@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="game-container">
+    <!-- Hidden inputs for game data -->
+    <input type="hidden" id="game-id" value="{{ game_id }}">
+    <input type="hidden" id="player-name" value="{{ player_name }}">
+    <input type="hidden" id="is-host" value="{{ 'true' if is_host else 'false' }}">
+    <input type="hidden" id="initial-players" value="{{ players|tojson|safe }}">
+
+    <div class="score-board">
+        <h2>النقاط:</h2>
+        <div id="scores"></div>
+    </div>
+
+    <div class="game-area">
+        <div id="game-status" class="status-message"></div>
+        <div id="game-content" class="content-area">
+            <div id="current-player"></div>
+            <div id="item-display" class="item-display"></div>
+            <div id="timer" class="timer">02:00</div>
+            <button id="guessButton" class="btn btn-success" onclick="handleCorrectGuess()" style="display: none;">جبتها!</button>
+        </div>
+    </div>
+
+    <div class="player-list">
+        <h3>اللعيبة:</h3>
+        <ul id="players"></ul>
+    </div>
+</div>
+
+<script>
+    let socket;
+    try {
+        socket = io();
+        console.log('Socket.IO initialized successfully');
+    } catch (error) {
+        console.error('Error initializing Socket.IO:', error);
+        document.getElementById('game-status').textContent = 'حدث خطأ في الاتصال. يرجى تحديث الصفحة.';
+        throw error;
+    }
+
+    const gameId = document.getElementById('game-id').value;
+    const playerName = document.getElementById('player-name').value;
+    const isHost = document.getElementById('is-host').value === 'true';
+    let timerInterval;
+    
+    // Initialize player list on page load
+    function initializePlayers() {
+        const playersList = document.getElementById('players');
+        const initialPlayersInput = document.getElementById('initial-players');
+        
+        try {
+            const initialPlayers = JSON.parse(initialPlayersInput.value);
+            updatePlayerList(initialPlayers);
+        } catch (error) {
+            console.error('Error parsing initial players:', error);
+        }
+    }
+    
+    // Update player list
+    function updatePlayerList(players) {
+        const playersList = document.getElementById('players');
+        if (!Array.isArray(players)) {
+            console.error('Players is not an array:', players);
+            return;
+        }
+        
+        playersList.innerHTML = players
+            .map(player => `<li class="player-item ${player === playerName ? 'current-user' : ''}">${player}</li>`)
+            .join('');
+    }
+    
+    // Initialize game room connection
+    socket.on('connect', () => {
+        socket.emit('join_game_room', {
+            game_id: gameId,
+            player_name: playerName
+        });
+        
+        // Request initial player list
+        socket.emit('request_players', {
+            game_id: gameId
+        });
+    });
+
+    // Listen for player list updates
+    socket.on('update_players', (data) => {
+        updatePlayerList(data.players);
+    });
+
+    // Handle game state updates
+    socket.on('game_state', (data) => {
+        if (data.players) {
+            updatePlayerList(data.players);
+        }
+        if (data.message) {
+            document.getElementById('game-status').textContent = data.message;
+        }
+    });
+
+    socket.on('new_item', (data) => {
+        const itemDisplay = document.getElementById('item-display');
+        itemDisplay.textContent = data.item;
+        itemDisplay.style.display = 'block';
+    });
+
+    socket.on('timer_start', (data) => {
+        startTimer(data.duration);
+        // Show guess button for non-current players
+        const currentPlayer = document.getElementById('current-player').textContent;
+        if (playerName !== currentPlayer) {
+            document.getElementById('guessButton').style.display = 'block';
+        } else {
+            document.getElementById('guessButton').style.display = 'none';
+        }
+    });
+
+    socket.on('score_update', (data) => {
+        updateScores(data.scores);
+        if (data.last_item) {
+            document.getElementById('game-status').textContent = 'الإجابة الصحيحة: ' + data.last_item;
+        }
+    });
+
+    socket.on('round_ended', (data) => {
+        clearInterval(timerInterval);
+        document.getElementById('item-display').style.display = 'none';
+        document.getElementById('guessButton').style.display = 'none';
+        updateScores(data.scores);
+        if (data.timeout) {
+            document.getElementById('game-status').textContent = 'انتهى الوقت! الكلمة كانت: ' + data.last_item;
+        }
+    });
+
+    function updateScores(scores) {
+        const scoresDiv = document.getElementById('scores');
+        scoresDiv.innerHTML = Object.entries(scores)
+            .map(([name, score]) => `<div class="score-item">${name}: ${score}</div>`)
+            .join('');
+    }
+
+    function updateCurrentPlayer(currentPlayer) {
+        document.getElementById('current-player').textContent = currentPlayer;
+        if (playerName === currentPlayer) {
+            document.getElementById('game-status').textContent = 'دورك! مثّل الكلمة دي';
+        } else {
+            document.getElementById('game-status').textContent = `دور ${currentPlayer}`;
+        }
+    }
+
+    function startTimer(duration) {
+        clearInterval(timerInterval);
+        let timeLeft = duration;
+        const timerElement = document.getElementById('timer');
+        
+        const updateTimer = () => {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeLeft === 0) {
+                clearInterval(timerInterval);
+                socket.emit('round_timeout', { game_id: gameId });
+                return;
+            }
+            timeLeft--;
+        };
+        
+        updateTimer();
+        timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    function handleCorrectGuess() {
+        socket.emit('guess_correct', {
+            game_id: gameId,
+            player_name: playerName
+        });
+        document.getElementById('guessButton').style.display = 'none';
+    }
+    
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', initializePlayers);
+</script>
+
+<style>
+    .game-container {
+        display: grid;
+        grid-template-columns: 1fr 2fr 1fr;
+        gap: 20px;
+        padding: 20px;
+        height: 100vh;
+        direction: rtl;
+    }
+
+    .score-board, .player-list {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .game-area {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .status-message {
+        font-size: 1.2em;
+        margin-bottom: 20px;
+        color: #2c3e50;
+        text-align: center;
+    }
+
+    .item-display {
+        font-size: 2em;
+        font-weight: bold;
+        margin: 20px 0;
+        color: #e74c3c;
+    }
+
+    .timer {
+        font-size: 1.5em;
+        color: #2980b9;
+        margin: 15px 0;
+    }
+
+    .score-item {
+        padding: 8px;
+        margin: 5px 0;
+        background: white;
+        border-radius: 5px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .player-item {
+        list-style: none;
+        padding: 8px;
+        margin: 5px 0;
+        background: white;
+        border-radius: 5px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .current-user {
+        background: #3498db;
+        color: white;
+    }
+
+    #guessButton {
+        padding: 10px 20px;
+        font-size: 1.2em;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    #guessButton:hover {
+        transform: scale(1.05);
+    }
+
+    h2, h3 {
+        color: #2c3e50;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+
+    #players {
+        padding: 0;
+        margin: 0;
+    }
+</style>
+{% endblock %}
