@@ -60,13 +60,15 @@ The application uses:
 
 ## Checkpoints
 
-### 2025-01-30 19:22
-- Fixed Socket.IO connection issues
-- Improved game room session handling
-- Added proper error handling for socket connections
-- Updated UI with placeholder for missing game image
-- Fixed game card buttons in home page
+### Checkpoint 8 (2025-02-01 19:48:51)
+- Fixed game room connection issues:
+  - Implemented proper transfer ID handling for each player
+  - Fixed session management and player state tracking
+  - Improved error handling for game room operations
+  - Added player-specific game state management
+  - Enhanced game start logic with individual player states
 
 To revert to this checkpoint:
 ```bash
-git checkout <commit-hash>  # Will be updated after first commit
+git checkout checkpoint-8
+```

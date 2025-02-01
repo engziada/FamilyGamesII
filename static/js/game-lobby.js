@@ -95,16 +95,20 @@ window.joinGame = function() {
 }
 
 // Game control functions
-window.startGame = function() {
-    if (!isHost) {
-        console.error('Only host can start the game');
+function startGame() {
+    if (!currentGameId) {
+        console.error('No game ID available');
         return;
     }
-    
-    console.log('Starting game:', { currentGameId, playerName, isHost });
-    socket.emit('start_game', { 
-        game_id: currentGameId,
-        player_name: playerName
+
+    if (!isHost) {
+        alert('فقط اللعيب الكبير يقدر يبدأ اللعبة');
+        return;
+    }
+
+    console.log('Starting game:', currentGameId);
+    socket.emit('start_game', {
+        game_id: currentGameId
     });
 }
 
@@ -141,18 +145,122 @@ function resetModals() {
 
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize socket connection
-    socket = io();
-    console.log('Initializing socket connection');
+    // Initialize socket connection with proper configuration
+    const socketOptions = {
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        timeout: 20000,
+        transports: ['polling', 'websocket'],
+        upgrade: false,
+        forceNew: true,
+        pingTimeout: 5000,
+        pingInterval: 25000,
+        closeOnBeforeunload: false
+    };
 
-    // Connection status handling
-    const connectionStatus = document.createElement('div');
-    connectionStatus.id = 'connection-status';
-    document.body.appendChild(connectionStatus);
+    // Create socket instance with error handling
+    try {
+        socket = io('http://127.0.0.1:5000', socketOptions);
+        console.log('Initializing socket connection with proper configuration');
+    } catch (error) {
+        console.error('Socket initialization error:', error);
+        return;
+    }
+
+    // Connection status handling with cleanup
+    let connectionStatus;
+    
+    function createConnectionStatus() {
+        if (!connectionStatus) {
+            connectionStatus = document.createElement('div');
+            connectionStatus.id = 'connection-status';
+            document.body.appendChild(connectionStatus);
+        }
+        return connectionStatus;
+    }
+
+    function updateConnectionStatus(text, className) {
+        const status = createConnectionStatus();
+        status.textContent = text;
+        status.className = className;
+    }
+
+    // Clean up function to properly close socket and remove listeners
+    function cleanupSocket() {
+        if (socket) {
+            // Remove all listeners to prevent memory leaks
+            socket.removeAllListeners();
+            
+            // Emit leave event if in a game
+            if (currentGameId && playerName) {
+                socket.emit('leave_game', {
+                    roomId: currentGameId,
+                    playerName: playerName
+                });
+            }
+            
+            // Close socket connection
+            socket.close();
+        }
+
+        // Remove connection status element
+        if (connectionStatus && connectionStatus.parentNode) {
+            connectionStatus.parentNode.removeChild(connectionStatus);
+        }
+    }
+
+    // Handle page visibility changes
+    let wasInGame = false;
+    let lastGameState = null;
+    
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            console.log('Page hidden');
+            // Store game state if we're in a game
+            if (currentGameId && playerName) {
+                wasInGame = true;
+                lastGameState = {
+                    gameId: currentGameId,
+                    playerName: playerName,
+                    isHost: isHost
+                };
+            }
+        } else {
+            console.log('Page visible');
+            // If we were in a game, reconnect and rejoin
+            if (wasInGame && lastGameState) {
+                console.log('Reconnecting to game:', lastGameState);
+                socket = io('http://127.0.0.1:5000', socketOptions);
+                
+                socket.on('connect', () => {
+                    if (lastGameState.isHost) {
+                        socket.emit('create_game', {
+                            game_id: parseInt(lastGameState.gameId),
+                            player_name: lastGameState.playerName,
+                            game_type: currentGame
+                        });
+                    } else {
+                        socket.emit('join_game', {
+                            game_id: lastGameState.gameId,
+                            player_name: lastGameState.playerName,
+                            game_type: currentGame
+                        });
+                    }
+                });
+            }
+        }
+    });
+
+    // Handle page unload
+    window.addEventListener('beforeunload', () => {
+        console.log('Page unloading, cleaning up socket');
+        cleanupSocket();
+    });
 
     socket.on('connect', () => {
-        connectionStatus.textContent = 'متصل';
-        connectionStatus.className = 'connected';
+        updateConnectionStatus('متصل', 'connected');
         console.log('Connected to server');
 
         // Auto-join game room if URL has game parameters
@@ -174,9 +282,48 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     socket.on('disconnect', () => {
-        connectionStatus.textContent = 'غير متصل';
-        connectionStatus.className = 'disconnected';
+        updateConnectionStatus('غير متصل', 'disconnected');
         console.log('Disconnected from server');
+    });
+
+    socket.on('connect_error', (error) => {
+        console.error('Connection error:', error);
+        updateConnectionStatus('خطأ في الاتصال', 'error');
+    });
+
+    socket.on('error', (error) => {
+        console.error('Socket error:', error);
+        updateConnectionStatus('خطأ في الاتصال', 'error');
+    });
+
+    socket.on('reconnect', (attemptNumber) => {
+        console.log('Reconnected after', attemptNumber, 'attempts');
+        updateConnectionStatus('متصل', 'connected');
+        
+        // Re-join room if we were in one
+        if (currentGameId && playerName) {
+            console.log('Re-joining game room after reconnection');
+            socket.emit('join_game_room', {
+                roomId: currentGameId,
+                playerName: playerName
+            });
+        }
+    });
+
+    socket.on('reconnect_attempt', (attemptNumber) => {
+        console.log('Attempting to reconnect:', attemptNumber);
+        updateConnectionStatus('جاري إعادة الاتصال...', 'reconnecting');
+    });
+
+    socket.on('reconnect_error', (error) => {
+        console.error('Reconnection error:', error);
+        updateConnectionStatus('فشل إعادة الاتصال', 'error');
+    });
+
+    socket.on('reconnect_failed', () => {
+        console.error('Failed to reconnect');
+        updateConnectionStatus('تعذر إعادة الاتصال', 'error');
+        alert('تعذر الاتصال بالخادم. يرجى تحديث الصفحة.');
     });
 
     // Global redirect handler
@@ -222,8 +369,21 @@ document.addEventListener('DOMContentLoaded', function() {
     socket.on('player_joined', (data) => {
         console.log('Player joined:', data);
         
-        // Update player list
-        updatePlayerList(data.players, data.host);
+        // Update both create and join modal player lists
+        const hostPlayersList = document.getElementById('host-players-list');
+        const joinPlayersList = document.getElementById('join-players-list');
+        
+        if (hostPlayersList) {
+            hostPlayersList.innerHTML = data.players.map(player => 
+                `<li>${player.name}${player.isHost ? ' (اللعيب الكبير)' : ''}</li>`
+            ).join('');
+        }
+        
+        if (joinPlayersList) {
+            joinPlayersList.innerHTML = data.players.map(player => 
+                `<li>${player.name}${player.isHost ? ' (اللعيب الكبير)' : ''}</li>`
+            ).join('');
+        }
         
         // Update start button state for host
         const startButton = document.getElementById('start-game-btn');
@@ -232,22 +392,22 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    socket.on('game_started', (data) => {
-        console.log('Game started, redirecting to:', data.url);
+    socket.on('game_started', async (data) => {
+        console.log('Game started:', data);
         
-        // Immediately hide modals
-        hideModal('create-game-modal');
-        hideModal('join-game-modal');
-        
-        // Force redirect to the game URL with parameters
-        const params = new URLSearchParams({
-            player_name: playerName,
-            is_host: isHost
-        });
-        
-        const gameUrl = `${window.location.origin}/game/${data.game_id}?${params.toString()}`;
-        console.log('Redirecting to game URL:', gameUrl);
-        window.location.href = gameUrl;
+        try {
+            // Hide modals first
+            hideModal('create-game-modal');
+            hideModal('join-game-modal');
+
+            // Redirect to game page with transfer ID and player name
+            const url = new URL(data.url, window.location.origin);
+            url.searchParams.append('transfer_id', data.transfer_id);
+            url.searchParams.append('player_name', playerName);
+            window.location.href = url.toString();
+        } catch (error) {
+            console.error('Error handling game start:', error);
+        }
     });
 
     socket.on('join_success', (data) => {
@@ -264,6 +424,58 @@ document.addEventListener('DOMContentLoaded', function() {
         playersList.innerHTML = data.players.map(player => 
             `<li>${player.name}${player.isHost ? ' (اللعيب الكبير)' : ''}</li>`
         ).join('');
+    });
+
+    socket.on('player_left', (data) => {
+        console.log('Player left:', data);
+        
+        // Update both create and join modal player lists
+        const hostPlayersList = document.getElementById('host-players-list');
+        const joinPlayersList = document.getElementById('join-players-list');
+        
+        if (hostPlayersList) {
+            hostPlayersList.innerHTML = data.players.map(player => 
+                `<li>${player.name}${player.isHost ? ' (اللعيب الكبير)' : ''}</li>`
+            ).join('');
+        }
+        
+        if (joinPlayersList) {
+            joinPlayersList.innerHTML = data.players.map(player => 
+                `<li>${player.name}${player.isHost ? ' (اللعيب الكبير)' : ''}</li>`
+            ).join('');
+        }
+        
+        // Update start button state for host
+        const startButton = document.getElementById('start-game-btn');
+        if (startButton && isHost) {
+            startButton.disabled = data.players.length < 2;
+        }
+    });
+
+    socket.on('update_players', (data) => {
+        console.log('Players updated:', data);
+        
+        // Update both create and join modal player lists
+        const hostPlayersList = document.getElementById('host-players-list');
+        const joinPlayersList = document.getElementById('join-players-list');
+        
+        const playerItems = data.players.map(name => 
+            `<li>${name}${name === playerName && isHost ? ' (اللعيب الكبير)' : ''}</li>`
+        ).join('');
+        
+        if (hostPlayersList) {
+            hostPlayersList.innerHTML = playerItems;
+        }
+        
+        if (joinPlayersList) {
+            joinPlayersList.innerHTML = playerItems;
+        }
+        
+        // Update start button state for host
+        const startButton = document.getElementById('start-game-btn');
+        if (startButton && isHost) {
+            startButton.disabled = data.players.length < 2;
+        }
     });
 
     socket.on('game_error', (error) => {
