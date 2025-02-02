@@ -6,6 +6,8 @@
     <input type="hidden" id="game-id" value="{{ game_id }}">
     <input type="hidden" id="player-name" value="{{ player_name }}">
     <input type="hidden" id="is-host" value="{{ 'true' if is_host else 'false' }}">
+    <input type="hidden" id="player-type" value="{{ player_type }}">
+    <input type="hidden" id="player-score" value="{{ player_score }}">
     <input type="hidden" id="initial-players" value="{{ players|tojson|safe }}">
 
     <div class="game-title">بدون كلام</div>
@@ -29,13 +31,16 @@
                 <div class="section-content">
                     <div id="item-display" class="item-display">Movie/Series/Play Name</div>
                 </div>
-                <button class="btn btn-secondary" onclick="endTurn()">أنا اللي عرفتها</button>
+                {% if player_type == 'guest' %}
+                <button id="guessButton" class="btn btn-secondary" onclick="handleCorrectGuess()">أنا اللي عرفتها</button>
+                {% endif %}
             </div>
 
             <!-- Control Buttons -->
             <div class="control-buttons">
                 <button class="btn btn-secondary" onclick="leaveGame()">أنا منسحب</button>
-                {% if is_host %}
+                {% if player_type == 'host' %}
+                <button id="nextRoundButton" class="btn btn-primary" onclick="startNextRound()">الدور اللي بعده</button>
                 <button class="btn btn-secondary" onclick="endGame()">إقفل الأوضة</button>
                 {% endif %}
             </div>
@@ -76,6 +81,8 @@
 
     const gameId = document.getElementById('game-id').value;
     const playerName = document.getElementById('player-name').value;
+    const playerType = document.getElementById('player-type').value;
+    const playerScore = document.getElementById('player-score').value;
     const isHost = document.getElementById('is-host').value === 'true';
     let timerInterval;
     

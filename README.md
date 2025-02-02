@@ -1,74 +1,96 @@
-# ألعاب العيلة (Family Games)
+# Family Games II
 
-A real-time multiplayer game platform built with Flask and Socket.IO, featuring Arabic interface.
+A modern web-based platform for family-friendly multiplayer games, starting with the classic Charades game.
 
-## Features
+## Project Description
+A Flask-based web application that allows families and friends to play games together in real-time. The first game implemented is Charades (بدون كلام), where players take turns acting out words while others try to guess them.
 
-- Real-time multiplayer gaming using Socket.IO
-- Arabic interface for better accessibility
-- Session-based game rooms
-- Multiple game modes (currently featuring "بدون كلام" / Charades)
-- Responsive design for all devices
+## Requirements
+- Python 3.8+
+- Flask
+- Flask-SocketIO
+- eventlet
+- Additional requirements in `requirements.txt`
 
 ## Project Structure
-
 ```
 FamilyGamesII/
-├── app.py                 # Main Flask application
-├── games/                 # Game modules
-│   ├── __init__.py
-│   └── charades/         # Charades game implementation
+├── app.py                 # Main Flask application entry point
+├── requirements.txt       # Python package dependencies
+├── games/                 # Game modules directory
+│   └── charades/         # Charades game module
 │       ├── __init__.py
-│       ├── models.py     # Game models and logic
-│       └── routes.py     # Game-specific routes
+│       ├── models.py     # Game data models and logic
+│       └── routes.py     # Game-specific routes and socket events
 ├── static/
-│   ├── css/             # Stylesheets
-│   ├── js/              # Client-side JavaScript
-│   └── images/          # Game images and assets
-├── templates/           # HTML templates
-│   ├── base.html       # Base template
-│   ├── index.html      # Home page
-│   └── game.html       # Game interface
-└── Log/                # Application logs (gitignored)
+│   ├── css/
+│   │   └── style.css    # Main stylesheet
+│   ├── js/
+│   │   ├── game.js      # Game-specific JavaScript
+│   │   └── game-lobby.js # Lobby and game creation logic
+│   └── data/
+│       └── charades_items.json # Game items database
+├── templates/
+│   ├── base.html        # Base template
+│   ├── index.html       # Landing page
+│   ├── lobby.html       # Game lobby
+│   └── game.html        # Game interface
+└── Log/                  # Application logs (gitignored)
 ```
 
-## Setup and Installation
+## Features
+1. Real-time Multiplayer
+   - Socket.IO for real-time communication
+   - Multiple players in the same game room
+   - Host/Guest player roles
 
-1. Create a Python virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
+2. Game Management
+   - Create/Join game rooms
+   - Unique room IDs
+   - Player score tracking
+   - Round-based gameplay
 
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+3. User Interface
+   - Modern, responsive design
+   - Arabic language support
+   - Real-time score updates
+   - Timer-based rounds
 
-3. Run the application:
-```bash
-python app.py
-```
-
-## Development
-
-The application uses:
-- Flask for the web framework
-- Socket.IO for real-time communication
-- SQLite for data storage
-- Vanilla JavaScript for frontend interactions
+4. Game Flow
+   - Lobby system for game setup
+   - Turn-based gameplay
+   - Score calculation based on time
+   - Round management by host
 
 ## Checkpoints
 
-### Checkpoint 8 (2025-02-01 19:48:51)
-- Fixed game room connection issues:
-  - Implemented proper transfer ID handling for each player
-  - Fixed session management and player state tracking
-  - Improved error handling for game room operations
-  - Added player-specific game state management
-  - Enhanced game start logic with individual player states
+### Checkpoint 1 (2025-02-02 22:56)
+- Refactored game code into modular structure
+- Moved game logic to dedicated charades module
+- Enhanced URL parameters for player tracking
+- Improved error handling and logging
+- Updated templates for conditional rendering
+- Command to revert: `git checkout 6e9a0d2`
 
-To revert to this checkpoint:
-```bash
-git checkout checkpoint-8
-```
+## Development Guidelines
+1. Code Style
+   - Clean, Pythonic code
+   - Comprehensive documentation
+   - Meaningful variable names
+   - Descriptive error messages
+
+2. Architecture
+   - Modular design
+   - Separation of concerns
+   - Client-side validation
+   - Minimal JavaScript usage
+
+3. Version Control
+   - Regular Git commits
+   - Checkpoint system
+   - Log folder in .gitignore
+
+4. Error Handling
+   - User-friendly error messages
+   - Comprehensive logging
+   - Graceful fallbacks

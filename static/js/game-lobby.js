@@ -400,10 +400,12 @@ document.addEventListener('DOMContentLoaded', function() {
             hideModal('create-game-modal');
             hideModal('join-game-modal');
 
-            // Redirect to game page with transfer ID and player name
+            // Redirect to game page with all player information
             const url = new URL(data.url, window.location.origin);
             url.searchParams.append('transfer_id', data.transfer_id);
             url.searchParams.append('player_name', playerName);
+            url.searchParams.append('player_type', isHost ? 'host' : 'guest');
+            url.searchParams.append('player_score', data.scores ? data.scores[playerName] || 0 : 0);
             window.location.href = url.toString();
         } catch (error) {
             console.error('Error handling game start:', error);

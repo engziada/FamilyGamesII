@@ -85,8 +85,12 @@ def transfer_state(transfer_id):
 def game(game_id):
     logger.debug(f"Accessing game route with game_id: {game_id}")
     
-    # Get transfer ID from query params
+    # Get all parameters from query params
     transfer_id = request.args.get('transfer_id')
+    player_name = request.args.get('player_name')
+    player_type = request.args.get('player_type', 'guest')  # Default to guest if not specified
+    player_score = request.args.get('player_score', 0)  # Default to 0 if not specified
+    
     if transfer_id:
         # Try to get state from transfer storage
         state = game_state_transfer.get(transfer_id)
@@ -96,19 +100,22 @@ def game(game_id):
             session['game_id'] = game_id
             session['player_name'] = state['player_name']
             session['is_host'] = state['is_host']
+            session['player_type'] = player_type
+            session['player_score'] = player_score
             session.modified = True
             
             logger.debug(f"Restored session state: {dict(session)}")
             del game_state_transfer[transfer_id]  # Clean up
+            
+            # Add additional parameters to state
+            state['player_type'] = player_type
+            state['player_score'] = player_score
             return render_template('game.html', **state)
     
     # Fall back to regular game state if no transfer state
     if game_id not in game_rooms:
         logger.warning(f"Game {game_id} not found in game_rooms")
         return redirect(url_for('index'))
-    
-    player_name = session.get('player_name')
-    is_host = session.get('is_host', False)
     
     if not player_name or not any(p['name'] == player_name for p in game_rooms[game_id]['players']):
         logger.warning(f"Player {player_name} not found in game {game_id}")
@@ -117,10 +124,12 @@ def game(game_id):
     return render_template('game.html',
         game_id=game_id,
         player_name=player_name,
-        is_host=is_host,
+        is_host=player_type == 'host',
+        player_type=player_type,
+        player_score=player_score,
         players=game_rooms[game_id]['players'],
         current_player=game_rooms[game_id]['current_player'],
-        current_item=game_rooms[game_id]['current_item'] if is_host else None,
+        current_item=game_rooms[game_id]['current_item'] if player_type == 'host' else None,
         scores=game_rooms[game_id].get('scores', {})
     )
 

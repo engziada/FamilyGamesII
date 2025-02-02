@@ -6,14 +6,14 @@ from flask import session, request
 from flask_socketio import emit, join_room, leave_room
 import logging
 from datetime import datetime
+import random
+import string
 
-from .models import CharadesGame
+from .models import CharadesGame, game_rooms, game_state_transfer
 
-# Game rooms storage
-game_rooms = {}  # {room_id: CharadesGame}
 logger = logging.getLogger(__name__)
 
-def register_routes(socketio):
+def register_charades_routes(socketio):
     @socketio.on('connect')
     def handle_connect():
         """Handle client connection."""
@@ -21,73 +21,39 @@ def register_routes(socketio):
         if 'room' in session:
             join_room(session['room'])
 
-    @socketio.on('join_game_room')
-    def handle_join_game_room(data):
-        """Handle player joining a game room."""
-        try:
-            room_id = data.get('roomId')
-            player_name = data.get('playerName')
-            
-            if not room_id or not player_name:
-                emit('error', {'message': 'Missing room ID or player name'})
-                return
-                
-            if room_id not in game_rooms:
-                game = CharadesGame(room_id, player_name)
-                game_rooms[room_id] = game
-                logger.info(f"Created new game room {room_id} for player {player_name}")
-            
-            game = game_rooms[room_id]
-            if player_name not in game.players:
-                game.add_player(player_name)
-            
-            join_room(room_id)
-            session['room'] = room_id
-            session['name'] = player_name
-            
-            logger.info(f"Player {player_name} joined room {room_id}")
-            emit('room_joined', {
-                'players': game.players,
-                'host': game.host,
-                'scores': game.scores,
-                'status': game.status
-            }, room=room_id)
-            
-        except Exception as e:
-            logger.error(f"Error joining game room: {str(e)}")
-            emit('error', {'message': 'Failed to join game room'})
-
     @socketio.on('create_game')
     def handle_create_game(data):
         """Handle game creation request."""
         try:
-            room_id = data.get('roomId')
             player_name = data.get('playerName')
-            
-            if not room_id or not player_name:
-                emit('error', {'message': 'Missing room ID or player name'})
+            if not player_name:
+                emit('error', {'message': 'Player name is required'})
                 return
-                
-            if room_id in game_rooms:
-                emit('error', {'message': 'Room already exists'})
-                return
-                
+
+            # Generate a unique room ID
+            room_id = ''.join(random.choices(string.digits, k=4))
+            while room_id in game_rooms:
+                room_id = ''.join(random.choices(string.digits, k=4))
+
+            # Create new game
             game = CharadesGame(room_id, player_name)
             game_rooms[room_id] = game
             
+            # Join the room
             join_room(room_id)
             session['room'] = room_id
             session['name'] = player_name
+            session['is_host'] = True
             
-            logger.info(f"Game created: Room {room_id}, Host: {player_name}")
+            logger.info(f"Created game room {room_id} for player {player_name}")
             emit('game_created', {
-                'roomId': room_id,
+                'game_id': room_id,
                 'players': game.players,
                 'host': game.host
-            }, room=room_id)
+            })
             
         except Exception as e:
-            logger.error(f"Error creating game: {str(e)}")
+            logger.error(f"Error creating game: {e}")
             emit('error', {'message': 'Failed to create game'})
 
     @socketio.on('join_game')
@@ -98,33 +64,44 @@ def register_routes(socketio):
             player_name = data.get('playerName')
             
             if not room_id or not player_name:
-                emit('error', {'message': 'Missing room ID or player name'})
+                emit('error', {'message': 'Room ID and player name are required'})
                 return
-                
+            
             if room_id not in game_rooms:
                 emit('error', {'message': 'Game room not found'})
                 return
-                
+            
             game = game_rooms[room_id]
-            if game.status != "waiting":
-                emit('error', {'message': 'Game already started'})
+            if game.status != 'waiting':
+                emit('error', {'message': 'Game has already started'})
                 return
-                
-            if game.add_player(player_name):
-                join_room(room_id)
-                session['room'] = room_id
-                session['name'] = player_name
-                
-                logger.info(f"Player {player_name} joined room {room_id}")
-                emit('player_joined', {
-                    'players': game.players,
-                    'host': game.host
-                }, room=room_id)
-            else:
-                emit('error', {'message': 'Player already in game'})
-                
+            
+            if any(p['name'] == player_name for p in game.players):
+                emit('error', {'message': 'Player name already taken'})
+                return
+            
+            # Add player to game
+            game.add_player(player_name)
+            join_room(room_id)
+            session['room'] = room_id
+            session['name'] = player_name
+            session['is_host'] = False
+            
+            logger.info(f"Player {player_name} joined game {room_id}")
+            emit('join_success', {
+                'game_id': room_id,
+                'players': game.players,
+                'host': game.host
+            })
+            
+            # Notify other players
+            emit('player_joined', {
+                'players': game.players,
+                'host': game.host
+            }, room=room_id)
+            
         except Exception as e:
-            logger.error(f"Error joining game: {str(e)}")
+            logger.error(f"Error joining game: {e}")
             emit('error', {'message': 'Failed to join game'})
 
     @socketio.on('start_game')
@@ -134,32 +111,48 @@ def register_routes(socketio):
             room_id = session.get('room')
             player_name = session.get('name')
             
-            if not room_id or room_id not in game_rooms:
-                emit('error', {'message': 'Invalid game room'})
+            if not room_id or not player_name:
+                emit('error', {'message': 'Not in a game room'})
                 return
-                
-            game = game_rooms[room_id]
+            
+            game = game_rooms.get(room_id)
+            if not game:
+                emit('error', {'message': 'Game not found'})
+                return
+            
             if player_name != game.host:
                 emit('error', {'message': 'Only host can start the game'})
                 return
-                
+            
             if len(game.players) < 2:
                 emit('error', {'message': 'Need at least 2 players to start'})
                 return
-                
-            if game.start_round():
-                logger.info(f"Game started in room {room_id}")
-                emit('game_started', {
-                    'currentPlayer': game.current_player,
-                    'currentItem': game.current_item if game.current_player == player_name else None,
-                    'players': game.players,
-                    'scores': game.scores
-                }, room=room_id)
-            else:
-                emit('error', {'message': 'Failed to start game'})
-                
+            
+            # Start the game
+            game.status = 'playing'
+            game.start_round()
+            
+            # Generate transfer ID for state preservation
+            transfer_id = f"{room_id}_{datetime.now().timestamp()}_{player_name}"
+            game_state_transfer[transfer_id] = {
+                'game_id': room_id,
+                'player_name': player_name,
+                'is_host': True,
+                'players': game.players,
+                'current_player': game.current_player,
+                'current_item': game.current_item,
+                'scores': game.scores
+            }
+            
+            # Notify all players
+            emit('game_started', {
+                'url': f'/game/{room_id}',
+                'transfer_id': transfer_id,
+                'scores': game.scores
+            }, room=room_id)
+            
         except Exception as e:
-            logger.error(f"Error starting game: {str(e)}")
+            logger.error(f"Error starting game: {e}")
             emit('error', {'message': 'Failed to start game'})
 
     @socketio.on('guess_correct')
@@ -169,29 +162,30 @@ def register_routes(socketio):
             room_id = session.get('room')
             player_name = session.get('name')
             
-            if not room_id or room_id not in game_rooms:
-                emit('error', {'message': 'Invalid game room'})
+            if not room_id or not player_name:
+                emit('error', {'message': 'Not in a game room'})
                 return
-                
-            game = game_rooms[room_id]
-            if game.status != "playing":
+            
+            game = game_rooms.get(room_id)
+            if not game:
+                emit('error', {'message': 'Game not found'})
+                return
+            
+            if game.status != 'playing':
                 emit('error', {'message': 'Game is not in playing state'})
                 return
-                
-            score = game.calculate_score()
-            game.scores[player_name] += score
             
+            # End the round and update scores
+            game.end_round(winner=player_name)
+            
+            # Notify all players
             emit('round_ended', {
-                'winner': player_name,
                 'scores': game.scores,
-                'item': game.current_item,
-                'points': score
+                'last_item': game.current_item
             }, room=room_id)
             
-            logger.info(f"Correct guess by {player_name} in room {room_id}")
-            
         except Exception as e:
-            logger.error(f"Error handling correct guess: {str(e)}")
+            logger.error(f"Error handling correct guess: {e}")
             emit('error', {'message': 'Failed to process guess'})
 
     @socketio.on('round_timeout')
@@ -199,26 +193,34 @@ def register_routes(socketio):
         """Handle round timeout."""
         try:
             room_id = session.get('room')
-            if not room_id or room_id not in game_rooms:
-                emit('error', {'message': 'Invalid game room'})
+            player_name = session.get('name')
+            
+            if not room_id or not player_name:
+                emit('error', {'message': 'Not in a game room'})
                 return
-                
-            game = game_rooms[room_id]
-            if game.status != "playing":
+            
+            game = game_rooms.get(room_id)
+            if not game:
+                emit('error', {'message': 'Game not found'})
+                return
+            
+            if game.status != 'playing':
                 emit('error', {'message': 'Game is not in playing state'})
                 return
-                
+            
+            # End the round without a winner
+            game.end_round()
+            
+            # Notify all players
             emit('round_ended', {
                 'timeout': True,
                 'scores': game.scores,
-                'item': game.current_item
+                'last_item': game.current_item
             }, room=room_id)
             
-            logger.info(f"Round timeout in room {room_id}")
-            
         except Exception as e:
-            logger.error(f"Error handling round timeout: {str(e)}")
-            emit('error', {'message': 'Failed to process timeout'})
+            logger.error(f"Error handling round timeout: {e}")
+            emit('error', {'message': 'Failed to process round timeout'})
 
     @socketio.on('next_round')
     def handle_next_round(data):
@@ -227,54 +229,98 @@ def register_routes(socketio):
             room_id = session.get('room')
             player_name = session.get('name')
             
-            if not room_id or room_id not in game_rooms:
-                emit('error', {'message': 'Invalid game room'})
+            if not room_id or not player_name:
+                emit('error', {'message': 'Not in a game room'})
                 return
-                
-            game = game_rooms[room_id]
-            if game.start_round():
-                emit('round_started', {
-                    'currentPlayer': game.current_player,
-                    'currentItem': game.current_item if game.current_player == player_name else None,
-                    'players': game.players,
-                    'scores': game.scores
-                }, room=room_id)
-                
-                logger.info(f"Next round started in room {room_id}")
-            else:
-                emit('error', {'message': 'Failed to start next round'})
-                
+            
+            game = game_rooms.get(room_id)
+            if not game:
+                emit('error', {'message': 'Game not found'})
+                return
+            
+            if player_name != game.host:
+                emit('error', {'message': 'Only host can start next round'})
+                return
+            
+            # Start new round
+            game.start_round()
+            
+            # Notify all players
+            emit('round_started', {
+                'current_player': game.current_player,
+                'current_item': game.current_item
+            }, room=room_id)
+            
         except Exception as e:
-            logger.error(f"Error starting next round: {str(e)}")
+            logger.error(f"Error starting next round: {e}")
             emit('error', {'message': 'Failed to start next round'})
 
-    @socketio.on('disconnect')
-    def handle_disconnect():
-        """Handle player disconnection."""
+    @socketio.on('leave_game')
+    def handle_leave_game(data):
+        """Handle player leaving game."""
         try:
             room_id = session.get('room')
             player_name = session.get('name')
             
-            if room_id and room_id in game_rooms:
-                game = game_rooms[room_id]
-                if game.remove_player(player_name):
+            if not room_id or not player_name:
+                emit('error', {'message': 'Not in a game room'})
+                return
+            
+            game = game_rooms.get(room_id)
+            if not game:
+                emit('error', {'message': 'Game not found'})
+                return
+            
+            # Remove player from game
+            game.remove_player(player_name)
+            leave_room(room_id)
+            session.pop('room', None)
+            session.pop('name', None)
+            session.pop('is_host', None)
+            
+            # If no players left, remove the game
+            if not game.players:
+                del game_rooms[room_id]
+            else:
+                # Notify remaining players
+                emit('player_left', {
+                    'players': game.players,
+                    'host': game.host,
+                    'scores': game.scores
+                }, room=room_id)
+            
+        except Exception as e:
+            logger.error(f"Error leaving game: {e}")
+            emit('error', {'message': 'Failed to leave game'})
+
+    @socketio.on('disconnect')
+    def handle_disconnect():
+        """Handle client disconnection."""
+        try:
+            room_id = session.get('room')
+            player_name = session.get('name')
+            
+            if room_id and player_name:
+                game = game_rooms.get(room_id)
+                if game:
+                    # Remove player from game
+                    game.remove_player(player_name)
                     leave_room(room_id)
                     
+                    # If no players left, remove the game
                     if not game.players:
                         del game_rooms[room_id]
-                        logger.info(f"Room {room_id} deleted - no players left")
                     else:
+                        # Notify remaining players
                         emit('player_left', {
-                            'player': player_name,
                             'players': game.players,
                             'host': game.host,
                             'scores': game.scores
                         }, room=room_id)
-                        
-                        logger.info(f"Player {player_name} left room {room_id}")
-                        
+            
             session.pop('room', None)
             session.pop('name', None)
+            session.pop('is_host', None)
             
         except Exception as e:
-            logger.error(f"Error handling disconnect: {str(e)}")
+            logger.error(f"Error handling disconnect: {e}")
