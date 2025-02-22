@@ -6,9 +6,9 @@
     <input type="hidden" id="game-id" value="{{ game_id }}">
     <input type="hidden" id="player-name" value="{{ player_name }}">
     <input type="hidden" id="is-host" value="{{ 'true' if is_host else 'false' }}">
-    <input type="hidden" id="player-type" value="{{ player_type }}">
-    <input type="hidden" id="player-score" value="{{ player_score }}">
-    <input type="hidden" id="initial-players" value="{{ players|tojson|safe }}">
+    <input type="hidden" id="game-type" value="{{ game_type }}">
+    <input type="hidden" id="initial-state" value="{{ initial_state|tojson|safe if initial_state else '{}' }}">
+    <input type="hidden" id="initial-players" value="{{ players|tojson|safe if players else '[]' }}">
 
     <div class="game-title">بدون كلام</div>
     <div class="game-layout">
@@ -22,7 +22,8 @@
             <!-- Player Turn Section -->
             <div class="player-turn-section">
                 <div class="section-content">
-                    <div id="current-player">اللي عليه الدور</div>
+                    <div class="turn-label">اللي عليه الدور:</div>
+                    <div id="current-turn" class="current-turn-player"></div>
                 </div>
             </div>
 
@@ -36,11 +37,19 @@
                 {% endif %}
             </div>
 
+            <!-- Game Controls -->
+            <div class="game-controls">
+                <button id="readyButton" class="btn btn-success" style="display: none;">جاهز</button>
+                {% if player_type == 'guest' %}
+                <button id="guess-btn" class="btn btn-primary" style="display: none;">تخمين</button>
+                {% endif %}
+                <div id="current-turn" class="current-turn"></div>
+            </div>
+
             <!-- Control Buttons -->
             <div class="control-buttons">
                 <button class="btn btn-secondary" id="leaveButton">أنا منسحب</button>
                 {% if player_type == 'host' %}
-                <button id="nextRoundButton" class="btn btn-primary">الدور اللي بعده</button>
                 <button id="endGameButton" class="btn btn-secondary">إقفل الأوضة</button>
                 {% endif %}
             </div>
@@ -52,11 +61,11 @@
             <div class="players-grid">
                 <div class="players-names">
                     <div class="grid-header">اللاعيبة</div>
-                    <div id="players-list"></div>
+                    <div id="players-list" class="players-list"></div>
                 </div>
                 <div class="players-scores">
                     <div class="grid-header">النتيجة</div>
-                    <div id="scores"></div>
+                    <div id="scores" class="scores-list"></div>
                 </div>
             </div>
         </div>

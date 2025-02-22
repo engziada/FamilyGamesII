@@ -81,6 +81,15 @@ FamilyGamesII/
 - Improved Arabic text rendering
 - Command to revert: `git checkout $(git rev-parse HEAD)`
 
+### Checkpoint 3 (2025-02-23 00:37)
+- Enhanced player identification in game UI
+- Added visual indicators for current player's turn
+- Improved player list display with own player marking
+- Enhanced score display with player highlighting
+- Added smooth transitions for state changes
+- Improved game status visibility
+- Command to revert: `git checkout $(git rev-parse HEAD)`
+
 ## Development Guidelines
 1. Code Style
    - Clean, Pythonic code

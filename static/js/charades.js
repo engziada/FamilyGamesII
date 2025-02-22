@@ -218,208 +218,138 @@ function leaveGame() {
 
 // Charades Game JavaScript Module
 class CharadesGame {
-    constructor() {
-        this.socket = null;
-        this.gameId = null;
-        this.playerName = null;
+    constructor(socket, gameId, playerName, isHost) {
+        this.socket = socket;
+        this.gameId = gameId;
+        this.playerName = playerName;
         this.playerType = null;
         this.playerScore = null;
-        this.isHost = false;
+        this.isHost = isHost;
         this.timerInterval = null;
+        
+        // Bind methods to preserve 'this' context
+        this.handleBeforeUnload = this.handleBeforeUnload.bind(this);
+        this.cleanup = this.cleanup.bind(this);
+        
+        // Add cleanup handlers
+        window.addEventListener('beforeunload', this.handleBeforeUnload);
         this.initialize();
     }
 
     initialize() {
-        // Initialize socket connection
-        try {
-            this.socket = io();
-            console.log('Socket.IO initialized successfully');
-        } catch (error) {
-            console.error('Error initializing Socket.IO:', error);
-            this.updateStatus('حدث خطأ في الاتصال. يرجى تحديث الصفحة.');
-            throw error;
+        if (!this.socket || !this.gameId || !this.playerName) {
+            console.error('Missing required game information');
+            return;
         }
 
-        // Get game data from DOM
-        this.gameId = document.getElementById('game-id')?.value;
-        this.playerName = document.getElementById('player-name')?.value;
-        this.playerType = document.getElementById('player-type')?.value;
-        this.playerScore = document.getElementById('player-score')?.value;
-        this.isHost = document.getElementById('is-host')?.value === 'true';
-
-        // Initialize event listeners
+        // Setup socket event listeners
         this.setupSocketListeners();
-        document.addEventListener('DOMContentLoaded', () => this.initializePlayers());
     }
 
     setupSocketListeners() {
-        // Connection events
-        this.socket.on('connect', () => this.handleConnect());
-        
-        // Game state events
-        this.socket.on('game_state', (data) => this.handleGameState(data));
-        this.socket.on('update_players', (data) => this.updatePlayerList(data.players));
-        this.socket.on('new_item', (data) => this.handleNewItem(data));
-        this.socket.on('timer_start', (data) => this.handleTimerStart(data));
-        this.socket.on('score_update', (data) => this.handleScoreUpdate(data));
-        this.socket.on('round_ended', (data) => this.handleRoundEnded(data));
-    }
+        // Remove any existing listeners first
+        this.cleanup();
 
-    // Event Handlers
-    handleConnect() {
-        this.socket.emit('join_game_room', {
-            game_id: this.gameId,
-            player_name: this.playerName
+        this.socket.on('game_state', (data) => {
+            if (data.message) {
+                this.updateStatus(data.message);
+            }
+            if (data.players) {
+                this.updatePlayersList(data.players);
+            }
+            if (data.current_player) {
+                this.updateCurrentPlayer(data.current_player);
+            }
+            if (data.scores) {
+                this.updateScores(data.scores);
+            }
         });
-        
-        this.socket.emit('request_players', {
-            game_id: this.gameId
+
+        this.socket.on('disconnect', () => {
+            console.log('Socket disconnected');
+            this.cleanup();
         });
     }
 
-    handleGameState(data) {
-        if (data.players) {
-            this.updatePlayerList(data.players);
-        }
-        if (data.message) {
-            this.updateStatus(data.message);
-        }
-    }
-
-    handleNewItem(data) {
-        const itemDisplay = document.getElementById('item-display');
-        itemDisplay.textContent = data.item;
-        itemDisplay.classList.add('visible');
-    }
-
-    handleTimerStart(data) {
-        this.startTimer(data.duration);
-        const currentPlayer = document.getElementById('current-player').textContent;
-        const guessButton = document.getElementById('guessButton');
-        
-        if (guessButton) {
-            if (this.playerName !== currentPlayer) {
-                guessButton.classList.add('visible');
-            } else {
-                guessButton.classList.remove('visible');
+    cleanup() {
+        if (this.socket) {
+            // Remove all listeners
+            this.socket.removeAllListeners('game_state');
+            this.socket.removeAllListeners('disconnect');
+            
+            // Clear any running timers
+            if (this.timerInterval) {
+                clearInterval(this.timerInterval);
+                this.timerInterval = null;
             }
         }
     }
 
-    handleScoreUpdate(data) {
-        this.updateScores(data.scores);
-        if (data.last_item) {
-            this.updateStatus('الإجابة الصحيحة: ' + data.last_item);
-        }
-    }
-
-    handleRoundEnded(data) {
-        clearInterval(this.timerInterval);
-        document.getElementById('item-display').classList.remove('visible');
-        const guessButton = document.getElementById('guessButton');
-        if (guessButton) {
-            guessButton.classList.remove('visible');
-        }
-        this.updateScores(data.scores);
-        if (data.timeout) {
-            this.updateStatus('انتهى الوقت! الكلمة كانت: ' + data.last_item);
-        }
-    }
-
-    // UI Update Methods
-    initializePlayers() {
-        const initialPlayersInput = document.getElementById('initial-players');
-        try {
-            const initialPlayers = JSON.parse(initialPlayersInput.value);
-            this.updateScores(initialPlayers);
-        } catch (error) {
-            console.error('Error parsing initial players:', error);
-        }
-    }
-
-    updatePlayerList(players) {
-        const playersList = document.getElementById('players-list');
-        if (!Array.isArray(players)) {
-            console.error('Players is not an array:', players);
-            return;
-        }
+    handleBeforeUnload(event) {
+        // Cleanup before page unload
+        this.cleanup();
         
-        playersList.innerHTML = players
-            .map(player => `<div class="player-item ${player === this.playerName ? 'current-user' : ''}">${player}</div>`)
-            .join('');
-    }
-
-    updateScores(scores) {
-        const playersList = document.getElementById('players-list');
-        const scoresDiv = document.getElementById('scores');
-        const players = Object.keys(scores);
-
-        playersList.innerHTML = players
-            .map(player => `<div class="player-item ${player === this.playerName ? 'current-user' : ''}">${player}</div>`)
-            .join('');
-
-        scoresDiv.innerHTML = players
-            .map(player => `<div class="score-item">${scores[player]}</div>`)
-            .join('');
-    }
-
-    updateCurrentPlayer(currentPlayer) {
-        document.getElementById('current-player').textContent = currentPlayer;
-        if (this.playerName === currentPlayer) {
-            this.updateStatus('دورك! مثّل الكلمة دي');
-        } else {
-            this.updateStatus(`دور ${currentPlayer}`);
+        if (this.socket && this.socket.connected) {
+            this.socket.emit('leave_game', {
+                game_id: this.gameId,
+                player_name: this.playerName
+            });
         }
     }
 
     updateStatus(message) {
-        document.getElementById('game-status').textContent = message;
+        const statusElement = document.getElementById('game-status');
+        if (statusElement) {
+            statusElement.textContent = message;
+        }
     }
 
-    startTimer(duration) {
-        clearInterval(this.timerInterval);
-        const timerDisplay = document.getElementById('timer');
-        let timeLeft = duration;
-
-        const updateDisplay = () => {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        };
-
-        updateDisplay();
-        this.timerInterval = setInterval(() => {
-            timeLeft--;
-            updateDisplay();
-            if (timeLeft <= 0) {
-                clearInterval(this.timerInterval);
-            }
-        }, 1000);
+    updatePlayersList(players) {
+        const playersListElement = document.getElementById('players-list');
+        const currentPlayerName = document.getElementById('player-name').value;
+        
+        if (playersListElement && Array.isArray(players)) {
+            playersListElement.innerHTML = players
+                .map(player => {
+                    const isCurrentPlayer = player === currentPlayerName;
+                    return `<div class="player-item ${isCurrentPlayer ? 'current-player' : ''}">${player}${isCurrentPlayer ? ' (أنت)' : ''}</div>`;
+                })
+                .join('');
+        }
     }
 
-    // Game Actions
-    handleCorrectGuess() {
-        this.socket.emit('correct_guess', {
-            game_id: this.gameId,
-            player_name: this.playerName
-        });
+    updateCurrentPlayer(player) {
+        const currentTurnElement = document.getElementById('current-turn');
+        if (currentTurnElement) {
+            const currentPlayerName = document.getElementById('player-name').value;
+            const displayText = player === currentPlayerName ? 
+                `${player} (أنت)` : player;
+            currentTurnElement.textContent = displayText;
+            
+            // Update the current player highlight in the players list
+            const playerItems = document.querySelectorAll('.player-item');
+            playerItems.forEach(item => {
+                if (item.textContent.includes(player)) {
+                    item.classList.add('current-turn');
+                } else {
+                    item.classList.remove('current-turn');
+                }
+            });
+        }
     }
 
-    startNextRound() {
-        this.socket.emit('start_round', {
-            game_id: this.gameId
-        });
-    }
-
-    leaveGame() {
-        window.location.href = '/';
-    }
-
-    endGame() {
-        this.socket.emit('end_game', {
-            game_id: this.gameId
-        });
-        window.location.href = '/';
+    updateScores(scores) {
+        const scoresElement = document.getElementById('scores');
+        const currentPlayerName = document.getElementById('player-name').value;
+        
+        if (scoresElement && typeof scores === 'object') {
+            scoresElement.innerHTML = Object.entries(scores)
+                .map(([player, score]) => {
+                    const isCurrentPlayer = player === currentPlayerName;
+                    return `<div class="score-item ${isCurrentPlayer ? 'current-player' : ''}">${score}</div>`;
+                })
+                .join('');
+        }
     }
 }
 
@@ -462,6 +392,14 @@ class CharadesLobby {
             this.gameState = data;
             this.updatePlayerList();
         });
+
+        this.socket.on('game_started', (data) => {
+            const playerName = document.getElementById('player-name')?.value || '';
+            // Construct the URL with query parameters
+            const redirectUrl = `${data.redirect_url}?transfer_id=${data.transfer_id}&player_name=${playerName}`;
+            // Redirect to the game page
+            window.location.href = redirectUrl;
+        });
     }
 
     updatePlayerList() {
@@ -490,17 +428,185 @@ class CharadesLobby {
 
 // Initialize game or lobby based on current page
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize game elements and event listeners only if we're on the game page
     if (document.querySelector('.game-container')) {
-        window.charadesGame = new CharadesGame();
+        let socket;
+        try {
+            // Initialize socket connection
+            socket = io({
+                reconnection: true,
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 5000,
+                reconnectionAttempts: 5
+            });
+        } catch (error) {
+            console.error('Failed to initialize socket:', error);
+            return;
+        }
+
+        // Get player info from hidden fields
+        const gameId = document.getElementById('game-id')?.value;
+        const playerName = document.getElementById('player-name')?.value;
+        const isHost = document.getElementById('is-host')?.value === 'true';
+        const initialStateElem = document.getElementById('initial-state');
+        const initialState = initialStateElem ? JSON.parse(initialStateElem.value) : {};
+        
+        if (!gameId || !playerName) {
+            console.error('Missing required game information');
+            return;
+        }
+
+        // Store player info in localStorage for persistence
+        localStorage.setItem('gameId', gameId);
+        localStorage.setItem('playerName', playerName);
+        localStorage.setItem('isHost', isHost);
+
+        // Initialize game instance with socket and initial state
+        window.charadesGame = new CharadesGame(socket, gameId, playerName, isHost);
+        
+        // Apply initial state if available
+        if (initialState && Object.keys(initialState).length > 0) {
+            if (initialState.players) {
+                window.charadesGame.updatePlayersList(initialState.players);
+            }
+            if (initialState.current_player) {
+                window.charadesGame.updateCurrentPlayer(initialState.current_player);
+            }
+            if (initialState.scores) {
+                window.charadesGame.updateScores(initialState.scores);
+            }
+            if (initialState.status) {
+                window.charadesGame.updateStatus(initialState.status);
+            }
+        }
+        
+        // Connect and join game room
+        socket.on('connect', () => {
+            console.log('Socket.IO initialized successfully');
+            socket.emit('join_game_room', {
+                game_id: gameId,
+                player_name: playerName
+            });
+        });
+
+        socket.on('error', (error) => {
+            console.error('Socket error:', error);
+        });
+
+        socket.on('disconnect', (reason) => {
+            console.log('Socket disconnected:', reason);
+        });
+
+        // Get DOM elements
+        const readyButton = document.getElementById('ready-btn');
+        const guessButton = document.getElementById('guess-btn');
+        const leaveButton = document.getElementById('leaveButton');
+        const endGameButton = document.getElementById('endGameButton');
+
+        // Add event listeners only if elements exist
+        if (readyButton) {
+            readyButton.addEventListener('click', function() {
+                if (socket && socket.connected) {
+                    socket.emit('player_ready', {
+                        game_id: gameId,
+                        player_name: playerName
+                    });
+                    this.style.display = 'none';
+                }
+            });
+        }
+
+        if (guessButton) {
+            guessButton.addEventListener('click', function() {
+                if (socket && socket.connected) {
+                    socket.emit('guess_correct', {
+                        game_id: gameId,
+                        player_name: playerName
+                    });
+                }
+            });
+        }
+
+        if (leaveButton) {
+            leaveButton.addEventListener('click', function() {
+                if (socket && socket.connected) {
+                    socket.emit('leave_game', {
+                        game_id: gameId,
+                        player_name: playerName
+                    });
+                }
+                window.location.href = '/';
+            });
+        }
+
+        if (endGameButton && isHost) {
+            endGameButton.addEventListener('click', function() {
+                if (socket && socket.connected) {
+                    socket.emit('cancel_game', {
+                        game_id: gameId,
+                        player_name: playerName
+                    });
+                }
+                window.location.href = '/';
+            });
+        }
     } else if (document.querySelector('.lobby-container')) {
         window.charadesLobby = new CharadesLobby();
     }
 });
 
-// Update the game_started event handler
-window.socket.on('game_started', function(data) {
-    // Construct the URL with query parameters
-    const redirectUrl = `${data.redirect_url}?transfer_id=${data.transfer_id}&player_name=${playerName}`;
-    // Redirect to the game page
-    window.location.href = redirectUrl;
-});
+// Helper Functions
+function updateGameStatus(message) {
+    const statusElement = document.getElementById('game-status');
+    if (statusElement) {
+        statusElement.textContent = message;
+    }
+}
+
+function updatePlayersList(players) {
+    const playersListElement = document.getElementById('players-list');
+    const currentPlayerName = document.getElementById('player-name').value;
+    
+    if (playersListElement && Array.isArray(players)) {
+        playersListElement.innerHTML = players
+            .map(player => {
+                const isCurrentPlayer = player === currentPlayerName;
+                return `<div class="player-item ${isCurrentPlayer ? 'current-player' : ''}">${player}${isCurrentPlayer ? ' (أنت)' : ''}</div>`;
+            })
+            .join('');
+    }
+}
+
+function updateCurrentPlayer(player) {
+    const currentTurnElement = document.getElementById('current-turn');
+    if (currentTurnElement) {
+        const currentPlayerName = document.getElementById('player-name').value;
+        const displayText = player === currentPlayerName ? 
+            `${player} (أنت)` : player;
+        currentTurnElement.textContent = displayText;
+        
+        // Update the current player highlight in the players list
+        const playerItems = document.querySelectorAll('.player-item');
+        playerItems.forEach(item => {
+            if (item.textContent.includes(player)) {
+                item.classList.add('current-turn');
+            } else {
+                item.classList.remove('current-turn');
+            }
+        });
+    }
+}
+
+function updateScores(scores) {
+    const scoresElement = document.getElementById('scores');
+    const currentPlayerName = document.getElementById('player-name').value;
+    
+    if (scoresElement && typeof scores === 'object') {
+        scoresElement.innerHTML = Object.entries(scores)
+            .map(([player, score]) => {
+                const isCurrentPlayer = player === currentPlayerName;
+                return `<div class="score-item ${isCurrentPlayer ? 'current-player' : ''}">${score}</div>`;
+            })
+            .join('');
+    }
+}

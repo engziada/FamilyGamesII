@@ -230,38 +230,44 @@ body {
     height: 100%;
     background: rgba(0,0,0,0.5);
     z-index: 1000;
+    justify-content: center;
+    align-items: center;
 }
 
 .modal-content {
-    position: relative;
-    background: white;
-    margin: 15% auto;
-    padding: 20px;
+    background-color: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     width: 90%;
     max-width: 500px;
-    border-radius: 15px;
-    animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-    from { transform: translateY(-100px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    position: relative;
+    text-align: center;
+    direction: rtl;
 }
 
 .input-group {
-    margin: 15px 0;
+    margin-bottom: 20px;
+    text-align: right;
 }
 
-input[type="text"] {
+.input-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--text-color);
+    font-weight: bold;
+}
+
+.input-group input {
     width: 100%;
-    padding: 12px;
-    border: 2px solid #ddd;
+    padding: 10px;
+    border: 2px solid var(--border-color);
     border-radius: 8px;
     font-size: 16px;
     transition: border-color 0.3s ease;
 }
 
-input[type="text"]:focus {
+.input-group input:focus {
     border-color: var(--primary-color);
     outline: none;
 }
@@ -649,7 +655,7 @@ input[type="text"]:focus {
 
 /* Timer styles */
 .timer {
-    font-size: 2rem;
+    font-size: 2.5rem;
     font-weight: bold;
     color: #333;
     text-align: center;
@@ -657,6 +663,23 @@ input[type="text"]:focus {
     background-color: #f5f5f5;
     border-radius: 8px;
     margin: 1rem 0;
+}
+
+.timer-warning {
+    color: #dc3545;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
 }
 
 /* Game display section */
@@ -1004,4 +1027,58 @@ input[type="text"]:focus {
     min-height: 100vh;
     padding: 20px;
     padding-bottom: 70px; /* Account for fixed status bar */
+}
+
+/* Player display styles */
+.current-turn-player {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #2196F3;
+    margin-top: 5px;
+}
+
+.turn-label {
+    font-size: 1em;
+    color: #666;
+}
+
+.players-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.player-item {
+    padding: 8px;
+    border-radius: 4px;
+    background-color: #f5f5f5;
+    transition: all 0.3s ease;
+}
+
+.player-item.current-player {
+    font-weight: bold;
+    color: #4CAF50;
+}
+
+.player-item.current-turn {
+    background-color: #E3F2FD;
+    border-left: 4px solid #2196F3;
+}
+
+.scores-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.score-item {
+    padding: 8px;
+    text-align: center;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+}
+
+.score-item.current-player {
+    font-weight: bold;
+    color: #4CAF50;
 }
