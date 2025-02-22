@@ -1,503 +1,964 @@
-2025-02-02 01:38:04,595 INFO: Server initialized for eventlet.
-2025-02-02 01:38:04,599 INFO: Starting server...
-2025-02-02 01:38:04,609 INFO:  * Restarting with stat
-2025-02-02 01:38:06,039 INFO: Server initialized for eventlet.
-2025-02-02 01:38:06,044 INFO: Starting server...
-2025-02-02 01:38:06,053 WARNING:  * Debugger is active!
-2025-02-02 01:38:06,063 INFO:  * Debugger PIN: 531-980-121
-2025-02-02 01:38:11,893 DEBUG: Accessing game route with game_id: 8308
-2025-02-02 01:38:11,894 WARNING: Game 8308 not found in game_rooms
-2025-02-02 01:38:13,248 INFO: raRF1Dn2LFNb5OaIAAAA: Sending packet OPEN data {'sid': 'raRF1Dn2LFNb5OaIAAAA', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
-2025-02-02 01:38:13,381 INFO: raRF1Dn2LFNb5OaIAAAA: Received packet MESSAGE data 0
-2025-02-02 01:38:13,382 INFO: raRF1Dn2LFNb5OaIAAAA: Sending packet MESSAGE data 0{"sid":"l_lkKHxBeIwMw-LCAAAB"}
-2025-02-02 01:38:13,388 DEBUG: Client connected. Session: {'_flashes': [('message', 'يجب تسجيل الدخول أولاً'), ('message', 'يجب تسجيل الدخول أولاً'), ('message', 'يجب تسجيل الدخول أولاً')], '_permanent': True, 'game_id': '8308', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 01:38:32,485 DEBUG: Accessing game route with game_id: 8308
-2025-02-02 01:38:32,485 WARNING: Game 8308 not found in game_rooms
-2025-02-02 01:38:32,858 INFO: qZbLhMteJO_6Cab5AAAC: Sending packet OPEN data {'sid': 'qZbLhMteJO_6Cab5AAAC', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
-2025-02-02 01:38:33,142 INFO: qZbLhMteJO_6Cab5AAAC: Received packet MESSAGE data 0
-2025-02-02 01:38:33,143 INFO: qZbLhMteJO_6Cab5AAAC: Sending packet MESSAGE data 0{"sid":"qVgsIUOsgM8RMpXwAAAD"}
-2025-02-02 01:38:33,146 DEBUG: Client connected. Session: {'_flashes': [('message', 'غرفة اللعب غير موجودة'), ('message', 'غرفة اللعب غير موجودة'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'current_item': 'ريا وسكينة', 'current_player': 'Ziada', 'game_id': '9732', 'is_host': True, 'player_name': 'Ziada', 'players': [{'isHost': True, 'name': 'Ziada'}, {'isHost': False, 'name': 'Ahmad'}], 'scores': {'Ahmad': 0, 'Ziada': 0}}
-2025-02-02 01:38:35,432 INFO: raRF1Dn2LFNb5OaIAAAA: Received packet MESSAGE data 2["create_game",{"game_id":9974,"player_name":"Ziada","game_type":null}]
-2025-02-02 01:38:35,434 INFO: received event "create_game" from l_lkKHxBeIwMw-LCAAAB [/]
-2025-02-02 01:38:35,439 DEBUG: Create game request - Game ID: 9974
-2025-02-02 01:38:35,439 DEBUG: Create game request - Player Name: Ziada
-2025-02-02 01:38:35,439 DEBUG: Create game request - Game Type: None
-2025-02-02 01:38:35,440 DEBUG: Session after create: {'_flashes': [('message', 'يجب تسجيل الدخول أولاً'), ('message', 'يجب تسجيل الدخول أولاً'), ('message', 'يجب تسجيل الدخول أولاً')], '_permanent': True, 'game_id': '9974', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 01:38:35,441 DEBUG: Game room after create: {'host': 'Ziada', 'players': [{'name': 'Ziada', 'isHost': True}], 'game_type': None, 'status': 'waiting', 'scores': {}, 'current_player': '', 'current_item': '', 'round_start_time': None}
-2025-02-02 01:38:35,441 INFO: Game room 9974 created by Ziada
-2025-02-02 01:38:35,442 INFO: emitting event "game_created" to l_lkKHxBeIwMw-LCAAAB [/]
-2025-02-02 01:38:35,442 INFO: raRF1Dn2LFNb5OaIAAAA: Sending packet MESSAGE data 2["game_created",{"game_id":"9974","host":"Ziada","players":[{"name":"Ziada","isHost":true}]}]
-2025-02-02 01:38:35,444 INFO: l_lkKHxBeIwMw-LCAAAB is entering room 9974 [/]
-2025-02-02 01:38:46,556 INFO: qZbLhMteJO_6Cab5AAAC: Received packet MESSAGE data 2["join_game",{"game_id":"9974","player_name":"Ahmad","game_type":null}]
-2025-02-02 01:38:46,556 INFO: received event "join_game" from qVgsIUOsgM8RMpXwAAAD [/]
-2025-02-02 01:38:46,559 DEBUG: Session after join: {'_flashes': [('message', 'غرفة اللعب غير موجودة'), ('message', 'غرفة اللعب غير موجودة'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'current_item': 'ريا وسكينة', 'current_player': 'Ziada', 'game_id': '9974', 'is_host': False, 'player_name': 'Ahmad', 'players': [{'isHost': True, 'name': 'Ziada'}, {'isHost': False, 'name': 'Ahmad'}], 'scores': {'Ahmad': 0, 'Ziada': 0}}
-2025-02-02 01:38:46,561 DEBUG: Game room after join: {'host': 'Ziada', 'players': [{'name': 'Ziada', 'isHost': True}, {'name': 'Ahmad', 'isHost': False}], 'game_type': None, 'status': 'waiting', 'scores': {}, 'current_player': '', 'current_item': '', 'round_start_time': None}
-2025-02-02 01:38:46,561 INFO: qVgsIUOsgM8RMpXwAAAD is entering room 9974 [/]
-2025-02-02 01:38:46,562 INFO: Player Ahmad joined game 9974
-2025-02-02 01:38:46,562 INFO: emitting event "join_success" to qVgsIUOsgM8RMpXwAAAD [/]
-2025-02-02 01:38:46,563 INFO: qZbLhMteJO_6Cab5AAAC: Sending packet MESSAGE data 2["join_success",{"players":[{"name":"Ziada","isHost":true},{"name":"Ahmad","isHost":false}],"host":"Ziada"}]
-2025-02-02 01:38:46,564 INFO: emitting event "player_joined" to 9974 [/]
-2025-02-02 01:38:46,565 INFO: raRF1Dn2LFNb5OaIAAAA: Sending packet MESSAGE data 2["player_joined",{"players":[{"name":"Ziada","isHost":true},{"name":"Ahmad","isHost":false}]}]
-2025-02-02 01:38:46,567 INFO: qZbLhMteJO_6Cab5AAAC: Sending packet MESSAGE data 2["player_joined",{"players":[{"name":"Ziada","isHost":true},{"name":"Ahmad","isHost":false}]}]
-2025-02-02 01:38:46,569 INFO: emitting event "update_players" to 9974 [/]
-2025-02-02 01:38:46,569 INFO: raRF1Dn2LFNb5OaIAAAA: Sending packet MESSAGE data 2["update_players",{"players":["Ziada","Ahmad"]}]
-2025-02-02 01:38:46,569 INFO: qZbLhMteJO_6Cab5AAAC: Sending packet MESSAGE data 2["update_players",{"players":["Ziada","Ahmad"]}]
-2025-02-02 01:38:50,116 INFO: raRF1Dn2LFNb5OaIAAAA: Received packet MESSAGE data 2["start_game",{"game_id":"9974"}]
-2025-02-02 01:38:50,117 INFO: received event "start_game" from l_lkKHxBeIwMw-LCAAAB [/]
-2025-02-02 01:38:50,119 DEBUG: Starting game 9974
-2025-02-02 01:38:50,123 DEBUG: Game room state before start: {'host': 'Ziada', 'players': [{'name': 'Ziada', 'isHost': True}, {'name': 'Ahmad', 'isHost': False}], 'game_type': None, 'status': 'waiting', 'scores': {}, 'current_player': '', 'current_item': '', 'round_start_time': None}
-2025-02-02 01:38:50,125 DEBUG: Number of players: 2
-2025-02-02 01:38:50,125 DEBUG: Players list: ['Ziada', 'Ahmad']
-2025-02-02 01:38:50,126 INFO: emitting event "game_started" to 9974 [/]
-2025-02-02 01:38:50,126 INFO: raRF1Dn2LFNb5OaIAAAA: Sending packet MESSAGE data 2["game_started",{"game_id":"9974","transfer_id":"9974_1738453130.126623_Ziada","url":"/game/9974"}]
-2025-02-02 01:38:50,126 INFO: qZbLhMteJO_6Cab5AAAC: Sending packet MESSAGE data 2["game_started",{"game_id":"9974","transfer_id":"9974_1738453130.126623_Ziada","url":"/game/9974"}]
-2025-02-02 01:38:50,129 INFO: Game 9974 started by Ziada
-2025-02-02 01:38:50,154 INFO: qZbLhMteJO_6Cab5AAAC: Received packet CLOSE data 
-2025-02-02 01:38:50,162 DEBUG: Session after disconnect: {'_flashes': [('message', 'غرفة اللعب غير موجودة'), ('message', 'غرفة اللعب غير موجودة'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'current_item': 'ريا وسكينة', 'current_player': 'Ziada', 'game_id': '9974', 'is_host': False, 'player_name': 'Ahmad', 'players': [{'isHost': True, 'name': 'Ziada'}, {'isHost': False, 'name': 'Ahmad'}], 'scores': {'Ahmad': 0, 'Ziada': 0}}
-2025-02-02 01:38:50,176 DEBUG: Accessing game route with game_id: 9974
-2025-02-02 01:38:50,178 DEBUG: Found transferred state for game 9974
-2025-02-02 01:38:50,181 DEBUG: Restored session state: {'_flashes': [('message', 'يجب تسجيل الدخول أولاً'), ('message', 'يجب تسجيل الدخول أولاً'), ('message', 'يجب تسجيل الدخول أولاً')], '_permanent': True, 'game_id': '9974', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 01:38:50,208 INFO: raRF1Dn2LFNb5OaIAAAA: Received packet CLOSE data 
-2025-02-02 01:38:50,211 DEBUG: Session after disconnect: {'_flashes': [('message', 'يجب تسجيل الدخول أولاً'), ('message', 'يجب تسجيل الدخول أولاً'), ('message', 'يجب تسجيل الدخول أولاً')], '_permanent': True, 'game_id': '9974', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 01:38:50,226 DEBUG: Accessing game route with game_id: 9974
-2025-02-02 01:38:50,715 INFO: urcCgn7Qz-P-U3a7AAAE: Sending packet OPEN data {'sid': 'urcCgn7Qz-P-U3a7AAAE', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
-2025-02-02 01:38:50,776 INFO: CFtAu_OnGcqTepmEAAAF: Sending packet OPEN data {'sid': 'CFtAu_OnGcqTepmEAAAF', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
-2025-02-02 01:38:50,931 INFO: CFtAu_OnGcqTepmEAAAF: Received request to upgrade to websocket
-2025-02-02 01:38:50,934 INFO: CFtAu_OnGcqTepmEAAAF: Received packet MESSAGE data 0
-2025-02-02 01:38:50,938 INFO: CFtAu_OnGcqTepmEAAAF: Sending packet MESSAGE data 0{"sid":"Kajsa6b-3X4sO8-UAAAG"}
-2025-02-02 01:38:50,939 DEBUG: Client connected. Session: {'_flashes': [('message', 'يجب تسجيل الدخول أولاً'), ('message', 'يجب تسجيل الدخول أولاً'), ('message', 'يجب تسجيل الدخول أولاً')], '_permanent': True, 'game_id': '9974', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 01:38:51,103 INFO: urcCgn7Qz-P-U3a7AAAE: Received packet MESSAGE data 0
-2025-02-02 01:38:51,104 INFO: urcCgn7Qz-P-U3a7AAAE: Sending packet MESSAGE data 0{"sid":"fFLwagM3wwKpzfJ3AAAH"}
-2025-02-02 01:38:51,104 DEBUG: Client connected. Session: {'_flashes': [('message', 'غرفة اللعب غير موجودة'), ('message', 'غرفة اللعب غير موجودة'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'current_item': 'ريا وسكينة', 'current_player': 'Ziada', 'game_id': '9732', 'is_host': True, 'player_name': 'Ziada', 'players': [{'isHost': True, 'name': 'Ziada'}, {'isHost': False, 'name': 'Ahmad'}], 'scores': {'Ahmad': 0, 'Ziada': 0}}
-2025-02-02 01:38:51,119 INFO: urcCgn7Qz-P-U3a7AAAE: Received request to upgrade to websocket
-2025-02-02 01:38:51,222 INFO: CFtAu_OnGcqTepmEAAAF: Upgrade to websocket successful
-2025-02-02 01:38:51,234 INFO: CFtAu_OnGcqTepmEAAAF: Received packet MESSAGE data 2["join_game_room",{"game_id":"9974","player_name":"Ziada"}]
-2025-02-02 01:38:51,236 INFO: received event "join_game_room" from Kajsa6b-3X4sO8-UAAAG [/]
-2025-02-02 01:38:51,240 INFO: CFtAu_OnGcqTepmEAAAF: Received packet MESSAGE data 2["request_players",{"game_id":"9974"}]
-2025-02-02 01:38:51,240 INFO: received event "request_players" from Kajsa6b-3X4sO8-UAAAG [/]
-2025-02-02 01:38:51,240 DEBUG: Received join_game_room event - game_id: 9974, player_name: Ziada
-2025-02-02 01:38:51,246 INFO: Kajsa6b-3X4sO8-UAAAG is entering room 9974 [/]
-2025-02-02 01:38:51,246 INFO: Player Ziada joined game room 9974
-2025-02-02 01:38:51,246 DEBUG: Current players in room 9974: ['Ziada', 'Ahmad']
-2025-02-02 01:38:51,246 INFO: emitting event "game_state" to 9974 [/]
-2025-02-02 01:38:51,252 INFO: CFtAu_OnGcqTepmEAAAF: Sending packet MESSAGE data 2["game_state",{"message":"Ziada \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ahmad"]}]
-2025-02-02 01:38:51,255 DEBUG: Received request_players event for game 9974
-2025-02-02 01:38:51,255 DEBUG: Sending player list for game 9974: ['Ziada', 'Ahmad']
-2025-02-02 01:38:51,255 INFO: emitting event "game_state" to 9974 [/]
-2025-02-02 01:38:51,255 INFO: CFtAu_OnGcqTepmEAAAF: Sending packet MESSAGE data 2["game_state",{"players":["Ziada","Ahmad"],"message":"\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0644\u0627\u0639\u0628\u064a\u0646"}]
-2025-02-02 01:38:52,656 INFO: urcCgn7Qz-P-U3a7AAAE: Upgrade to websocket successful
-2025-02-02 01:38:52,666 INFO: urcCgn7Qz-P-U3a7AAAE: Received packet MESSAGE data 2["join_game_room",{"game_id":"9974","player_name":"Ziada"}]
-2025-02-02 01:38:52,667 INFO: received event "join_game_room" from fFLwagM3wwKpzfJ3AAAH [/]
-2025-02-02 01:38:52,669 INFO: urcCgn7Qz-P-U3a7AAAE: Received packet MESSAGE data 2["request_players",{"game_id":"9974"}]
-2025-02-02 01:38:52,669 INFO: received event "request_players" from fFLwagM3wwKpzfJ3AAAH [/]
-2025-02-02 01:38:52,669 DEBUG: Received join_game_room event - game_id: 9974, player_name: Ziada
-2025-02-02 01:38:52,672 INFO: fFLwagM3wwKpzfJ3AAAH is entering room 9974 [/]
-2025-02-02 01:38:52,673 INFO: Player Ziada joined game room 9974
-2025-02-02 01:38:52,673 DEBUG: Current players in room 9974: ['Ziada', 'Ahmad']
-2025-02-02 01:38:52,673 INFO: emitting event "game_state" to 9974 [/]
-2025-02-02 01:38:52,674 INFO: CFtAu_OnGcqTepmEAAAF: Sending packet MESSAGE data 2["game_state",{"message":"Ziada \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ahmad"]}]
-2025-02-02 01:38:52,675 INFO: urcCgn7Qz-P-U3a7AAAE: Sending packet MESSAGE data 2["game_state",{"message":"Ziada \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ahmad"]}]
-2025-02-02 01:38:52,677 DEBUG: Received request_players event for game 9974
-2025-02-02 01:38:52,677 DEBUG: Sending player list for game 9974: ['Ziada', 'Ahmad']
-2025-02-02 01:38:52,677 INFO: emitting event "game_state" to 9974 [/]
-2025-02-02 01:38:52,677 INFO: CFtAu_OnGcqTepmEAAAF: Sending packet MESSAGE data 2["game_state",{"players":["Ziada","Ahmad"],"message":"\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0644\u0627\u0639\u0628\u064a\u0646"}]
-2025-02-02 01:38:52,680 INFO: urcCgn7Qz-P-U3a7AAAE: Sending packet MESSAGE data 2["game_state",{"players":["Ziada","Ahmad"],"message":"\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0644\u0627\u0639\u0628\u064a\u0646"}]
-2025-02-02 22:27:16,499 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
-2025-02-02 22:27:16,729 INFO:  * Restarting with stat
-2025-02-02 22:27:18,082 INFO: Server initialized for eventlet.
-2025-02-02 22:27:18,089 INFO: Starting server...
-2025-02-02 22:27:18,102 WARNING:  * Debugger is active!
-2025-02-02 22:27:18,119 INFO:  * Debugger PIN: 531-980-121
-2025-02-02 22:27:18,269 ERROR: Invalid session UlUUy2CyVXeXRhIjAAAA (further occurrences of this error will be logged with level INFO)
-2025-02-02 22:27:18,279 INFO: Invalid session UlUUy2CyVXeXRhIjAAAA
-2025-02-02 22:27:19,574 INFO: ADOvHUUk63yKpb2hAAAA: Sending packet OPEN data {'sid': 'ADOvHUUk63yKpb2hAAAA', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
-2025-02-02 22:27:19,599 INFO: ADOvHUUk63yKpb2hAAAA: Received packet MESSAGE data 0
-2025-02-02 22:27:19,603 INFO: ADOvHUUk63yKpb2hAAAA: Sending packet MESSAGE data 0{"sid":"hri5lt-Q8Nqy4hu8AAAB"}
-2025-02-02 22:27:19,606 DEBUG: Client connected. Session: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True}
-2025-02-02 22:27:41,672 INFO: Server initialized for eventlet.
-2025-02-02 22:27:41,675 INFO: Starting server...
-2025-02-02 22:27:41,690 INFO:  * Restarting with stat
-2025-02-02 22:27:42,928 INFO: Server initialized for eventlet.
-2025-02-02 22:27:42,931 INFO: Starting server...
-2025-02-02 22:27:42,939 WARNING:  * Debugger is active!
-2025-02-02 22:27:42,950 INFO:  * Debugger PIN: 531-980-121
-2025-02-02 22:27:43,211 INFO: AFrJUZGnkj2Rb4aZAAAA: Sending packet OPEN data {'sid': 'AFrJUZGnkj2Rb4aZAAAA', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
-2025-02-02 22:27:43,234 INFO: AFrJUZGnkj2Rb4aZAAAA: Received packet MESSAGE data 0
-2025-02-02 22:27:43,238 INFO: AFrJUZGnkj2Rb4aZAAAA: Sending packet MESSAGE data 0{"sid":"u3V3CKSGId_C2xwzAAAB"}
-2025-02-02 22:27:43,241 DEBUG: Client connected. Session: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True}
-2025-02-02 22:27:52,607 INFO: AFrJUZGnkj2Rb4aZAAAA: Received packet MESSAGE data 1
-2025-02-02 22:27:52,609 DEBUG: Session after disconnect: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True}
-2025-02-02 22:27:52,613 INFO: AFrJUZGnkj2Rb4aZAAAA: Received packet CLOSE data 
-2025-02-02 22:27:53,185 INFO: x7sFhIaI_QqSQ5-nAAAC: Sending packet OPEN data {'sid': 'x7sFhIaI_QqSQ5-nAAAC', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
-2025-02-02 22:27:53,216 INFO: x7sFhIaI_QqSQ5-nAAAC: Received packet MESSAGE data 0
-2025-02-02 22:27:53,218 INFO: x7sFhIaI_QqSQ5-nAAAC: Sending packet MESSAGE data 0{"sid":"aLIDLnfMjVl4l3hPAAAD"}
-2025-02-02 22:27:53,220 DEBUG: Client connected. Session: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True}
-2025-02-02 22:27:57,291 INFO: x7sFhIaI_QqSQ5-nAAAC: Received packet MESSAGE data 2["create_game",{"game_id":6007,"player_name":"Ziada","game_type":null}]
-2025-02-02 22:27:57,293 INFO: received event "create_game" from aLIDLnfMjVl4l3hPAAAD [/]
-2025-02-02 22:27:57,295 DEBUG: Create game request - Game ID: 6007
-2025-02-02 22:27:57,296 DEBUG: Create game request - Player Name: Ziada
-2025-02-02 22:27:57,296 DEBUG: Create game request - Game Type: None
-2025-02-02 22:27:57,298 DEBUG: Session after create: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '6007', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 22:27:57,299 DEBUG: Game room after create: {'host': 'Ziada', 'players': [{'name': 'Ziada', 'isHost': True}], 'game_type': None, 'status': 'waiting', 'scores': {}, 'current_player': '', 'current_item': '', 'round_start_time': None}
-2025-02-02 22:27:57,300 INFO: Game room 6007 created by Ziada
-2025-02-02 22:27:57,300 INFO: emitting event "game_created" to aLIDLnfMjVl4l3hPAAAD [/]
-2025-02-02 22:27:57,301 INFO: x7sFhIaI_QqSQ5-nAAAC: Sending packet MESSAGE data 2["game_created",{"game_id":"6007","host":"Ziada","players":[{"name":"Ziada","isHost":true}]}]
-2025-02-02 22:27:57,302 INFO: aLIDLnfMjVl4l3hPAAAD is entering room 6007 [/]
-2025-02-02 22:28:04,132 INFO: azkBd8lPTz2QsPGOAAAE: Sending packet OPEN data {'sid': 'azkBd8lPTz2QsPGOAAAE', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
-2025-02-02 22:28:04,500 INFO: azkBd8lPTz2QsPGOAAAE: Received packet MESSAGE data 0
-2025-02-02 22:28:04,502 INFO: azkBd8lPTz2QsPGOAAAE: Sending packet MESSAGE data 0{"sid":"Ptm-i3DmvxO2lDsRAAAF"}
-2025-02-02 22:28:04,504 DEBUG: Client connected. Session: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True}
-2025-02-02 22:28:06,440 INFO: azkBd8lPTz2QsPGOAAAE: Received packet CLOSE data 
-2025-02-02 22:28:06,441 DEBUG: Session after disconnect: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True}
-2025-02-02 22:28:06,547 INFO: Ck9tQZGnDsnVibEKAAAG: Sending packet OPEN data {'sid': 'Ck9tQZGnDsnVibEKAAAG', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
-2025-02-02 22:28:06,732 INFO: Ck9tQZGnDsnVibEKAAAG: Received packet MESSAGE data 0
-2025-02-02 22:28:06,732 INFO: Ck9tQZGnDsnVibEKAAAG: Sending packet MESSAGE data 0{"sid":"s91Hipx7wUxy9n5_AAAH"}
-2025-02-02 22:28:06,735 DEBUG: Client connected. Session: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True}
-2025-02-02 22:28:14,627 INFO: Ck9tQZGnDsnVibEKAAAG: Received packet MESSAGE data 2["join_game",{"game_id":"6007","player_name":"Ali","game_type":null}]
-2025-02-02 22:28:14,629 INFO: received event "join_game" from s91Hipx7wUxy9n5_AAAH [/]
-2025-02-02 22:28:14,634 DEBUG: Session after join: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'player_name': 'Ali', 'game_id': '6007', 'is_host': False}
-2025-02-02 22:28:14,638 DEBUG: Game room after join: {'host': 'Ziada', 'players': [{'name': 'Ziada', 'isHost': True}, {'name': 'Ali', 'isHost': False}], 'game_type': None, 'status': 'waiting', 'scores': {}, 'current_player': '', 'current_item': '', 'round_start_time': None}
-2025-02-02 22:28:14,640 INFO: s91Hipx7wUxy9n5_AAAH is entering room 6007 [/]
-2025-02-02 22:28:14,640 INFO: Player Ali joined game 6007
-2025-02-02 22:28:14,643 INFO: emitting event "join_success" to s91Hipx7wUxy9n5_AAAH [/]
-2025-02-02 22:28:14,646 INFO: Ck9tQZGnDsnVibEKAAAG: Sending packet MESSAGE data 2["join_success",{"players":[{"name":"Ziada","isHost":true},{"name":"Ali","isHost":false}],"host":"Ziada"}]
-2025-02-02 22:28:14,648 INFO: emitting event "player_joined" to 6007 [/]
-2025-02-02 22:28:14,652 INFO: x7sFhIaI_QqSQ5-nAAAC: Sending packet MESSAGE data 2["player_joined",{"players":[{"name":"Ziada","isHost":true},{"name":"Ali","isHost":false}]}]
-2025-02-02 22:28:14,654 INFO: Ck9tQZGnDsnVibEKAAAG: Sending packet MESSAGE data 2["player_joined",{"players":[{"name":"Ziada","isHost":true},{"name":"Ali","isHost":false}]}]
-2025-02-02 22:28:14,654 INFO: emitting event "update_players" to 6007 [/]
-2025-02-02 22:28:14,657 INFO: x7sFhIaI_QqSQ5-nAAAC: Sending packet MESSAGE data 2["update_players",{"players":["Ziada","Ali"]}]
-2025-02-02 22:28:14,660 INFO: Ck9tQZGnDsnVibEKAAAG: Sending packet MESSAGE data 2["update_players",{"players":["Ziada","Ali"]}]
-2025-02-02 22:28:18,333 INFO: x7sFhIaI_QqSQ5-nAAAC: Received packet MESSAGE data 2["start_game",{"game_id":"6007"}]
-2025-02-02 22:28:18,337 INFO: received event "start_game" from aLIDLnfMjVl4l3hPAAAD [/]
-2025-02-02 22:28:18,339 DEBUG: Starting game 6007
-2025-02-02 22:28:18,339 DEBUG: Game room state before start: {'host': 'Ziada', 'players': [{'name': 'Ziada', 'isHost': True}, {'name': 'Ali', 'isHost': False}], 'game_type': None, 'status': 'waiting', 'scores': {}, 'current_player': '', 'current_item': '', 'round_start_time': None}
-2025-02-02 22:28:18,339 DEBUG: Number of players: 2
-2025-02-02 22:28:18,343 DEBUG: Players list: ['Ziada', 'Ali']
-2025-02-02 22:28:18,345 INFO: emitting event "game_started" to 6007 [/]
-2025-02-02 22:28:18,346 INFO: x7sFhIaI_QqSQ5-nAAAC: Sending packet MESSAGE data 2["game_started",{"game_id":"6007","transfer_id":"6007_1738528098.344301_Ziada","url":"/game/6007"}]
-2025-02-02 22:28:18,348 INFO: Ck9tQZGnDsnVibEKAAAG: Sending packet MESSAGE data 2["game_started",{"game_id":"6007","transfer_id":"6007_1738528098.344301_Ziada","url":"/game/6007"}]
-2025-02-02 22:28:18,349 INFO: Game 6007 started by Ziada
-2025-02-02 22:28:18,393 INFO: x7sFhIaI_QqSQ5-nAAAC: Received packet CLOSE data 
-2025-02-02 22:28:18,402 DEBUG: Session after disconnect: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '6007', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 22:28:18,407 DEBUG: Accessing game route with game_id: 6007
-2025-02-02 22:28:18,407 DEBUG: Found transferred state for game 6007
-2025-02-02 22:28:18,409 DEBUG: Restored session state: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '6007', 'player_name': 'Ziada', 'is_host': True}
-2025-02-02 22:28:18,434 DEBUG: Accessing game route with game_id: 6007
-2025-02-02 22:28:18,436 WARNING: Player None not found in game 6007
-2025-02-02 22:28:18,441 INFO: Ck9tQZGnDsnVibEKAAAG: Received packet CLOSE data 
-2025-02-02 22:28:18,456 DEBUG: Session after disconnect: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'player_name': 'Ali', 'game_id': '6007', 'is_host': False}
-2025-02-02 22:28:18,807 INFO: DRN203wTd06ZkWn7AAAI: Sending packet OPEN data {'sid': 'DRN203wTd06ZkWn7AAAI', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
-2025-02-02 22:28:18,822 INFO: DRN203wTd06ZkWn7AAAI: Received packet MESSAGE data 0
-2025-02-02 22:28:18,822 INFO: DRN203wTd06ZkWn7AAAI: Sending packet MESSAGE data 0{"sid":"i1rbkWaMXoRc4vggAAAJ"}
-2025-02-02 22:28:18,826 DEBUG: Client connected. Session: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '6007', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 22:28:18,832 INFO: DRN203wTd06ZkWn7AAAI: Received request to upgrade to websocket
-2025-02-02 22:28:19,016 INFO: 1SdpkuwZCZiTUCNbAAAK: Sending packet OPEN data {'sid': '1SdpkuwZCZiTUCNbAAAK', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
-2025-02-02 22:28:19,061 INFO: 1SdpkuwZCZiTUCNbAAAK: Received packet MESSAGE data 0
-2025-02-02 22:28:19,061 INFO: 1SdpkuwZCZiTUCNbAAAK: Sending packet MESSAGE data 0{"sid":"GCRRGx-CViNCablWAAAL"}
-2025-02-02 22:28:19,065 DEBUG: Client connected. Session: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True}
-2025-02-02 22:28:20,222 INFO: DRN203wTd06ZkWn7AAAI: Upgrade to websocket successful
-2025-02-02 22:28:20,420 INFO: DRN203wTd06ZkWn7AAAI: Received packet MESSAGE data 2["join_game_room",{"game_id":"6007","player_name":"Ziada"}]
-2025-02-02 22:28:20,423 INFO: received event "join_game_room" from i1rbkWaMXoRc4vggAAAJ [/]
-2025-02-02 22:28:20,425 DEBUG: Received join_game_room event - game_id: 6007, player_name: Ziada
-2025-02-02 22:28:20,425 INFO: i1rbkWaMXoRc4vggAAAJ is entering room 6007 [/]
-2025-02-02 22:28:20,426 INFO: Player Ziada joined game room 6007
-2025-02-02 22:28:20,427 DEBUG: Current players in room 6007: ['Ziada', 'Ali']
-2025-02-02 22:28:20,427 INFO: emitting event "game_state" to 6007 [/]
-2025-02-02 22:28:20,428 INFO: DRN203wTd06ZkWn7AAAI: Sending packet MESSAGE data 2["game_state",{"message":"Ziada \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ali"]}]
-2025-02-02 22:28:20,431 INFO: DRN203wTd06ZkWn7AAAI: Received packet MESSAGE data 2["request_players",{"game_id":"6007"}]
-2025-02-02 22:28:20,432 INFO: received event "request_players" from i1rbkWaMXoRc4vggAAAJ [/]
-2025-02-02 22:28:20,433 DEBUG: Received request_players event for game 6007
-2025-02-02 22:28:20,433 DEBUG: Sending player list for game 6007: ['Ziada', 'Ali']
-2025-02-02 22:28:20,433 INFO: emitting event "game_state" to 6007 [/]
-2025-02-02 22:28:20,433 INFO: DRN203wTd06ZkWn7AAAI: Sending packet MESSAGE data 2["game_state",{"players":["Ziada","Ali"],"message":"\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0644\u0627\u0639\u0628\u064a\u0646"}]
-2025-02-02 22:29:16,642 INFO: 1SdpkuwZCZiTUCNbAAAK: Received packet MESSAGE data 2["create_game",{"game_id":7443,"player_name":"Ziada","game_type":null}]
-2025-02-02 22:29:16,642 INFO: received event "create_game" from GCRRGx-CViNCablWAAAL [/]
-2025-02-02 22:29:16,644 DEBUG: Create game request - Game ID: 7443
-2025-02-02 22:29:16,644 DEBUG: Create game request - Player Name: Ziada
-2025-02-02 22:29:16,644 DEBUG: Create game request - Game Type: None
-2025-02-02 22:29:16,647 DEBUG: Session after create: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '7443', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 22:29:16,648 DEBUG: Game room after create: {'host': 'Ziada', 'players': [{'name': 'Ziada', 'isHost': True}], 'game_type': None, 'status': 'waiting', 'scores': {}, 'current_player': '', 'current_item': '', 'round_start_time': None}
-2025-02-02 22:29:16,650 INFO: Game room 7443 created by Ziada
-2025-02-02 22:29:16,650 INFO: emitting event "game_created" to GCRRGx-CViNCablWAAAL [/]
-2025-02-02 22:29:16,654 INFO: 1SdpkuwZCZiTUCNbAAAK: Sending packet MESSAGE data 2["game_created",{"game_id":"7443","host":"Ziada","players":[{"name":"Ziada","isHost":true}]}]
-2025-02-02 22:29:16,655 INFO: GCRRGx-CViNCablWAAAL is entering room 7443 [/]
-2025-02-02 22:29:52,376 DEBUG: Session after disconnect: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '6007', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 22:29:52,552 INFO: HMqmRzUyIngal6LzAAAM: Sending packet OPEN data {'sid': 'HMqmRzUyIngal6LzAAAM', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
-2025-02-02 22:29:52,824 INFO: HMqmRzUyIngal6LzAAAM: Received packet MESSAGE data 0
-2025-02-02 22:29:52,824 INFO: HMqmRzUyIngal6LzAAAM: Sending packet MESSAGE data 0{"sid":"KEVaJN15p0VX_9-_AAAN"}
-2025-02-02 22:29:52,828 DEBUG: Client connected. Session: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '6007', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 22:30:04,449 INFO: HMqmRzUyIngal6LzAAAM: Received packet MESSAGE data 2["join_game",{"game_id":"7443","player_name":"Ali","game_type":null}]
-2025-02-02 22:30:04,449 INFO: received event "join_game" from KEVaJN15p0VX_9-_AAAN [/]
-2025-02-02 22:30:04,456 DEBUG: Session after join: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '7443', 'is_host': False, 'player_name': 'Ali'}
-2025-02-02 22:30:04,457 DEBUG: Game room after join: {'host': 'Ziada', 'players': [{'name': 'Ziada', 'isHost': True}, {'name': 'Ali', 'isHost': False}], 'game_type': None, 'status': 'waiting', 'scores': {}, 'current_player': '', 'current_item': '', 'round_start_time': None}
-2025-02-02 22:30:04,459 INFO: KEVaJN15p0VX_9-_AAAN is entering room 7443 [/]
-2025-02-02 22:30:04,461 INFO: Player Ali joined game 7443
-2025-02-02 22:30:04,462 INFO: emitting event "join_success" to KEVaJN15p0VX_9-_AAAN [/]
-2025-02-02 22:30:04,462 INFO: HMqmRzUyIngal6LzAAAM: Sending packet MESSAGE data 2["join_success",{"players":[{"name":"Ziada","isHost":true},{"name":"Ali","isHost":false}],"host":"Ziada"}]
-2025-02-02 22:30:04,462 INFO: emitting event "player_joined" to 7443 [/]
-2025-02-02 22:30:04,462 INFO: 1SdpkuwZCZiTUCNbAAAK: Sending packet MESSAGE data 2["player_joined",{"players":[{"name":"Ziada","isHost":true},{"name":"Ali","isHost":false}]}]
-2025-02-02 22:30:04,462 INFO: HMqmRzUyIngal6LzAAAM: Sending packet MESSAGE data 2["player_joined",{"players":[{"name":"Ziada","isHost":true},{"name":"Ali","isHost":false}]}]
-2025-02-02 22:30:04,469 INFO: emitting event "update_players" to 7443 [/]
-2025-02-02 22:30:04,470 INFO: 1SdpkuwZCZiTUCNbAAAK: Sending packet MESSAGE data 2["update_players",{"players":["Ziada","Ali"]}]
-2025-02-02 22:30:04,471 INFO: HMqmRzUyIngal6LzAAAM: Sending packet MESSAGE data 2["update_players",{"players":["Ziada","Ali"]}]
-2025-02-02 22:30:07,561 INFO: 1SdpkuwZCZiTUCNbAAAK: Received packet MESSAGE data 2["start_game",{"game_id":"7443"}]
-2025-02-02 22:30:07,563 INFO: received event "start_game" from GCRRGx-CViNCablWAAAL [/]
-2025-02-02 22:30:07,567 DEBUG: Starting game 7443
-2025-02-02 22:30:07,567 DEBUG: Game room state before start: {'host': 'Ziada', 'players': [{'name': 'Ziada', 'isHost': True}, {'name': 'Ali', 'isHost': False}], 'game_type': None, 'status': 'waiting', 'scores': {}, 'current_player': '', 'current_item': '', 'round_start_time': None}
-2025-02-02 22:30:07,569 DEBUG: Number of players: 2
-2025-02-02 22:30:07,570 DEBUG: Players list: ['Ziada', 'Ali']
-2025-02-02 22:30:07,571 INFO: emitting event "game_started" to 7443 [/]
-2025-02-02 22:30:07,572 INFO: 1SdpkuwZCZiTUCNbAAAK: Sending packet MESSAGE data 2["game_started",{"game_id":"7443","transfer_id":"7443_1738528207.571239_Ziada","url":"/game/7443"}]
-2025-02-02 22:30:07,574 INFO: HMqmRzUyIngal6LzAAAM: Sending packet MESSAGE data 2["game_started",{"game_id":"7443","transfer_id":"7443_1738528207.571239_Ziada","url":"/game/7443"}]
-2025-02-02 22:30:07,575 INFO: Game 7443 started by Ziada
-2025-02-02 22:30:07,596 INFO: 1SdpkuwZCZiTUCNbAAAK: Received packet CLOSE data 
-2025-02-02 22:30:07,598 DEBUG: Session after disconnect: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '7443', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 22:30:07,617 INFO: HMqmRzUyIngal6LzAAAM: Received packet CLOSE data 
-2025-02-02 22:30:07,621 DEBUG: Session after disconnect: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '7443', 'is_host': False, 'player_name': 'Ali'}
-2025-02-02 22:30:07,649 DEBUG: Accessing game route with game_id: 7443
-2025-02-02 22:30:07,656 DEBUG: Found transferred state for game 7443
-2025-02-02 22:30:07,656 DEBUG: Restored session state: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '7443', 'player_name': 'Ziada', 'is_host': True}
-2025-02-02 22:30:07,664 DEBUG: Accessing game route with game_id: 7443
-2025-02-02 22:30:08,016 INFO: cx7DdoTyfQB2BzfzAAAO: Sending packet OPEN data {'sid': 'cx7DdoTyfQB2BzfzAAAO', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
-2025-02-02 22:30:08,103 INFO: cx7DdoTyfQB2BzfzAAAO: Received packet MESSAGE data 0
-2025-02-02 22:30:08,103 INFO: cx7DdoTyfQB2BzfzAAAO: Sending packet MESSAGE data 0{"sid":"UkVTgw2z09YZCRewAAAP"}
-2025-02-02 22:30:08,107 DEBUG: Client connected. Session: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '6007', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 22:30:08,112 INFO: cx7DdoTyfQB2BzfzAAAO: Received request to upgrade to websocket
-2025-02-02 22:30:08,305 INFO: _pO1jFkmlYfodSXfAAAQ: Sending packet OPEN data {'sid': '_pO1jFkmlYfodSXfAAAQ', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
-2025-02-02 22:30:08,363 INFO: _pO1jFkmlYfodSXfAAAQ: Received request to upgrade to websocket
-2025-02-02 22:30:08,365 INFO: _pO1jFkmlYfodSXfAAAQ: Received packet MESSAGE data 0
-2025-02-02 22:30:08,367 INFO: _pO1jFkmlYfodSXfAAAQ: Sending packet MESSAGE data 0{"sid":"RWGAYPx2VxEfGl0oAAAR"}
-2025-02-02 22:30:08,371 DEBUG: Client connected. Session: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '7443', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 22:30:08,509 INFO: cx7DdoTyfQB2BzfzAAAO: Received packet MESSAGE data 2["join_game_room",{"game_id":"7443","player_name":"Ziada"}]
-2025-02-02 22:30:08,509 INFO: received event "join_game_room" from UkVTgw2z09YZCRewAAAP [/]
-2025-02-02 22:30:08,512 DEBUG: Received join_game_room event - game_id: 7443, player_name: Ziada
-2025-02-02 22:30:08,513 INFO: UkVTgw2z09YZCRewAAAP is entering room 7443 [/]
-2025-02-02 22:30:08,513 INFO: Player Ziada joined game room 7443
-2025-02-02 22:30:08,514 DEBUG: Current players in room 7443: ['Ziada', 'Ali']
-2025-02-02 22:30:08,516 INFO: emitting event "game_state" to 7443 [/]
-2025-02-02 22:30:08,518 INFO: cx7DdoTyfQB2BzfzAAAO: Sending packet MESSAGE data 2["game_state",{"message":"Ziada \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ali"]}]
-2025-02-02 22:30:08,695 INFO: _pO1jFkmlYfodSXfAAAQ: Upgrade to websocket successful
-2025-02-02 22:30:08,734 INFO: _pO1jFkmlYfodSXfAAAQ: Received packet MESSAGE data 2["join_game_room",{"game_id":"7443","player_name":"Ziada"}]
-2025-02-02 22:30:08,737 INFO: received event "join_game_room" from RWGAYPx2VxEfGl0oAAAR [/]
-2025-02-02 22:30:08,739 DEBUG: Received join_game_room event - game_id: 7443, player_name: Ziada
-2025-02-02 22:30:08,741 INFO: RWGAYPx2VxEfGl0oAAAR is entering room 7443 [/]
-2025-02-02 22:30:08,742 INFO: Player Ziada joined game room 7443
-2025-02-02 22:30:08,743 DEBUG: Current players in room 7443: ['Ziada', 'Ali']
-2025-02-02 22:30:08,744 INFO: emitting event "game_state" to 7443 [/]
-2025-02-02 22:30:08,749 INFO: cx7DdoTyfQB2BzfzAAAO: Sending packet MESSAGE data 2["game_state",{"message":"Ziada \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ali"]}]
-2025-02-02 22:30:08,750 INFO: _pO1jFkmlYfodSXfAAAQ: Sending packet MESSAGE data 2["game_state",{"message":"Ziada \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ali"]}]
-2025-02-02 22:30:08,780 INFO: _pO1jFkmlYfodSXfAAAQ: Received packet MESSAGE data 2["request_players",{"game_id":"7443"}]
-2025-02-02 22:30:08,798 INFO: received event "request_players" from RWGAYPx2VxEfGl0oAAAR [/]
-2025-02-02 22:30:08,904 DEBUG: Received request_players event for game 7443
-2025-02-02 22:30:08,908 DEBUG: Sending player list for game 7443: ['Ziada', 'Ali']
-2025-02-02 22:30:08,911 INFO: emitting event "game_state" to 7443 [/]
-2025-02-02 22:30:08,913 INFO: cx7DdoTyfQB2BzfzAAAO: Sending packet MESSAGE data 2["game_state",{"players":["Ziada","Ali"],"message":"\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0644\u0627\u0639\u0628\u064a\u0646"}]
-2025-02-02 22:30:08,915 INFO: _pO1jFkmlYfodSXfAAAQ: Sending packet MESSAGE data 2["game_state",{"players":["Ziada","Ali"],"message":"\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0644\u0627\u0639\u0628\u064a\u0646"}]
-2025-02-02 22:30:09,613 INFO: cx7DdoTyfQB2BzfzAAAO: Upgrade to websocket successful
-2025-02-02 22:30:09,614 INFO: cx7DdoTyfQB2BzfzAAAO: Received packet MESSAGE data 2["request_players",{"game_id":"7443"}]
-2025-02-02 22:30:09,614 INFO: received event "request_players" from UkVTgw2z09YZCRewAAAP [/]
-2025-02-02 22:30:09,616 DEBUG: Received request_players event for game 7443
-2025-02-02 22:30:09,616 DEBUG: Sending player list for game 7443: ['Ziada', 'Ali']
-2025-02-02 22:30:09,616 INFO: emitting event "game_state" to 7443 [/]
-2025-02-02 22:30:09,619 INFO: cx7DdoTyfQB2BzfzAAAO: Sending packet MESSAGE data 2["game_state",{"players":["Ziada","Ali"],"message":"\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0644\u0627\u0639\u0628\u064a\u0646"}]
-2025-02-02 22:30:09,619 INFO: _pO1jFkmlYfodSXfAAAQ: Sending packet MESSAGE data 2["game_state",{"players":["Ziada","Ali"],"message":"\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0644\u0627\u0639\u0628\u064a\u0646"}]
-2025-02-02 22:42:42,708 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
-2025-02-02 22:42:42,857 INFO:  * Restarting with stat
-2025-02-02 22:42:44,424 INFO: Server initialized for eventlet.
-2025-02-02 22:42:44,426 INFO: Starting server...
-2025-02-02 22:42:44,438 WARNING:  * Debugger is active!
-2025-02-02 22:42:44,453 INFO:  * Debugger PIN: 531-980-121
-2025-02-02 22:42:44,619 INFO: YjTPJeaXyXwbD8WvAAAA: Sending packet OPEN data {'sid': 'YjTPJeaXyXwbD8WvAAAA', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
-2025-02-02 22:42:44,640 INFO: YjTPJeaXyXwbD8WvAAAA: Received request to upgrade to websocket
-2025-02-02 22:42:44,642 INFO: YjTPJeaXyXwbD8WvAAAA: Received packet MESSAGE data 0
-2025-02-02 22:42:44,648 INFO: YjTPJeaXyXwbD8WvAAAA: Sending packet MESSAGE data 0{"sid":"MF63T2HMjU6AGuawAAAB"}
-2025-02-02 22:42:44,650 DEBUG: Client connected. Session: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '7443', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 22:42:44,661 INFO: YjTPJeaXyXwbD8WvAAAA: Upgrade to websocket successful
-2025-02-02 22:42:44,672 INFO: YjTPJeaXyXwbD8WvAAAA: Received packet MESSAGE data 2["join_game_room",{"game_id":"7443","player_name":"Ziada"}]
-2025-02-02 22:42:44,674 INFO: received event "join_game_room" from MF63T2HMjU6AGuawAAAB [/]
-2025-02-02 22:42:44,674 INFO: YjTPJeaXyXwbD8WvAAAA: Received packet MESSAGE data 2["request_players",{"game_id":"7443"}]
-2025-02-02 22:42:44,676 INFO: received event "request_players" from MF63T2HMjU6AGuawAAAB [/]
-2025-02-02 22:42:44,679 DEBUG: Received join_game_room event - game_id: 7443, player_name: Ziada
-2025-02-02 22:42:44,679 ERROR: Game 7443 not found in game_rooms
-2025-02-02 22:42:44,680 ERROR: Error joining game room: غرفة اللعب غير موجودة
-2025-02-02 22:42:44,680 INFO: emitting event "game_error" to MF63T2HMjU6AGuawAAAB [/]
-2025-02-02 22:42:44,680 INFO: YjTPJeaXyXwbD8WvAAAA: Sending packet MESSAGE data 2["game_error",{"message":"\u063a\u0631\u0641\u0629 \u0627\u0644\u0644\u0639\u0628 \u063a\u064a\u0631 \u0645\u0648\u062c\u0648\u062f\u0629"}]
-2025-02-02 22:42:44,682 DEBUG: Received request_players event for game 7443
-2025-02-02 22:42:44,684 ERROR: Game 7443 not found in game_rooms
-2025-02-02 22:42:44,684 ERROR: Error handling request_players: غرفة اللعب غير موجودة
-2025-02-02 22:42:44,685 INFO: emitting event "game_error" to MF63T2HMjU6AGuawAAAB [/]
-2025-02-02 22:42:44,686 INFO: YjTPJeaXyXwbD8WvAAAA: Sending packet MESSAGE data 2["game_error",{"message":"\u063a\u0631\u0641\u0629 \u0627\u0644\u0644\u0639\u0628 \u063a\u064a\u0631 \u0645\u0648\u062c\u0648\u062f\u0629"}]
-2025-02-02 22:49:59,081 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\games\\charades\\models.py', reloading
-2025-02-02 22:49:59,288 INFO:  * Restarting with stat
-2025-02-02 22:50:01,107 INFO: Server initialized for eventlet.
-2025-02-02 22:50:01,111 INFO: Starting server...
-2025-02-02 22:50:01,123 WARNING:  * Debugger is active!
-2025-02-02 22:50:01,138 INFO:  * Debugger PIN: 531-980-121
-2025-02-02 22:50:01,424 INFO: QdE9sVbC95QvXE_GAAAA: Sending packet OPEN data {'sid': 'QdE9sVbC95QvXE_GAAAA', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
-2025-02-02 22:50:01,439 INFO: QdE9sVbC95QvXE_GAAAA: Received request to upgrade to websocket
-2025-02-02 22:50:01,441 INFO: QdE9sVbC95QvXE_GAAAA: Received packet MESSAGE data 0
-2025-02-02 22:50:01,444 INFO: QdE9sVbC95QvXE_GAAAA: Sending packet MESSAGE data 0{"sid":"lSDaDno6YpwAjI8rAAAB"}
-2025-02-02 22:50:01,446 DEBUG: Client connected. Session: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '7443', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 22:50:01,464 INFO: QdE9sVbC95QvXE_GAAAA: Upgrade to websocket successful
-2025-02-02 22:50:01,469 INFO: QdE9sVbC95QvXE_GAAAA: Received packet MESSAGE data 2["join_game_room",{"game_id":"7443","player_name":"Ziada"}]
-2025-02-02 22:50:01,471 INFO: received event "join_game_room" from lSDaDno6YpwAjI8rAAAB [/]
-2025-02-02 22:50:01,472 INFO: QdE9sVbC95QvXE_GAAAA: Received packet MESSAGE data 2["request_players",{"game_id":"7443"}]
-2025-02-02 22:50:01,474 INFO: received event "request_players" from lSDaDno6YpwAjI8rAAAB [/]
-2025-02-02 22:50:01,480 DEBUG: Received join_game_room event - game_id: 7443, player_name: Ziada
-2025-02-02 22:50:01,481 ERROR: Game 7443 not found in game_rooms
-2025-02-02 22:50:01,481 ERROR: Error joining game room: غرفة اللعب غير موجودة
-2025-02-02 22:50:01,482 INFO: emitting event "game_error" to lSDaDno6YpwAjI8rAAAB [/]
-2025-02-02 22:50:01,483 INFO: QdE9sVbC95QvXE_GAAAA: Sending packet MESSAGE data 2["game_error",{"message":"\u063a\u0631\u0641\u0629 \u0627\u0644\u0644\u0639\u0628 \u063a\u064a\u0631 \u0645\u0648\u062c\u0648\u062f\u0629"}]
-2025-02-02 22:50:01,485 DEBUG: Received request_players event for game 7443
-2025-02-02 22:50:01,486 ERROR: Game 7443 not found in game_rooms
-2025-02-02 22:50:01,486 ERROR: Error handling request_players: غرفة اللعب غير موجودة
-2025-02-02 22:50:01,487 INFO: emitting event "game_error" to lSDaDno6YpwAjI8rAAAB [/]
-2025-02-02 22:50:01,487 INFO: QdE9sVbC95QvXE_GAAAA: Sending packet MESSAGE data 2["game_error",{"message":"\u063a\u0631\u0641\u0629 \u0627\u0644\u0644\u0639\u0628 \u063a\u064a\u0631 \u0645\u0648\u062c\u0648\u062f\u0629"}]
-2025-02-02 22:52:37,382 INFO: Server initialized for eventlet.
-2025-02-02 22:52:37,388 INFO: Starting server...
-2025-02-02 22:52:37,398 INFO:  * Restarting with stat
-2025-02-02 22:52:38,711 INFO: Server initialized for eventlet.
-2025-02-02 22:52:38,714 INFO: Starting server...
-2025-02-02 22:52:38,726 WARNING:  * Debugger is active!
-2025-02-02 22:52:38,740 INFO:  * Debugger PIN: 531-980-121
-2025-02-02 22:52:38,944 INFO: pHfxazQpRHzgSLTFAAAA: Sending packet OPEN data {'sid': 'pHfxazQpRHzgSLTFAAAA', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
-2025-02-02 22:52:38,964 INFO: pHfxazQpRHzgSLTFAAAA: Received request to upgrade to websocket
-2025-02-02 22:52:38,971 INFO: pHfxazQpRHzgSLTFAAAA: Received packet MESSAGE data 0
-2025-02-02 22:52:38,974 INFO: pHfxazQpRHzgSLTFAAAA: Sending packet MESSAGE data 0{"sid":"T_fgTyGFtII3Il97AAAB"}
-2025-02-02 22:52:38,977 DEBUG: Client connected. Session: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '7443', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 22:52:38,996 INFO: pHfxazQpRHzgSLTFAAAA: Upgrade to websocket successful
-2025-02-02 22:52:38,999 INFO: pHfxazQpRHzgSLTFAAAA: Received packet MESSAGE data 2["join_game_room",{"game_id":"7443","player_name":"Ziada"}]
-2025-02-02 22:52:39,001 INFO: received event "join_game_room" from T_fgTyGFtII3Il97AAAB [/]
-2025-02-02 22:52:39,002 INFO: pHfxazQpRHzgSLTFAAAA: Received packet MESSAGE data 2["request_players",{"game_id":"7443"}]
-2025-02-02 22:52:39,004 INFO: received event "request_players" from T_fgTyGFtII3Il97AAAB [/]
-2025-02-02 22:52:39,008 DEBUG: Received join_game_room event - game_id: 7443, player_name: Ziada
-2025-02-02 22:52:39,009 ERROR: Game 7443 not found in game_rooms
-2025-02-02 22:52:39,010 ERROR: Error joining game room: غرفة اللعب غير موجودة
-2025-02-02 22:52:39,011 INFO: emitting event "game_error" to T_fgTyGFtII3Il97AAAB [/]
-2025-02-02 22:52:39,011 INFO: pHfxazQpRHzgSLTFAAAA: Sending packet MESSAGE data 2["game_error",{"message":"\u063a\u0631\u0641\u0629 \u0627\u0644\u0644\u0639\u0628 \u063a\u064a\u0631 \u0645\u0648\u062c\u0648\u062f\u0629"}]
-2025-02-02 22:52:39,015 DEBUG: Received request_players event for game 7443
-2025-02-02 22:52:39,016 ERROR: Game 7443 not found in game_rooms
-2025-02-02 22:52:39,016 ERROR: Error handling request_players: غرفة اللعب غير موجودة
-2025-02-02 22:52:39,016 INFO: emitting event "game_error" to T_fgTyGFtII3Il97AAAB [/]
-2025-02-02 22:52:39,017 INFO: pHfxazQpRHzgSLTFAAAA: Sending packet MESSAGE data 2["game_error",{"message":"\u063a\u0631\u0641\u0629 \u0627\u0644\u0644\u0639\u0628 \u063a\u064a\u0631 \u0645\u0648\u062c\u0648\u062f\u0629"}]
-2025-02-02 22:53:22,190 DEBUG: Session after disconnect: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '7443', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 22:53:23,159 INFO: TZyOAC-smKRDKjn3AAAC: Sending packet OPEN data {'sid': 'TZyOAC-smKRDKjn3AAAC', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
-2025-02-02 22:53:23,519 INFO: TZyOAC-smKRDKjn3AAAC: Received packet MESSAGE data 0
-2025-02-02 22:53:23,522 INFO: TZyOAC-smKRDKjn3AAAC: Sending packet MESSAGE data 0{"sid":"jBh4q-7Wszl3HDr-AAAD"}
-2025-02-02 22:53:23,524 DEBUG: Client connected. Session: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '7443', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 22:53:26,213 INFO: TZyOAC-smKRDKjn3AAAC: Received packet CLOSE data 
-2025-02-02 22:53:26,214 DEBUG: Session after disconnect: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '7443', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 22:53:26,707 INFO: BsgoG-fx9iHMxnJyAAAE: Sending packet OPEN data {'sid': 'BsgoG-fx9iHMxnJyAAAE', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
-2025-02-02 22:53:26,862 INFO: BsgoG-fx9iHMxnJyAAAE: Received packet MESSAGE data 0
-2025-02-02 22:53:26,866 INFO: BsgoG-fx9iHMxnJyAAAE: Sending packet MESSAGE data 0{"sid":"A09a-kB-9GnJoBr-AAAF"}
-2025-02-02 22:53:26,868 DEBUG: Client connected. Session: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '7443', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 22:53:47,342 INFO: BsgoG-fx9iHMxnJyAAAE: Received packet MESSAGE data 2["create_game",{"game_id":4943,"player_name":"Ziada","game_type":null}]
-2025-02-02 22:53:47,346 INFO: received event "create_game" from A09a-kB-9GnJoBr-AAAF [/]
-2025-02-02 22:53:47,348 DEBUG: Create game request - Game ID: 4943
-2025-02-02 22:53:47,348 DEBUG: Create game request - Player Name: Ziada
-2025-02-02 22:53:47,348 DEBUG: Create game request - Game Type: None
-2025-02-02 22:53:47,351 DEBUG: Session after create: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '4943', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 22:53:47,353 DEBUG: Game room after create: {'host': 'Ziada', 'players': [{'name': 'Ziada', 'isHost': True}], 'game_type': None, 'status': 'waiting', 'scores': {}, 'current_player': '', 'current_item': '', 'round_start_time': None}
-2025-02-02 22:53:47,354 INFO: Game room 4943 created by Ziada
-2025-02-02 22:53:47,354 INFO: emitting event "game_created" to A09a-kB-9GnJoBr-AAAF [/]
-2025-02-02 22:53:47,356 INFO: BsgoG-fx9iHMxnJyAAAE: Sending packet MESSAGE data 2["game_created",{"game_id":"4943","host":"Ziada","players":[{"name":"Ziada","isHost":true}]}]
-2025-02-02 22:53:47,357 INFO: A09a-kB-9GnJoBr-AAAF is entering room 4943 [/]
-2025-02-02 22:53:52,636 INFO: Ner2QYEmCsg8LEW_AAAG: Sending packet OPEN data {'sid': 'Ner2QYEmCsg8LEW_AAAG', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
-2025-02-02 22:53:52,646 INFO: Ner2QYEmCsg8LEW_AAAG: Received packet MESSAGE data 0
-2025-02-02 22:53:52,649 INFO: Ner2QYEmCsg8LEW_AAAG: Sending packet MESSAGE data 0{"sid":"cQ4Ny-dmrlDd70jUAAAH"}
-2025-02-02 22:53:52,650 DEBUG: Client connected. Session: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '6007', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 22:53:52,656 INFO: Ner2QYEmCsg8LEW_AAAG: Received request to upgrade to websocket
-2025-02-02 22:53:52,671 INFO: Ner2QYEmCsg8LEW_AAAG: Upgrade to websocket successful
-2025-02-02 22:53:52,677 INFO: Ner2QYEmCsg8LEW_AAAG: Received packet MESSAGE data 2["join_game_room",{"game_id":"7443","player_name":"Ziada"}]
-2025-02-02 22:53:52,678 INFO: received event "join_game_room" from cQ4Ny-dmrlDd70jUAAAH [/]
-2025-02-02 22:53:52,678 INFO: Ner2QYEmCsg8LEW_AAAG: Received packet MESSAGE data 2["request_players",{"game_id":"7443"}]
-2025-02-02 22:53:52,680 INFO: received event "request_players" from cQ4Ny-dmrlDd70jUAAAH [/]
-2025-02-02 22:53:52,682 DEBUG: Received join_game_room event - game_id: 7443, player_name: Ziada
-2025-02-02 22:53:52,682 ERROR: Game 7443 not found in game_rooms
-2025-02-02 22:53:52,682 ERROR: Error joining game room: غرفة اللعب غير موجودة
-2025-02-02 22:53:52,684 INFO: emitting event "game_error" to cQ4Ny-dmrlDd70jUAAAH [/]
-2025-02-02 22:53:52,685 INFO: Ner2QYEmCsg8LEW_AAAG: Sending packet MESSAGE data 2["game_error",{"message":"\u063a\u0631\u0641\u0629 \u0627\u0644\u0644\u0639\u0628 \u063a\u064a\u0631 \u0645\u0648\u062c\u0648\u062f\u0629"}]
-2025-02-02 22:53:52,687 DEBUG: Received request_players event for game 7443
-2025-02-02 22:53:52,688 ERROR: Game 7443 not found in game_rooms
-2025-02-02 22:53:52,688 ERROR: Error handling request_players: غرفة اللعب غير موجودة
-2025-02-02 22:53:52,688 INFO: emitting event "game_error" to cQ4Ny-dmrlDd70jUAAAH [/]
-2025-02-02 22:53:52,689 INFO: Ner2QYEmCsg8LEW_AAAG: Sending packet MESSAGE data 2["game_error",{"message":"\u063a\u0631\u0641\u0629 \u0627\u0644\u0644\u0639\u0628 \u063a\u064a\u0631 \u0645\u0648\u062c\u0648\u062f\u0629"}]
-2025-02-02 22:53:53,348 DEBUG: Session after disconnect: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '6007', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 22:53:53,624 INFO: ulkUz1QYCzp0rxdsAAAI: Sending packet OPEN data {'sid': 'ulkUz1QYCzp0rxdsAAAI', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
-2025-02-02 22:53:53,924 INFO: ulkUz1QYCzp0rxdsAAAI: Received packet MESSAGE data 0
-2025-02-02 22:53:53,925 INFO: ulkUz1QYCzp0rxdsAAAI: Sending packet MESSAGE data 0{"sid":"ke4y3aMy4BBdfcC9AAAJ"}
-2025-02-02 22:53:53,926 DEBUG: Client connected. Session: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '6007', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 22:54:03,724 INFO: ulkUz1QYCzp0rxdsAAAI: Received packet MESSAGE data 2["join_game",{"game_id":"4943","player_name":"Ali","game_type":null}]
-2025-02-02 22:54:03,730 INFO: received event "join_game" from ke4y3aMy4BBdfcC9AAAJ [/]
-2025-02-02 22:54:03,738 DEBUG: Session after join: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '4943', 'is_host': False, 'player_name': 'Ali'}
-2025-02-02 22:54:03,742 DEBUG: Game room after join: {'host': 'Ziada', 'players': [{'name': 'Ziada', 'isHost': True}, {'name': 'Ali', 'isHost': False}], 'game_type': None, 'status': 'waiting', 'scores': {}, 'current_player': '', 'current_item': '', 'round_start_time': None}
-2025-02-02 22:54:03,746 INFO: ke4y3aMy4BBdfcC9AAAJ is entering room 4943 [/]
-2025-02-02 22:54:03,751 INFO: Player Ali joined game 4943
-2025-02-02 22:54:03,753 INFO: emitting event "join_success" to ke4y3aMy4BBdfcC9AAAJ [/]
-2025-02-02 22:54:03,754 INFO: ulkUz1QYCzp0rxdsAAAI: Sending packet MESSAGE data 2["join_success",{"players":[{"name":"Ziada","isHost":true},{"name":"Ali","isHost":false}],"host":"Ziada"}]
-2025-02-02 22:54:03,759 INFO: emitting event "player_joined" to 4943 [/]
-2025-02-02 22:54:03,763 INFO: BsgoG-fx9iHMxnJyAAAE: Sending packet MESSAGE data 2["player_joined",{"players":[{"name":"Ziada","isHost":true},{"name":"Ali","isHost":false}]}]
-2025-02-02 22:54:03,831 INFO: ulkUz1QYCzp0rxdsAAAI: Sending packet MESSAGE data 2["player_joined",{"players":[{"name":"Ziada","isHost":true},{"name":"Ali","isHost":false}]}]
-2025-02-02 22:54:03,834 INFO: emitting event "update_players" to 4943 [/]
-2025-02-02 22:54:03,834 INFO: BsgoG-fx9iHMxnJyAAAE: Sending packet MESSAGE data 2["update_players",{"players":["Ziada","Ali"]}]
-2025-02-02 22:54:03,851 INFO: ulkUz1QYCzp0rxdsAAAI: Sending packet MESSAGE data 2["update_players",{"players":["Ziada","Ali"]}]
-2025-02-02 22:54:07,448 INFO: BsgoG-fx9iHMxnJyAAAE: Received packet MESSAGE data 2["start_game",{"game_id":"4943"}]
-2025-02-02 22:54:07,452 INFO: received event "start_game" from A09a-kB-9GnJoBr-AAAF [/]
-2025-02-02 22:54:07,456 DEBUG: Starting game 4943
-2025-02-02 22:54:07,456 DEBUG: Game room state before start: {'host': 'Ziada', 'players': [{'name': 'Ziada', 'isHost': True}, {'name': 'Ali', 'isHost': False}], 'game_type': None, 'status': 'waiting', 'scores': {}, 'current_player': '', 'current_item': '', 'round_start_time': None}
-2025-02-02 22:54:07,459 DEBUG: Number of players: 2
-2025-02-02 22:54:07,460 DEBUG: Players list: ['Ziada', 'Ali']
-2025-02-02 22:54:07,461 INFO: emitting event "game_started" to 4943 [/]
-2025-02-02 22:54:07,465 INFO: BsgoG-fx9iHMxnJyAAAE: Sending packet MESSAGE data 2["game_started",{"game_id":"4943","transfer_id":"4943_1738529647.461849_Ziada","url":"/game/4943"}]
-2025-02-02 22:54:07,467 INFO: ulkUz1QYCzp0rxdsAAAI: Sending packet MESSAGE data 2["game_started",{"game_id":"4943","transfer_id":"4943_1738529647.461849_Ziada","url":"/game/4943"}]
-2025-02-02 22:54:07,471 INFO: Game 4943 started by Ziada
-2025-02-02 22:54:07,502 INFO: ulkUz1QYCzp0rxdsAAAI: Received packet CLOSE data 
-2025-02-02 22:54:07,506 DEBUG: Session after disconnect: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '4943', 'is_host': False, 'player_name': 'Ali'}
-2025-02-02 22:54:07,524 INFO: BsgoG-fx9iHMxnJyAAAE: Received packet CLOSE data 
-2025-02-02 22:54:07,532 DEBUG: Session after disconnect: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '4943', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 22:54:07,542 DEBUG: Accessing game route with game_id: 4943
-2025-02-02 22:54:07,542 DEBUG: Found transferred state for game 4943
-2025-02-02 22:54:07,550 DEBUG: Restored session state: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '4943', 'is_host': True, 'player_name': 'Ziada', 'player_type': 'guest', 'player_score': '0'}
-2025-02-02 22:54:07,581 DEBUG: Accessing game route with game_id: 4943
-2025-02-02 22:54:07,914 INFO: 8gmsNpxHkkxqq4oRAAAK: Sending packet OPEN data {'sid': '8gmsNpxHkkxqq4oRAAAK', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
-2025-02-02 22:54:07,930 INFO: 8gmsNpxHkkxqq4oRAAAK: Received packet MESSAGE data 0
-2025-02-02 22:54:07,932 INFO: 8gmsNpxHkkxqq4oRAAAK: Sending packet MESSAGE data 0{"sid":"pwDrcUbXXA1zhp7aAAAL"}
-2025-02-02 22:54:07,933 DEBUG: Client connected. Session: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '4943', 'is_host': True, 'player_name': 'Ziada', 'player_score': '0', 'player_type': 'guest'}
-2025-02-02 22:54:07,939 INFO: 8gmsNpxHkkxqq4oRAAAK: Received request to upgrade to websocket
-2025-02-02 22:54:08,220 INFO: TfD3OQHGQjUDQc26AAAM: Sending packet OPEN data {'sid': 'TfD3OQHGQjUDQc26AAAM', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
-2025-02-02 22:54:08,383 INFO: TfD3OQHGQjUDQc26AAAM: Received request to upgrade to websocket
-2025-02-02 22:54:08,385 INFO: TfD3OQHGQjUDQc26AAAM: Received packet MESSAGE data 0
-2025-02-02 22:54:08,387 INFO: TfD3OQHGQjUDQc26AAAM: Sending packet MESSAGE data 0{"sid":"x7XPx8HhacoDhVG7AAAN"}
-2025-02-02 22:54:08,389 DEBUG: Client connected. Session: {'_flashes': [('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'جلسة اللعب غير صالحة أو منتهية الصلاحية'), ('message', 'غرفة اللعب غير موجودة')], '_permanent': True, 'game_id': '7443', 'is_host': True, 'player_name': 'Ziada'}
-2025-02-02 22:54:08,516 INFO: 8gmsNpxHkkxqq4oRAAAK: Received packet MESSAGE data 2["join_game_room",{"game_id":"4943","player_name":"Ziada"}]
-2025-02-02 22:54:08,516 INFO: received event "join_game_room" from pwDrcUbXXA1zhp7aAAAL [/]
-2025-02-02 22:54:08,520 DEBUG: Received join_game_room event - game_id: 4943, player_name: Ziada
-2025-02-02 22:54:08,521 INFO: pwDrcUbXXA1zhp7aAAAL is entering room 4943 [/]
-2025-02-02 22:54:08,522 INFO: Player Ziada joined game room 4943
-2025-02-02 22:54:08,522 DEBUG: Current players in room 4943: ['Ziada', 'Ali']
-2025-02-02 22:54:08,522 INFO: emitting event "game_state" to 4943 [/]
-2025-02-02 22:54:08,524 INFO: 8gmsNpxHkkxqq4oRAAAK: Sending packet MESSAGE data 2["game_state",{"message":"Ziada \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ali"]}]
-2025-02-02 22:54:08,614 INFO: TfD3OQHGQjUDQc26AAAM: Upgrade to websocket successful
-2025-02-02 22:54:08,616 INFO: TfD3OQHGQjUDQc26AAAM: Received packet MESSAGE data 2["join_game_room",{"game_id":"4943","player_name":"Ziada"}]
-2025-02-02 22:54:08,619 INFO: received event "join_game_room" from x7XPx8HhacoDhVG7AAAN [/]
-2025-02-02 22:54:08,619 INFO: TfD3OQHGQjUDQc26AAAM: Received packet MESSAGE data 2["request_players",{"game_id":"4943"}]
-2025-02-02 22:54:08,621 INFO: received event "request_players" from x7XPx8HhacoDhVG7AAAN [/]
-2025-02-02 22:54:08,623 DEBUG: Received request_players event for game 4943
-2025-02-02 22:54:08,623 DEBUG: Sending player list for game 4943: ['Ziada', 'Ali']
-2025-02-02 22:54:08,624 INFO: emitting event "game_state" to 4943 [/]
-2025-02-02 22:54:08,624 INFO: 8gmsNpxHkkxqq4oRAAAK: Sending packet MESSAGE data 2["game_state",{"players":["Ziada","Ali"],"message":"\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0644\u0627\u0639\u0628\u064a\u0646"}]
-2025-02-02 22:54:08,626 DEBUG: Received join_game_room event - game_id: 4943, player_name: Ziada
-2025-02-02 22:54:08,627 INFO: x7XPx8HhacoDhVG7AAAN is entering room 4943 [/]
-2025-02-02 22:54:08,627 INFO: Player Ziada joined game room 4943
-2025-02-02 22:54:08,628 DEBUG: Current players in room 4943: ['Ziada', 'Ali']
-2025-02-02 22:54:08,628 INFO: emitting event "game_state" to 4943 [/]
-2025-02-02 22:54:08,628 INFO: 8gmsNpxHkkxqq4oRAAAK: Sending packet MESSAGE data 2["game_state",{"message":"Ziada \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ali"]}]
-2025-02-02 22:54:08,630 INFO: TfD3OQHGQjUDQc26AAAM: Sending packet MESSAGE data 2["game_state",{"message":"Ziada \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ali"]}]
-2025-02-02 22:54:09,156 INFO: 8gmsNpxHkkxqq4oRAAAK: Upgrade to websocket successful
-2025-02-02 22:54:09,162 INFO: 8gmsNpxHkkxqq4oRAAAK: Received packet MESSAGE data 2["request_players",{"game_id":"4943"}]
-2025-02-02 22:54:09,163 INFO: received event "request_players" from pwDrcUbXXA1zhp7aAAAL [/]
-2025-02-02 22:54:09,163 DEBUG: Received request_players event for game 4943
-2025-02-02 22:54:09,166 DEBUG: Sending player list for game 4943: ['Ziada', 'Ali']
-2025-02-02 22:54:09,166 INFO: emitting event "game_state" to 4943 [/]
-2025-02-02 22:54:09,167 INFO: 8gmsNpxHkkxqq4oRAAAK: Sending packet MESSAGE data 2["game_state",{"players":["Ziada","Ali"],"message":"\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0644\u0627\u0639\u0628\u064a\u0646"}]
-2025-02-02 22:54:09,169 INFO: TfD3OQHGQjUDQc26AAAM: Sending packet MESSAGE data 2["game_state",{"players":["Ziada","Ali"],"message":"\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0644\u0627\u0639\u0628\u064a\u0646"}]
+2025-02-22 01:43:27,306 INFO: Server initialized for eventlet.
+2025-02-22 01:43:27,309 INFO: Starting server...
+2025-02-22 01:43:27,324 INFO:  * Restarting with stat
+2025-02-22 01:43:29,028 INFO: Server initialized for eventlet.
+2025-02-22 01:43:29,032 INFO: Starting server...
+2025-02-22 01:43:29,044 WARNING:  * Debugger is active!
+2025-02-22 01:43:29,059 INFO:  * Debugger PIN: 531-980-121
+2025-02-22 01:43:35,523 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:43:35,523 DEBUG: Is session permanent: True
+2025-02-22 01:43:35,523 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:43:35,628 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:43:35,628 DEBUG: Is session permanent: True
+2025-02-22 01:43:35,628 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:43:35,779 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:43:35,779 DEBUG: Is session permanent: True
+2025-02-22 01:43:35,779 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:43:38,478 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:43:38,478 DEBUG: Is session permanent: True
+2025-02-22 01:43:38,478 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:43:38,570 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:43:38,572 DEBUG: Is session permanent: True
+2025-02-22 01:43:38,572 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:43:38,576 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:43:38,576 DEBUG: Is session permanent: True
+2025-02-22 01:43:38,576 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:43:43,216 INFO: undKbaCLccegkDE7AAAA: Sending packet OPEN data {'sid': 'undKbaCLccegkDE7AAAA', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 01:43:43,229 INFO: undKbaCLccegkDE7AAAA: Received request to upgrade to websocket
+2025-02-22 01:43:43,232 INFO: undKbaCLccegkDE7AAAA: Received packet MESSAGE data 0
+2025-02-22 01:43:43,235 INFO: undKbaCLccegkDE7AAAA: Sending packet MESSAGE data 0{"sid":"HDzaZADtW0LzTAI9AAAB"}
+2025-02-22 01:43:43,238 DEBUG: Client connected. Session: {'_permanent': True}
+2025-02-22 01:43:43,239 WARNING: Player name not found in connection request
+2025-02-22 01:43:43,247 INFO: undKbaCLccegkDE7AAAA: Upgrade to websocket successful
+2025-02-22 01:43:43,250 INFO: undKbaCLccegkDE7AAAA: Received packet MESSAGE data 2["create_game",{"game_id":2143,"player_name":"Ziada","game_type":"charades"}]
+2025-02-22 01:43:43,251 INFO: received event "create_game" from HDzaZADtW0LzTAI9AAAB [/]
+2025-02-22 01:43:43,253 INFO: Creating game: {'game_id': 2143, 'player_name': 'Ziada', 'game_type': 'charades'}
+2025-02-22 01:43:43,255 DEBUG: Session state before game creation: {'_permanent': True}
+2025-02-22 01:43:43,256 DEBUG: Session contents before game creation: {'_permanent': True}
+2025-02-22 01:43:43,256 DEBUG: Create game request - Game ID: 2143
+2025-02-22 01:43:43,257 DEBUG: Create game request - Player Name: Ziada
+2025-02-22 01:43:43,257 DEBUG: Create game request - Game Type: charades
+2025-02-22 01:43:43,257 DEBUG: Creating game for player: Ziada
+2025-02-22 01:43:43,257 DEBUG: Session after create: {'_permanent': True, 'game_id': '2143', 'is_host': True, 'player_name': 'Ziada'}
+2025-02-22 01:43:43,260 DEBUG: Game room after create: {'host': 'Ziada', 'players': [{'name': 'Ziada', 'isHost': True}], 'game_type': 'charades', 'status': 'waiting', 'scores': {}, 'current_player': '', 'current_item': '', 'round_start_time': None}
+2025-02-22 01:43:43,260 DEBUG: Player name set in session: Ziada
+2025-02-22 01:43:43,260 DEBUG: Session after creating game: {'_permanent': True, 'game_id': '2143', 'is_host': True, 'player_name': 'Ziada'}
+2025-02-22 01:43:43,263 INFO: Game room 2143 created by Ziada
+2025-02-22 01:43:43,264 INFO: emitting event "game_created" to HDzaZADtW0LzTAI9AAAB [/]
+2025-02-22 01:43:43,265 INFO: undKbaCLccegkDE7AAAA: Sending packet MESSAGE data 2["game_created",{"game_id":"2143","host":"Ziada","players":[{"name":"Ziada","isHost":true}]}]
+2025-02-22 01:43:43,266 INFO: HDzaZADtW0LzTAI9AAAB is entering room 2143 [/]
+2025-02-22 01:43:52,009 INFO: yshULnPV_uQlvOM5AAAC: Sending packet OPEN data {'sid': 'yshULnPV_uQlvOM5AAAC', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 01:43:52,024 INFO: yshULnPV_uQlvOM5AAAC: Received request to upgrade to websocket
+2025-02-22 01:43:52,029 INFO: yshULnPV_uQlvOM5AAAC: Received packet MESSAGE data 0
+2025-02-22 01:43:52,029 INFO: yshULnPV_uQlvOM5AAAC: Sending packet MESSAGE data 0{"sid":"7xOdmsdwpRvlRDnOAAAD"}
+2025-02-22 01:43:52,034 DEBUG: Client connected. Session: {'_permanent': True}
+2025-02-22 01:43:52,036 WARNING: Player name not found in connection request
+2025-02-22 01:43:52,045 INFO: yshULnPV_uQlvOM5AAAC: Upgrade to websocket successful
+2025-02-22 01:43:52,050 INFO: yshULnPV_uQlvOM5AAAC: Received packet MESSAGE data 2["join_game",{"game_id":"2143","player_name":"Ahmad","game_type":"charades"}]
+2025-02-22 01:43:52,053 INFO: received event "join_game" from 7xOdmsdwpRvlRDnOAAAD [/]
+2025-02-22 01:43:52,057 DEBUG: Session after join: {'_permanent': True, 'game_id': '2143', 'is_host': False, 'player_name': 'Ahmad'}
+2025-02-22 01:43:52,058 DEBUG: Game room after join: {'host': 'Ziada', 'players': [{'name': 'Ziada', 'isHost': True}, {'name': 'Ahmad', 'isHost': False}], 'game_type': 'charades', 'status': 'waiting', 'scores': {}, 'current_player': '', 'current_item': '', 'round_start_time': None}
+2025-02-22 01:43:52,060 INFO: Player Ahmad joined game 2143
+2025-02-22 01:43:52,060 INFO: 7xOdmsdwpRvlRDnOAAAD is entering room 2143 [/]
+2025-02-22 01:43:52,063 INFO: emitting event "join_success" to 7xOdmsdwpRvlRDnOAAAD [/]
+2025-02-22 01:43:52,063 INFO: yshULnPV_uQlvOM5AAAC: Sending packet MESSAGE data 2["join_success",{"players":[{"name":"Ziada","isHost":true},{"name":"Ahmad","isHost":false}],"host":"Ziada"}]
+2025-02-22 01:43:52,065 INFO: emitting event "player_joined" to 2143 [/]
+2025-02-22 01:43:52,066 INFO: undKbaCLccegkDE7AAAA: Sending packet MESSAGE data 2["player_joined",{"players":[{"name":"Ziada","isHost":true},{"name":"Ahmad","isHost":false}]}]
+2025-02-22 01:43:52,068 INFO: yshULnPV_uQlvOM5AAAC: Sending packet MESSAGE data 2["player_joined",{"players":[{"name":"Ziada","isHost":true},{"name":"Ahmad","isHost":false}]}]
+2025-02-22 01:43:52,070 INFO: emitting event "update_players" to 2143 [/]
+2025-02-22 01:43:52,072 INFO: undKbaCLccegkDE7AAAA: Sending packet MESSAGE data 2["update_players",{"players":["Ziada","Ahmad"]}]
+2025-02-22 01:43:52,074 INFO: yshULnPV_uQlvOM5AAAC: Sending packet MESSAGE data 2["update_players",{"players":["Ziada","Ahmad"]}]
+2025-02-22 01:43:57,013 INFO: undKbaCLccegkDE7AAAA: Received packet MESSAGE data 2["start_game",{"game_id":"2143"}]
+2025-02-22 01:43:57,016 INFO: received event "start_game" from HDzaZADtW0LzTAI9AAAB [/]
+2025-02-22 01:43:57,020 DEBUG: Starting game 2143
+2025-02-22 01:43:57,020 DEBUG: Number of players: 2
+2025-02-22 01:43:57,020 DEBUG: Players list: ['Ziada', 'Ahmad']
+2025-02-22 01:43:57,025 INFO: emitting event "game_started" to 2143 [/]
+2025-02-22 01:43:57,025 INFO: undKbaCLccegkDE7AAAA: Sending packet MESSAGE data 2["game_started",{"game_id":"2143","redirect_url":"/game/2143","transfer_id":"b8d5802d-cb1d-4323-8984-ba92f8a8eb32"}]
+2025-02-22 01:43:57,030 INFO: yshULnPV_uQlvOM5AAAC: Sending packet MESSAGE data 2["game_started",{"game_id":"2143","redirect_url":"/game/2143","transfer_id":"b8d5802d-cb1d-4323-8984-ba92f8a8eb32"}]
+2025-02-22 01:43:57,146 INFO: Player disconnected: Ziada
+2025-02-22 01:43:57,170 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:43:57,174 DEBUG: Is session permanent: True
+2025-02-22 01:43:57,177 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:43:58,110 INFO: Player disconnected: Ahmad
+2025-02-22 01:43:58,584 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:43:58,586 DEBUG: Is session permanent: True
+2025-02-22 01:43:58,589 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:45:38,458 INFO: Server initialized for eventlet.
+2025-02-22 01:45:38,464 INFO: Starting server...
+2025-02-22 01:45:38,465 INFO:  * Restarting with stat
+2025-02-22 01:45:40,616 INFO: Server initialized for eventlet.
+2025-02-22 01:45:40,620 INFO: Starting server...
+2025-02-22 01:45:40,620 WARNING:  * Debugger is active!
+2025-02-22 01:45:40,635 INFO:  * Debugger PIN: 225-132-545
+2025-02-22 01:49:19,832 INFO: Server initialized for eventlet.
+2025-02-22 01:49:19,840 INFO: Starting server...
+2025-02-22 01:49:19,854 INFO:  * Restarting with stat
+2025-02-22 01:49:21,593 INFO: Server initialized for eventlet.
+2025-02-22 01:49:21,597 INFO: Starting server...
+2025-02-22 01:49:21,613 WARNING:  * Debugger is active!
+2025-02-22 01:49:21,631 INFO:  * Debugger PIN: 531-980-121
+2025-02-22 01:49:40,875 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:49:40,876 DEBUG: Is session permanent: True
+2025-02-22 01:49:40,876 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:49:41,020 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:49:41,020 DEBUG: Is session permanent: True
+2025-02-22 01:49:41,020 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:49:41,160 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:49:41,160 DEBUG: Is session permanent: True
+2025-02-22 01:49:41,162 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:50:08,517 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:50:08,518 DEBUG: Is session permanent: True
+2025-02-22 01:50:08,518 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:50:08,595 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:50:08,595 DEBUG: Is session permanent: True
+2025-02-22 01:50:08,597 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:50:08,603 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:50:08,604 DEBUG: Is session permanent: True
+2025-02-22 01:50:08,605 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:50:11,763 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:50:11,763 DEBUG: Is session permanent: True
+2025-02-22 01:50:11,765 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:50:11,869 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:50:11,871 DEBUG: Is session permanent: True
+2025-02-22 01:50:11,871 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:50:11,875 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:50:11,875 DEBUG: Is session permanent: True
+2025-02-22 01:50:11,877 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:50:13,993 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:50:13,995 DEBUG: Is session permanent: True
+2025-02-22 01:50:13,995 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:50:14,070 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:50:14,074 DEBUG: Is session permanent: True
+2025-02-22 01:50:14,075 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:50:14,079 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:50:14,079 DEBUG: Is session permanent: True
+2025-02-22 01:50:14,080 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:50:22,306 INFO: r8d5CzTlv4zbe_wOAAAA: Sending packet OPEN data {'sid': 'r8d5CzTlv4zbe_wOAAAA', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 01:50:22,342 INFO: r8d5CzTlv4zbe_wOAAAA: Received request to upgrade to websocket
+2025-02-22 01:50:22,347 INFO: r8d5CzTlv4zbe_wOAAAA: Received packet MESSAGE data 0
+2025-02-22 01:50:22,351 INFO: r8d5CzTlv4zbe_wOAAAA: Sending packet MESSAGE data 0{"sid":"dJtzc3coJv6TDEBqAAAB"}
+2025-02-22 01:50:22,356 DEBUG: Client connected. Session: {'_permanent': True}
+2025-02-22 01:50:22,357 WARNING: Player name not found in connection request
+2025-02-22 01:50:22,375 INFO: r8d5CzTlv4zbe_wOAAAA: Upgrade to websocket successful
+2025-02-22 01:50:22,385 INFO: r8d5CzTlv4zbe_wOAAAA: Received packet MESSAGE data 2["create_game",{"game_id":9856,"player_name":"Ziada","game_type":"charades"}]
+2025-02-22 01:50:22,388 INFO: received event "create_game" from dJtzc3coJv6TDEBqAAAB [/]
+2025-02-22 01:50:22,394 INFO: Creating game: {'game_id': 9856, 'player_name': 'Ziada', 'game_type': 'charades'}
+2025-02-22 01:50:22,396 DEBUG: Session state before game creation: {'_permanent': True}
+2025-02-22 01:50:22,397 DEBUG: Session contents before game creation: {'_permanent': True}
+2025-02-22 01:50:22,397 DEBUG: Create game request - Game ID: 9856
+2025-02-22 01:50:22,400 DEBUG: Create game request - Player Name: Ziada
+2025-02-22 01:50:22,402 DEBUG: Create game request - Game Type: charades
+2025-02-22 01:50:22,402 DEBUG: Creating game for player: Ziada
+2025-02-22 01:50:22,405 DEBUG: Session after create: {'_permanent': True, 'game_id': '9856', 'is_host': True, 'player_name': 'Ziada'}
+2025-02-22 01:50:22,406 DEBUG: Game room after create: {'host': 'Ziada', 'players': [{'name': 'Ziada', 'isHost': True}], 'game_type': 'charades', 'status': 'waiting', 'scores': {}, 'current_player': '', 'current_item': '', 'round_start_time': None}
+2025-02-22 01:50:22,409 DEBUG: Player name set in session: Ziada
+2025-02-22 01:50:22,412 DEBUG: Session after creating game: {'_permanent': True, 'game_id': '9856', 'is_host': True, 'player_name': 'Ziada'}
+2025-02-22 01:50:22,413 INFO: Game room 9856 created by Ziada
+2025-02-22 01:50:22,416 INFO: emitting event "game_created" to dJtzc3coJv6TDEBqAAAB [/]
+2025-02-22 01:50:22,420 INFO: r8d5CzTlv4zbe_wOAAAA: Sending packet MESSAGE data 2["game_created",{"game_id":"9856","host":"Ziada","players":[{"name":"Ziada","isHost":true}]}]
+2025-02-22 01:50:22,424 INFO: dJtzc3coJv6TDEBqAAAB is entering room 9856 [/]
+2025-02-22 01:50:36,176 INFO: 6wc2GUsxWZOkr1ySAAAC: Sending packet OPEN data {'sid': '6wc2GUsxWZOkr1ySAAAC', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 01:50:36,206 INFO: 6wc2GUsxWZOkr1ySAAAC: Received request to upgrade to websocket
+2025-02-22 01:50:36,213 INFO: 6wc2GUsxWZOkr1ySAAAC: Received packet MESSAGE data 0
+2025-02-22 01:50:36,217 INFO: 6wc2GUsxWZOkr1ySAAAC: Sending packet MESSAGE data 0{"sid":"Wb5ulgMnlqUe343lAAAD"}
+2025-02-22 01:50:36,222 DEBUG: Client connected. Session: {'_permanent': True}
+2025-02-22 01:50:36,222 WARNING: Player name not found in connection request
+2025-02-22 01:50:36,246 INFO: 6wc2GUsxWZOkr1ySAAAC: Upgrade to websocket successful
+2025-02-22 01:50:36,251 INFO: 6wc2GUsxWZOkr1ySAAAC: Received packet MESSAGE data 2["join_game",{"game_id":"9856","player_name":"Ahmad","game_type":"charades"}]
+2025-02-22 01:50:36,254 INFO: received event "join_game" from Wb5ulgMnlqUe343lAAAD [/]
+2025-02-22 01:50:36,261 DEBUG: Session after join: {'_permanent': True, 'game_id': '9856', 'is_host': False, 'player_name': 'Ahmad'}
+2025-02-22 01:50:36,265 DEBUG: Game room after join: {'host': 'Ziada', 'players': [{'name': 'Ziada', 'isHost': True}, {'name': 'Ahmad', 'isHost': False}], 'game_type': 'charades', 'status': 'waiting', 'scores': {}, 'current_player': '', 'current_item': '', 'round_start_time': None}
+2025-02-22 01:50:36,267 INFO: Player Ahmad joined game 9856
+2025-02-22 01:50:36,269 INFO: Wb5ulgMnlqUe343lAAAD is entering room 9856 [/]
+2025-02-22 01:50:36,271 INFO: emitting event "join_success" to Wb5ulgMnlqUe343lAAAD [/]
+2025-02-22 01:50:36,274 INFO: 6wc2GUsxWZOkr1ySAAAC: Sending packet MESSAGE data 2["join_success",{"players":[{"name":"Ziada","isHost":true},{"name":"Ahmad","isHost":false}],"host":"Ziada"}]
+2025-02-22 01:50:36,277 INFO: emitting event "player_joined" to 9856 [/]
+2025-02-22 01:50:36,278 INFO: r8d5CzTlv4zbe_wOAAAA: Sending packet MESSAGE data 2["player_joined",{"players":[{"name":"Ziada","isHost":true},{"name":"Ahmad","isHost":false}]}]
+2025-02-22 01:50:36,278 INFO: 6wc2GUsxWZOkr1ySAAAC: Sending packet MESSAGE data 2["player_joined",{"players":[{"name":"Ziada","isHost":true},{"name":"Ahmad","isHost":false}]}]
+2025-02-22 01:50:36,283 INFO: emitting event "update_players" to 9856 [/]
+2025-02-22 01:50:36,283 INFO: r8d5CzTlv4zbe_wOAAAA: Sending packet MESSAGE data 2["update_players",{"players":["Ziada","Ahmad"]}]
+2025-02-22 01:50:36,284 INFO: 6wc2GUsxWZOkr1ySAAAC: Sending packet MESSAGE data 2["update_players",{"players":["Ziada","Ahmad"]}]
+2025-02-22 01:50:39,307 INFO: r8d5CzTlv4zbe_wOAAAA: Received packet MESSAGE data 2["start_game",{"game_id":"9856"}]
+2025-02-22 01:50:39,317 INFO: received event "start_game" from dJtzc3coJv6TDEBqAAAB [/]
+2025-02-22 01:50:39,317 DEBUG: Starting game 9856
+2025-02-22 01:50:39,320 DEBUG: Number of players: 2
+2025-02-22 01:50:39,320 DEBUG: Players list: ['Ziada', 'Ahmad']
+2025-02-22 01:50:39,321 INFO: emitting event "game_started" to 9856 [/]
+2025-02-22 01:50:39,321 INFO: r8d5CzTlv4zbe_wOAAAA: Sending packet MESSAGE data 2["game_started",{"game_id":"9856","redirect_url":"/game/9856","transfer_id":"f6635e0a-b38e-4e15-ac8e-6ade366311d3"}]
+2025-02-22 01:50:39,323 INFO: 6wc2GUsxWZOkr1ySAAAC: Sending packet MESSAGE data 2["game_started",{"game_id":"9856","redirect_url":"/game/9856","transfer_id":"f6635e0a-b38e-4e15-ac8e-6ade366311d3"}]
+2025-02-22 01:50:39,435 INFO: Player disconnected: Ziada
+2025-02-22 01:50:39,445 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:50:39,447 DEBUG: Is session permanent: True
+2025-02-22 01:50:39,447 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:50:40,170 INFO: Player disconnected: Ahmad
+2025-02-22 01:50:40,219 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:50:40,219 DEBUG: Is session permanent: True
+2025-02-22 01:50:40,219 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:54:07,252 INFO: Server initialized for eventlet.
+2025-02-22 01:54:07,256 INFO: Starting server...
+2025-02-22 01:54:07,268 INFO:  * Restarting with stat
+2025-02-22 01:54:08,973 INFO: Server initialized for eventlet.
+2025-02-22 01:54:08,978 INFO: Starting server...
+2025-02-22 01:54:08,992 WARNING:  * Debugger is active!
+2025-02-22 01:54:09,006 INFO:  * Debugger PIN: 531-980-121
+2025-02-22 01:55:13,404 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:55:13,406 DEBUG: Is session permanent: True
+2025-02-22 01:55:13,406 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:55:13,528 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:55:13,528 DEBUG: Is session permanent: True
+2025-02-22 01:55:13,529 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:55:13,691 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:55:13,692 DEBUG: Is session permanent: True
+2025-02-22 01:55:13,693 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:55:16,403 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:55:16,403 DEBUG: Is session permanent: True
+2025-02-22 01:55:16,404 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:55:16,469 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:55:16,469 DEBUG: Is session permanent: True
+2025-02-22 01:55:16,470 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:55:16,520 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:55:16,520 DEBUG: Is session permanent: True
+2025-02-22 01:55:16,520 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:55:19,024 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:55:19,024 DEBUG: Is session permanent: True
+2025-02-22 01:55:19,024 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:55:19,072 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:55:19,074 DEBUG: Is session permanent: True
+2025-02-22 01:55:19,074 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:55:19,083 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:55:19,083 DEBUG: Is session permanent: True
+2025-02-22 01:55:19,083 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:55:25,654 INFO: rvuIiF0BfEys3TYqAAAA: Sending packet OPEN data {'sid': 'rvuIiF0BfEys3TYqAAAA', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 01:55:25,666 INFO: rvuIiF0BfEys3TYqAAAA: Received request to upgrade to websocket
+2025-02-22 01:55:25,669 INFO: rvuIiF0BfEys3TYqAAAA: Received packet MESSAGE data 0
+2025-02-22 01:55:25,671 INFO: rvuIiF0BfEys3TYqAAAA: Sending packet MESSAGE data 0{"sid":"4Z1L2Xy7G48ICId0AAAB"}
+2025-02-22 01:55:25,675 DEBUG: Client connected. Session: {'_permanent': True}
+2025-02-22 01:55:25,675 WARNING: Player name not found in connection request
+2025-02-22 01:55:25,689 INFO: rvuIiF0BfEys3TYqAAAA: Upgrade to websocket successful
+2025-02-22 01:55:25,692 INFO: rvuIiF0BfEys3TYqAAAA: Received packet MESSAGE data 2["create_game",{"game_id":4530,"player_name":"Ziada","game_type":"charades"}]
+2025-02-22 01:55:25,695 INFO: received event "create_game" from 4Z1L2Xy7G48ICId0AAAB [/]
+2025-02-22 01:55:25,697 INFO: Creating game: {'game_id': 4530, 'player_name': 'Ziada', 'game_type': 'charades'}
+2025-02-22 01:55:25,698 DEBUG: Session state before game creation: {'_permanent': True}
+2025-02-22 01:55:25,698 DEBUG: Session contents before game creation: {'_permanent': True}
+2025-02-22 01:55:25,698 DEBUG: Create game request - Game ID: 4530
+2025-02-22 01:55:25,700 DEBUG: Create game request - Player Name: Ziada
+2025-02-22 01:55:25,700 DEBUG: Create game request - Game Type: charades
+2025-02-22 01:55:25,702 DEBUG: Creating game for player: Ziada
+2025-02-22 01:55:25,702 DEBUG: Session after create: {'_permanent': True, 'game_id': '4530', 'is_host': True, 'player_name': 'Ziada'}
+2025-02-22 01:55:25,702 DEBUG: Game room after create: {'host': 'Ziada', 'players': [{'name': 'Ziada', 'isHost': True}], 'game_type': 'charades', 'status': 'waiting', 'scores': {}, 'current_player': '', 'current_item': '', 'round_start_time': None}
+2025-02-22 01:55:25,704 DEBUG: Player name set in session: Ziada
+2025-02-22 01:55:25,704 DEBUG: Session after creating game: {'_permanent': True, 'game_id': '4530', 'is_host': True, 'player_name': 'Ziada'}
+2025-02-22 01:55:25,706 INFO: Game room 4530 created by Ziada
+2025-02-22 01:55:25,706 INFO: emitting event "game_created" to 4Z1L2Xy7G48ICId0AAAB [/]
+2025-02-22 01:55:25,709 INFO: rvuIiF0BfEys3TYqAAAA: Sending packet MESSAGE data 2["game_created",{"game_id":"4530","host":"Ziada","players":[{"name":"Ziada","isHost":true}]}]
+2025-02-22 01:55:25,710 INFO: 4Z1L2Xy7G48ICId0AAAB is entering room 4530 [/]
+2025-02-22 01:55:30,403 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:55:30,403 DEBUG: Is session permanent: True
+2025-02-22 01:55:30,403 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:55:30,486 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:55:30,486 DEBUG: Is session permanent: True
+2025-02-22 01:55:30,487 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:55:30,491 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:55:30,491 DEBUG: Is session permanent: True
+2025-02-22 01:55:30,493 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:55:38,272 INFO: -ftuy5tiqZfaA__GAAAC: Sending packet OPEN data {'sid': '-ftuy5tiqZfaA__GAAAC', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 01:55:38,283 INFO: -ftuy5tiqZfaA__GAAAC: Received request to upgrade to websocket
+2025-02-22 01:55:38,286 INFO: -ftuy5tiqZfaA__GAAAC: Received packet MESSAGE data 0
+2025-02-22 01:55:38,288 INFO: -ftuy5tiqZfaA__GAAAC: Sending packet MESSAGE data 0{"sid":"GIu5V39WF77qUrWaAAAD"}
+2025-02-22 01:55:38,290 DEBUG: Client connected. Session: {'_permanent': True}
+2025-02-22 01:55:38,290 WARNING: Player name not found in connection request
+2025-02-22 01:55:38,298 INFO: -ftuy5tiqZfaA__GAAAC: Upgrade to websocket successful
+2025-02-22 01:55:38,300 INFO: -ftuy5tiqZfaA__GAAAC: Received packet MESSAGE data 2["join_game",{"game_id":"4530","player_name":"Ahmad","game_type":"charades"}]
+2025-02-22 01:55:38,302 INFO: received event "join_game" from GIu5V39WF77qUrWaAAAD [/]
+2025-02-22 01:55:38,303 DEBUG: Session after join: {'_permanent': True, 'game_id': '4530', 'is_host': False, 'player_name': 'Ahmad'}
+2025-02-22 01:55:38,304 DEBUG: Game room after join: {'host': 'Ziada', 'players': [{'name': 'Ziada', 'isHost': True}, {'name': 'Ahmad', 'isHost': False}], 'game_type': 'charades', 'status': 'waiting', 'scores': {}, 'current_player': '', 'current_item': '', 'round_start_time': None}
+2025-02-22 01:55:38,305 INFO: Player Ahmad joined game 4530
+2025-02-22 01:55:38,306 INFO: GIu5V39WF77qUrWaAAAD is entering room 4530 [/]
+2025-02-22 01:55:38,306 INFO: emitting event "join_success" to GIu5V39WF77qUrWaAAAD [/]
+2025-02-22 01:55:38,307 INFO: -ftuy5tiqZfaA__GAAAC: Sending packet MESSAGE data 2["join_success",{"players":[{"name":"Ziada","isHost":true},{"name":"Ahmad","isHost":false}],"host":"Ziada"}]
+2025-02-22 01:55:38,308 INFO: emitting event "player_joined" to 4530 [/]
+2025-02-22 01:55:38,309 INFO: rvuIiF0BfEys3TYqAAAA: Sending packet MESSAGE data 2["player_joined",{"players":[{"name":"Ziada","isHost":true},{"name":"Ahmad","isHost":false}]}]
+2025-02-22 01:55:38,310 INFO: -ftuy5tiqZfaA__GAAAC: Sending packet MESSAGE data 2["player_joined",{"players":[{"name":"Ziada","isHost":true},{"name":"Ahmad","isHost":false}]}]
+2025-02-22 01:55:38,311 INFO: emitting event "update_players" to 4530 [/]
+2025-02-22 01:55:38,312 INFO: rvuIiF0BfEys3TYqAAAA: Sending packet MESSAGE data 2["update_players",{"players":["Ziada","Ahmad"]}]
+2025-02-22 01:55:38,314 INFO: -ftuy5tiqZfaA__GAAAC: Sending packet MESSAGE data 2["update_players",{"players":["Ziada","Ahmad"]}]
+2025-02-22 01:55:42,010 INFO: rvuIiF0BfEys3TYqAAAA: Received packet MESSAGE data 2["start_game",{"game_id":"4530"}]
+2025-02-22 01:55:42,013 INFO: received event "start_game" from 4Z1L2Xy7G48ICId0AAAB [/]
+2025-02-22 01:55:42,019 DEBUG: Starting game 4530
+2025-02-22 01:55:42,020 DEBUG: Number of players: 2
+2025-02-22 01:55:42,021 DEBUG: Players list: ['Ziada', 'Ahmad']
+2025-02-22 01:55:42,021 INFO: emitting event "game_started" to 4530 [/]
+2025-02-22 01:55:42,023 INFO: rvuIiF0BfEys3TYqAAAA: Sending packet MESSAGE data 2["game_started",{"game_id":"4530","redirect_url":"/game/4530","transfer_id":"d4202ed7-77a8-4594-b415-d9261925da49"}]
+2025-02-22 01:55:42,023 INFO: -ftuy5tiqZfaA__GAAAC: Sending packet MESSAGE data 2["game_started",{"game_id":"4530","redirect_url":"/game/4530","transfer_id":"d4202ed7-77a8-4594-b415-d9261925da49"}]
+2025-02-22 01:55:42,152 INFO: Player disconnected: Ziada
+2025-02-22 01:55:42,177 DEBUG: Session before connection: <SecureCookieSession {'_permanent': True}>
+2025-02-22 01:55:42,181 DEBUG: Is session permanent: True
+2025-02-22 01:55:42,182 DEBUG: Session contents before connection: {'_permanent': True}
+2025-02-22 01:55:42,220 ERROR: Error accessing game route: Object of type Undefined is not JSON serializable
+2025-02-22 01:55:42,245 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 01:55:42,250 DEBUG: Is session permanent: True
+2025-02-22 01:55:42,250 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 01:55:42,347 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 01:55:42,348 DEBUG: Is session permanent: True
+2025-02-22 01:55:42,349 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 01:55:42,354 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 01:55:42,354 DEBUG: Is session permanent: True
+2025-02-22 01:55:42,355 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 01:55:43,020 INFO: Player disconnected: Ahmad
+2025-02-22 01:55:43,044 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 01:55:43,045 DEBUG: Is session permanent: True
+2025-02-22 01:55:43,046 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 01:55:43,048 ERROR: Error accessing game route: Object of type Undefined is not JSON serializable
+2025-02-22 01:55:43,066 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 01:55:43,069 DEBUG: Is session permanent: True
+2025-02-22 01:55:43,069 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 01:55:43,195 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 01:55:43,197 DEBUG: Is session permanent: True
+2025-02-22 01:55:43,198 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 01:55:43,695 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 01:55:43,695 DEBUG: Is session permanent: True
+2025-02-22 01:55:43,698 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:00:05,045 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
+2025-02-22 02:00:05,525 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
+2025-02-22 02:00:05,775 INFO:  * Restarting with stat
+2025-02-22 02:00:07,368 INFO: Server initialized for eventlet.
+2025-02-22 02:00:07,372 INFO: Starting server...
+2025-02-22 02:00:07,383 WARNING:  * Debugger is active!
+2025-02-22 02:00:07,399 INFO:  * Debugger PIN: 531-980-121
+2025-02-22 02:00:59,799 INFO: Server initialized for eventlet.
+2025-02-22 02:00:59,802 INFO: Starting server...
+2025-02-22 02:00:59,813 INFO:  * Restarting with stat
+2025-02-22 02:01:01,324 INFO: Server initialized for eventlet.
+2025-02-22 02:01:01,332 INFO: Starting server...
+2025-02-22 02:01:01,343 WARNING:  * Debugger is active!
+2025-02-22 02:01:01,360 INFO:  * Debugger PIN: 531-980-121
+2025-02-22 02:01:31,509 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:01:31,510 DEBUG: Is session permanent: True
+2025-02-22 02:01:31,511 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:01:31,637 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:01:31,638 DEBUG: Is session permanent: True
+2025-02-22 02:01:31,638 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:01:31,786 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:01:31,787 DEBUG: Is session permanent: True
+2025-02-22 02:01:31,788 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:01:34,822 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:01:34,822 DEBUG: Is session permanent: True
+2025-02-22 02:01:34,822 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:01:34,929 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:01:34,932 DEBUG: Is session permanent: True
+2025-02-22 02:01:34,932 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:01:34,939 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:01:34,941 DEBUG: Is session permanent: True
+2025-02-22 02:01:34,941 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:01:51,637 INFO: B0jtm29B2Rjo9BCWAAAA: Sending packet OPEN data {'sid': 'B0jtm29B2Rjo9BCWAAAA', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 02:01:51,670 INFO: B0jtm29B2Rjo9BCWAAAA: Received request to upgrade to websocket
+2025-02-22 02:01:51,674 INFO: B0jtm29B2Rjo9BCWAAAA: Received packet MESSAGE data 0
+2025-02-22 02:01:51,676 INFO: B0jtm29B2Rjo9BCWAAAA: Sending packet MESSAGE data 0{"sid":"TN_tf1g7UWFGcgrDAAAB"}
+2025-02-22 02:01:51,678 DEBUG: Client connected. Session: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:01:51,680 WARNING: Player name not found in connection request
+2025-02-22 02:01:51,691 INFO: B0jtm29B2Rjo9BCWAAAA: Upgrade to websocket successful
+2025-02-22 02:01:51,695 INFO: B0jtm29B2Rjo9BCWAAAA: Received packet MESSAGE data 2["create_game",{"game_id":5166,"player_name":"Ziada","game_type":"charades"}]
+2025-02-22 02:01:51,697 INFO: received event "create_game" from TN_tf1g7UWFGcgrDAAAB [/]
+2025-02-22 02:01:51,700 INFO: Creating game: {'game_id': 5166, 'player_name': 'Ziada', 'game_type': 'charades'}
+2025-02-22 02:01:51,700 DEBUG: Session state before game creation: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:01:51,702 DEBUG: Session contents before game creation: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:01:51,702 DEBUG: Create game request - Game ID: 5166
+2025-02-22 02:01:51,702 DEBUG: Create game request - Player Name: Ziada
+2025-02-22 02:01:51,704 DEBUG: Create game request - Game Type: charades
+2025-02-22 02:01:51,704 DEBUG: Creating game for player: Ziada
+2025-02-22 02:01:51,705 DEBUG: Session after create: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True, 'game_id': '5166', 'is_host': True, 'player_name': 'Ziada'}
+2025-02-22 02:01:51,706 DEBUG: Game room after create: {'host': 'Ziada', 'players': [{'name': 'Ziada', 'isHost': True}], 'game_type': 'charades', 'status': 'waiting', 'scores': {}, 'current_player': '', 'current_item': '', 'round_start_time': None}
+2025-02-22 02:01:51,707 DEBUG: Player name set in session: Ziada
+2025-02-22 02:01:51,707 DEBUG: Session after creating game: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True, 'game_id': '5166', 'is_host': True, 'player_name': 'Ziada'}
+2025-02-22 02:01:51,708 INFO: Game room 5166 created by Ziada
+2025-02-22 02:01:51,709 INFO: emitting event "game_created" to TN_tf1g7UWFGcgrDAAAB [/]
+2025-02-22 02:01:51,710 INFO: B0jtm29B2Rjo9BCWAAAA: Sending packet MESSAGE data 2["game_created",{"game_id":"5166","host":"Ziada","players":[{"name":"Ziada","isHost":true}]}]
+2025-02-22 02:01:51,711 INFO: TN_tf1g7UWFGcgrDAAAB is entering room 5166 [/]
+2025-02-22 02:02:03,943 INFO: iRss8598wCFrHPkjAAAC: Sending packet OPEN data {'sid': 'iRss8598wCFrHPkjAAAC', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 02:02:03,984 INFO: iRss8598wCFrHPkjAAAC: Received packet MESSAGE data 0
+2025-02-22 02:02:03,986 INFO: iRss8598wCFrHPkjAAAC: Sending packet MESSAGE data 0{"sid":"9qfSoySD2hWjn_82AAAD"}
+2025-02-22 02:02:03,987 DEBUG: Client connected. Session: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:02:03,990 WARNING: Player name not found in connection request
+2025-02-22 02:02:03,991 INFO: iRss8598wCFrHPkjAAAC: Received request to upgrade to websocket
+2025-02-22 02:02:04,002 INFO: iRss8598wCFrHPkjAAAC: Upgrade to websocket successful
+2025-02-22 02:02:04,004 INFO: iRss8598wCFrHPkjAAAC: Received packet MESSAGE data 2["join_game",{"game_id":"5166","player_name":"Ahmad","game_type":"charades"}]
+2025-02-22 02:02:04,004 INFO: received event "join_game" from 9qfSoySD2hWjn_82AAAD [/]
+2025-02-22 02:02:04,006 DEBUG: Session after join: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True, 'game_id': '5166', 'is_host': False, 'player_name': 'Ahmad'}
+2025-02-22 02:02:04,006 DEBUG: Game room after join: {'host': 'Ziada', 'players': [{'name': 'Ziada', 'isHost': True}, {'name': 'Ahmad', 'isHost': False}], 'game_type': 'charades', 'status': 'waiting', 'scores': {}, 'current_player': '', 'current_item': '', 'round_start_time': None}
+2025-02-22 02:02:04,009 INFO: Player Ahmad joined game 5166
+2025-02-22 02:02:04,010 INFO: 9qfSoySD2hWjn_82AAAD is entering room 5166 [/]
+2025-02-22 02:02:04,010 INFO: emitting event "join_success" to 9qfSoySD2hWjn_82AAAD [/]
+2025-02-22 02:02:04,012 INFO: iRss8598wCFrHPkjAAAC: Sending packet MESSAGE data 2["join_success",{"players":[{"name":"Ziada","isHost":true},{"name":"Ahmad","isHost":false}],"host":"Ziada"}]
+2025-02-22 02:02:04,013 INFO: emitting event "player_joined" to 5166 [/]
+2025-02-22 02:02:04,013 INFO: B0jtm29B2Rjo9BCWAAAA: Sending packet MESSAGE data 2["player_joined",{"players":[{"name":"Ziada","isHost":true},{"name":"Ahmad","isHost":false}]}]
+2025-02-22 02:02:04,015 INFO: iRss8598wCFrHPkjAAAC: Sending packet MESSAGE data 2["player_joined",{"players":[{"name":"Ziada","isHost":true},{"name":"Ahmad","isHost":false}]}]
+2025-02-22 02:02:04,017 INFO: emitting event "update_players" to 5166 [/]
+2025-02-22 02:02:04,018 INFO: B0jtm29B2Rjo9BCWAAAA: Sending packet MESSAGE data 2["update_players",{"players":["Ziada","Ahmad"]}]
+2025-02-22 02:02:04,019 INFO: iRss8598wCFrHPkjAAAC: Sending packet MESSAGE data 2["update_players",{"players":["Ziada","Ahmad"]}]
+2025-02-22 02:02:09,287 INFO: B0jtm29B2Rjo9BCWAAAA: Received packet MESSAGE data 2["start_game",{"game_id":"5166"}]
+2025-02-22 02:02:09,291 INFO: received event "start_game" from TN_tf1g7UWFGcgrDAAAB [/]
+2025-02-22 02:02:09,294 DEBUG: Starting game 5166
+2025-02-22 02:02:09,296 DEBUG: Number of players: 2
+2025-02-22 02:02:09,297 DEBUG: Players list: ['Ziada', 'Ahmad']
+2025-02-22 02:02:09,297 INFO: emitting event "game_started" to 5166 [/]
+2025-02-22 02:02:09,304 INFO: B0jtm29B2Rjo9BCWAAAA: Sending packet MESSAGE data 2["game_started",{"game_id":"5166","redirect_url":"/game/5166","transfer_id":"05b81d00-0a50-4898-a6dc-07d746582159"}]
+2025-02-22 02:02:09,310 INFO: iRss8598wCFrHPkjAAAC: Sending packet MESSAGE data 2["game_started",{"game_id":"5166","redirect_url":"/game/5166","transfer_id":"05b81d00-0a50-4898-a6dc-07d746582159"}]
+2025-02-22 02:02:09,436 INFO: Player disconnected: Ziada
+2025-02-22 02:02:09,463 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:02:09,466 DEBUG: Is session permanent: True
+2025-02-22 02:02:09,470 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:02:09,602 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:02:09,604 DEBUG: Is session permanent: True
+2025-02-22 02:02:09,604 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:02:09,610 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:02:09,611 DEBUG: Is session permanent: True
+2025-02-22 02:02:09,613 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:02:10,005 INFO: OHPJwXQ_LCVb-G1UAAAE: Sending packet OPEN data {'sid': 'OHPJwXQ_LCVb-G1UAAAE', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 02:02:10,061 INFO: OHPJwXQ_LCVb-G1UAAAE: Received request to upgrade to websocket
+2025-02-22 02:02:10,065 INFO: OHPJwXQ_LCVb-G1UAAAE: Received packet MESSAGE data 0
+2025-02-22 02:02:10,065 INFO: OHPJwXQ_LCVb-G1UAAAE: Sending packet MESSAGE data 0{"sid":"Iiq8i7FnBumQf3JFAAAF"}
+2025-02-22 02:02:10,069 DEBUG: Client connected. Session: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:02:10,069 WARNING: Player name not found in connection request
+2025-02-22 02:02:10,210 INFO: Player disconnected: Ahmad
+2025-02-22 02:02:10,227 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:02:10,230 DEBUG: Is session permanent: True
+2025-02-22 02:02:10,230 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:02:10,363 INFO: OHPJwXQ_LCVb-G1UAAAE: Upgrade to websocket successful
+2025-02-22 02:02:10,414 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:02:10,415 DEBUG: Is session permanent: True
+2025-02-22 02:02:10,416 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:02:10,422 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:02:10,424 DEBUG: Is session permanent: True
+2025-02-22 02:02:10,424 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:02:10,455 INFO: OHPJwXQ_LCVb-G1UAAAE: Received packet MESSAGE data 2["join_game_room",{"game_id":"5166","player_name":"Ziada"}]
+2025-02-22 02:02:10,457 INFO: received event "join_game_room" from Iiq8i7FnBumQf3JFAAAF [/]
+2025-02-22 02:02:10,459 DEBUG: Received join_game_room event - game_id: 5166, player_name: None
+2025-02-22 02:02:10,460 INFO: Iiq8i7FnBumQf3JFAAAF is entering room 5166 [/]
+2025-02-22 02:02:10,461 INFO: Player None joined game room 5166
+2025-02-22 02:02:10,461 DEBUG: Current players in room 5166: ['Ziada', 'Ahmad']
+2025-02-22 02:02:10,463 INFO: emitting event "game_state" to 5166 [/]
+2025-02-22 02:02:10,463 INFO: OHPJwXQ_LCVb-G1UAAAE: Sending packet MESSAGE data 2["game_state",{"message":"None \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ahmad"]}]
+2025-02-22 02:02:10,774 INFO: OHPJwXQ_LCVb-G1UAAAE: Received packet MESSAGE data 2["request_players",{"game_id":"5166"}]
+2025-02-22 02:02:10,775 INFO: received event "request_players" from Iiq8i7FnBumQf3JFAAAF [/]
+2025-02-22 02:02:10,777 DEBUG: Received request_players event for game 5166
+2025-02-22 02:02:10,778 DEBUG: Sending player list for game 5166: ['Ziada', 'Ahmad']
+2025-02-22 02:02:10,778 INFO: emitting event "game_state" to 5166 [/]
+2025-02-22 02:02:10,779 INFO: OHPJwXQ_LCVb-G1UAAAE: Sending packet MESSAGE data 2["game_state",{"players":["Ziada","Ahmad"],"message":"\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0644\u0627\u0639\u0628\u064a\u0646"}]
+2025-02-22 02:02:10,862 INFO: ueg9Tw6oUlM_E_PVAAAG: Sending packet OPEN data {'sid': 'ueg9Tw6oUlM_E_PVAAAG', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 02:02:11,037 INFO: ueg9Tw6oUlM_E_PVAAAG: Received request to upgrade to websocket
+2025-02-22 02:02:11,047 INFO: ueg9Tw6oUlM_E_PVAAAG: Received packet MESSAGE data 0
+2025-02-22 02:02:11,048 INFO: ueg9Tw6oUlM_E_PVAAAG: Sending packet MESSAGE data 0{"sid":"Dxk8KUsnkbV1fw4mAAAH"}
+2025-02-22 02:02:11,049 DEBUG: Client connected. Session: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:02:11,051 WARNING: Player name not found in connection request
+2025-02-22 02:02:11,260 INFO: ueg9Tw6oUlM_E_PVAAAG: Upgrade to websocket successful
+2025-02-22 02:02:11,271 INFO: ueg9Tw6oUlM_E_PVAAAG: Received packet MESSAGE data 2["join_game_room",{"game_id":"5166","player_name":"Ahmad"}]
+2025-02-22 02:02:11,271 INFO: received event "join_game_room" from Dxk8KUsnkbV1fw4mAAAH [/]
+2025-02-22 02:02:11,274 DEBUG: Received join_game_room event - game_id: 5166, player_name: None
+2025-02-22 02:02:11,274 INFO: Dxk8KUsnkbV1fw4mAAAH is entering room 5166 [/]
+2025-02-22 02:02:11,274 INFO: Player None joined game room 5166
+2025-02-22 02:02:11,274 DEBUG: Current players in room 5166: ['Ziada', 'Ahmad']
+2025-02-22 02:02:11,274 INFO: emitting event "game_state" to 5166 [/]
+2025-02-22 02:02:11,277 INFO: OHPJwXQ_LCVb-G1UAAAE: Sending packet MESSAGE data 2["game_state",{"message":"None \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ahmad"]}]
+2025-02-22 02:02:11,278 INFO: ueg9Tw6oUlM_E_PVAAAG: Sending packet MESSAGE data 2["game_state",{"message":"None \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ahmad"]}]
+2025-02-22 02:02:11,280 INFO: ueg9Tw6oUlM_E_PVAAAG: Received packet MESSAGE data 2["request_players",{"game_id":"5166"}]
+2025-02-22 02:02:11,280 INFO: received event "request_players" from Dxk8KUsnkbV1fw4mAAAH [/]
+2025-02-22 02:02:11,282 DEBUG: Received request_players event for game 5166
+2025-02-22 02:02:11,282 DEBUG: Sending player list for game 5166: ['Ziada', 'Ahmad']
+2025-02-22 02:02:11,282 INFO: emitting event "game_state" to 5166 [/]
+2025-02-22 02:02:11,286 INFO: OHPJwXQ_LCVb-G1UAAAE: Sending packet MESSAGE data 2["game_state",{"players":["Ziada","Ahmad"],"message":"\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0644\u0627\u0639\u0628\u064a\u0646"}]
+2025-02-22 02:02:11,288 INFO: ueg9Tw6oUlM_E_PVAAAG: Sending packet MESSAGE data 2["game_state",{"players":["Ziada","Ahmad"],"message":"\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0644\u0627\u0639\u0628\u064a\u0646"}]
+2025-02-22 02:03:51,428 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
+2025-02-22 02:03:51,664 INFO:  * Restarting with stat
+2025-02-22 02:03:53,702 INFO: Server initialized for eventlet.
+2025-02-22 02:03:53,709 INFO: Starting server...
+2025-02-22 02:03:53,726 WARNING:  * Debugger is active!
+2025-02-22 02:03:53,748 INFO:  * Debugger PIN: 531-980-121
+2025-02-22 02:03:53,888 INFO: Bpli2-znWRuG1znKAAAA: Sending packet OPEN data {'sid': 'Bpli2-znWRuG1znKAAAA', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 02:03:53,897 INFO: ybDAWAhSqj9IUTmUAAAB: Sending packet OPEN data {'sid': 'ybDAWAhSqj9IUTmUAAAB', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 02:03:53,913 INFO: Bpli2-znWRuG1znKAAAA: Received request to upgrade to websocket
+2025-02-22 02:03:53,915 INFO: Bpli2-znWRuG1znKAAAA: Received packet MESSAGE data 0
+2025-02-22 02:03:53,918 INFO: Bpli2-znWRuG1znKAAAA: Sending packet MESSAGE data 0{"sid":"1n8YtHqevOeWqWLzAAAC"}
+2025-02-22 02:03:53,920 DEBUG: Client connected. Session: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:03:53,922 WARNING: Player name not found in session
+2025-02-22 02:03:53,931 INFO: ybDAWAhSqj9IUTmUAAAB: Received request to upgrade to websocket
+2025-02-22 02:03:53,944 INFO: ybDAWAhSqj9IUTmUAAAB: Received packet MESSAGE data 0
+2025-02-22 02:03:53,948 INFO: ybDAWAhSqj9IUTmUAAAB: Sending packet MESSAGE data 0{"sid":"bRFkbuSXgNZJ4S81AAAD"}
+2025-02-22 02:03:53,951 DEBUG: Client connected. Session: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:03:53,952 WARNING: Player name not found in session
+2025-02-22 02:03:53,963 INFO: Bpli2-znWRuG1znKAAAA: Upgrade to websocket successful
+2025-02-22 02:03:53,968 INFO: Bpli2-znWRuG1znKAAAA: Received packet MESSAGE data 2["join_game_room",{"game_id":"5166","player_name":"Ziada"}]
+2025-02-22 02:03:53,971 INFO: received event "join_game_room" from 1n8YtHqevOeWqWLzAAAC [/]
+2025-02-22 02:03:53,976 INFO: Bpli2-znWRuG1znKAAAA: Received packet MESSAGE data 2["request_players",{"game_id":"5166"}]
+2025-02-22 02:03:53,976 INFO: received event "request_players" from 1n8YtHqevOeWqWLzAAAC [/]
+2025-02-22 02:03:53,980 DEBUG: Received join_game_room event - game_id: 5166, player_name: None
+2025-02-22 02:03:53,982 ERROR: Game 5166 not found in game_rooms
+2025-02-22 02:03:53,982 ERROR: Error joining game room: غرفة اللعب غير موجودة
+2025-02-22 02:03:53,983 INFO: emitting event "game_error" to 1n8YtHqevOeWqWLzAAAC [/]
+2025-02-22 02:03:53,983 INFO: Bpli2-znWRuG1znKAAAA: Sending packet MESSAGE data 2["game_error",{"message":"\u063a\u0631\u0641\u0629 \u0627\u0644\u0644\u0639\u0628 \u063a\u064a\u0631 \u0645\u0648\u062c\u0648\u062f\u0629"}]
+2025-02-22 02:03:53,987 DEBUG: Received request_players event for game 5166
+2025-02-22 02:03:53,987 ERROR: Game 5166 not found in game_rooms
+2025-02-22 02:03:53,987 ERROR: Error handling request_players: غرفة اللعب غير موجودة
+2025-02-22 02:03:53,989 INFO: emitting event "game_error" to 1n8YtHqevOeWqWLzAAAC [/]
+2025-02-22 02:03:53,990 INFO: Bpli2-znWRuG1znKAAAA: Sending packet MESSAGE data 2["game_error",{"message":"\u063a\u0631\u0641\u0629 \u0627\u0644\u0644\u0639\u0628 \u063a\u064a\u0631 \u0645\u0648\u062c\u0648\u062f\u0629"}]
+2025-02-22 02:03:53,995 INFO: ybDAWAhSqj9IUTmUAAAB: Upgrade to websocket successful
+2025-02-22 02:03:54,002 INFO: ybDAWAhSqj9IUTmUAAAB: Received packet MESSAGE data 2["join_game_room",{"game_id":"5166","player_name":"Ahmad"}]
+2025-02-22 02:03:54,003 INFO: received event "join_game_room" from bRFkbuSXgNZJ4S81AAAD [/]
+2025-02-22 02:03:54,003 INFO: ybDAWAhSqj9IUTmUAAAB: Received packet MESSAGE data 2["request_players",{"game_id":"5166"}]
+2025-02-22 02:03:54,005 INFO: received event "request_players" from bRFkbuSXgNZJ4S81AAAD [/]
+2025-02-22 02:03:54,009 DEBUG: Received join_game_room event - game_id: 5166, player_name: None
+2025-02-22 02:03:54,010 ERROR: Game 5166 not found in game_rooms
+2025-02-22 02:03:54,010 ERROR: Error joining game room: غرفة اللعب غير موجودة
+2025-02-22 02:03:54,010 INFO: emitting event "game_error" to bRFkbuSXgNZJ4S81AAAD [/]
+2025-02-22 02:03:54,013 INFO: ybDAWAhSqj9IUTmUAAAB: Sending packet MESSAGE data 2["game_error",{"message":"\u063a\u0631\u0641\u0629 \u0627\u0644\u0644\u0639\u0628 \u063a\u064a\u0631 \u0645\u0648\u062c\u0648\u062f\u0629"}]
+2025-02-22 02:03:54,016 DEBUG: Received request_players event for game 5166
+2025-02-22 02:03:54,017 ERROR: Game 5166 not found in game_rooms
+2025-02-22 02:03:54,017 ERROR: Error handling request_players: غرفة اللعب غير موجودة
+2025-02-22 02:03:54,018 INFO: emitting event "game_error" to bRFkbuSXgNZJ4S81AAAD [/]
+2025-02-22 02:03:54,019 INFO: ybDAWAhSqj9IUTmUAAAB: Sending packet MESSAGE data 2["game_error",{"message":"\u063a\u0631\u0641\u0629 \u0627\u0644\u0644\u0639\u0628 \u063a\u064a\u0631 \u0645\u0648\u062c\u0648\u062f\u0629"}]
+2025-02-22 02:04:03,214 INFO: Server initialized for eventlet.
+2025-02-22 02:04:03,217 INFO: Starting server...
+2025-02-22 02:04:03,218 INFO:  * Restarting with stat
+2025-02-22 02:04:05,502 INFO: Server initialized for eventlet.
+2025-02-22 02:04:05,512 INFO: Starting server...
+2025-02-22 02:04:05,512 WARNING:  * Debugger is active!
+2025-02-22 02:04:05,532 INFO:  * Debugger PIN: 225-132-545
+2025-02-22 02:08:59,465 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:08:59,468 DEBUG: Is session permanent: True
+2025-02-22 02:08:59,468 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:08:59,597 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:08:59,600 DEBUG: Is session permanent: True
+2025-02-22 02:08:59,601 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:08:59,863 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:08:59,863 DEBUG: Is session permanent: True
+2025-02-22 02:08:59,865 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:09:02,387 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:09:02,388 DEBUG: Is session permanent: True
+2025-02-22 02:09:02,389 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:09:02,459 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:09:02,459 DEBUG: Is session permanent: True
+2025-02-22 02:09:02,459 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:09:02,471 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:09:02,473 DEBUG: Is session permanent: True
+2025-02-22 02:09:02,473 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:09:05,787 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:09:05,790 DEBUG: Is session permanent: True
+2025-02-22 02:09:05,790 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:09:05,892 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:09:05,893 DEBUG: Is session permanent: True
+2025-02-22 02:09:05,894 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:09:05,901 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:09:05,903 DEBUG: Is session permanent: True
+2025-02-22 02:09:05,903 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:09:08,690 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:09:08,690 DEBUG: Is session permanent: True
+2025-02-22 02:09:08,690 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:09:08,770 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:09:08,773 DEBUG: Is session permanent: True
+2025-02-22 02:09:08,773 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:09:08,776 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:09:08,781 DEBUG: Is session permanent: True
+2025-02-22 02:09:08,781 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:09:15,961 INFO: BZDlx4eQNwA0VZVfAAAE: Sending packet OPEN data {'sid': 'BZDlx4eQNwA0VZVfAAAE', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 02:09:15,990 INFO: BZDlx4eQNwA0VZVfAAAE: Received request to upgrade to websocket
+2025-02-22 02:09:15,997 INFO: BZDlx4eQNwA0VZVfAAAE: Received packet MESSAGE data 0
+2025-02-22 02:09:16,002 INFO: BZDlx4eQNwA0VZVfAAAE: Sending packet MESSAGE data 0{"sid":"9UT3Kt45WSs6pzi5AAAF"}
+2025-02-22 02:09:16,006 DEBUG: Client connected. Session: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:09:16,010 WARNING: Player name not found in session
+2025-02-22 02:09:16,028 INFO: BZDlx4eQNwA0VZVfAAAE: Upgrade to websocket successful
+2025-02-22 02:09:16,033 INFO: BZDlx4eQNwA0VZVfAAAE: Received packet MESSAGE data 2["create_game",{"game_id":7014,"player_name":"Ziada","game_type":"charades"}]
+2025-02-22 02:09:16,038 INFO: received event "create_game" from 9UT3Kt45WSs6pzi5AAAF [/]
+2025-02-22 02:09:16,042 INFO: Creating game: {'game_id': 7014, 'player_name': 'Ziada', 'game_type': 'charades'}
+2025-02-22 02:09:16,043 DEBUG: Session state before game creation: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:09:16,045 DEBUG: Session contents before game creation: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:09:16,048 DEBUG: Create game request - Game ID: 7014
+2025-02-22 02:09:16,048 DEBUG: Create game request - Player Name: Ziada
+2025-02-22 02:09:16,053 DEBUG: Create game request - Game Type: charades
+2025-02-22 02:09:16,055 DEBUG: Creating game for player: Ziada
+2025-02-22 02:09:16,057 DEBUG: Session after create: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True, 'game_id': '7014', 'is_host': True, 'player_name': 'Ziada'}
+2025-02-22 02:09:16,057 DEBUG: Game room after create: {'host': 'Ziada', 'players': [{'name': 'Ziada', 'isHost': True}], 'game_type': 'charades', 'status': 'waiting', 'scores': {}, 'current_player': '', 'current_item': '', 'round_start_time': None}
+2025-02-22 02:09:16,061 DEBUG: Player name set in session: Ziada
+2025-02-22 02:09:16,061 DEBUG: Session after creating game: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True, 'game_id': '7014', 'is_host': True, 'player_name': 'Ziada'}
+2025-02-22 02:09:16,063 INFO: Game room 7014 created by Ziada
+2025-02-22 02:09:16,065 INFO: emitting event "game_created" to 9UT3Kt45WSs6pzi5AAAF [/]
+2025-02-22 02:09:16,066 INFO: BZDlx4eQNwA0VZVfAAAE: Sending packet MESSAGE data 2["game_created",{"game_id":"7014","host":"Ziada","players":[{"name":"Ziada","isHost":true}]}]
+2025-02-22 02:09:16,068 INFO: 9UT3Kt45WSs6pzi5AAAF is entering room 7014 [/]
+2025-02-22 02:09:28,315 INFO: KRcdyCVf8LbKJMbKAAAG: Sending packet OPEN data {'sid': 'KRcdyCVf8LbKJMbKAAAG', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 02:09:28,340 INFO: KRcdyCVf8LbKJMbKAAAG: Received request to upgrade to websocket
+2025-02-22 02:09:28,348 INFO: KRcdyCVf8LbKJMbKAAAG: Received packet MESSAGE data 0
+2025-02-22 02:09:28,353 INFO: KRcdyCVf8LbKJMbKAAAG: Sending packet MESSAGE data 0{"sid":"LvRHex6bqC0vI-u-AAAH"}
+2025-02-22 02:09:28,360 DEBUG: Client connected. Session: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:09:28,362 WARNING: Player name not found in session
+2025-02-22 02:09:28,380 INFO: KRcdyCVf8LbKJMbKAAAG: Upgrade to websocket successful
+2025-02-22 02:09:28,386 INFO: KRcdyCVf8LbKJMbKAAAG: Received packet MESSAGE data 2["join_game",{"game_id":"7014","player_name":"Ahmad","game_type":"charades"}]
+2025-02-22 02:09:28,391 INFO: received event "join_game" from LvRHex6bqC0vI-u-AAAH [/]
+2025-02-22 02:09:28,397 DEBUG: Session after join: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True, 'game_id': '7014', 'is_host': False, 'player_name': 'Ahmad'}
+2025-02-22 02:09:28,400 DEBUG: Game room after join: {'host': 'Ziada', 'players': [{'name': 'Ziada', 'isHost': True}, {'name': 'Ahmad', 'isHost': False}], 'game_type': 'charades', 'status': 'waiting', 'scores': {}, 'current_player': '', 'current_item': '', 'round_start_time': None}
+2025-02-22 02:09:28,404 INFO: Player Ahmad joined game 7014
+2025-02-22 02:09:28,406 INFO: LvRHex6bqC0vI-u-AAAH is entering room 7014 [/]
+2025-02-22 02:09:28,410 INFO: emitting event "join_success" to LvRHex6bqC0vI-u-AAAH [/]
+2025-02-22 02:09:28,413 INFO: KRcdyCVf8LbKJMbKAAAG: Sending packet MESSAGE data 2["join_success",{"players":[{"name":"Ziada","isHost":true},{"name":"Ahmad","isHost":false}],"host":"Ziada"}]
+2025-02-22 02:09:28,416 INFO: emitting event "player_joined" to 7014 [/]
+2025-02-22 02:09:28,419 INFO: BZDlx4eQNwA0VZVfAAAE: Sending packet MESSAGE data 2["player_joined",{"players":[{"name":"Ziada","isHost":true},{"name":"Ahmad","isHost":false}]}]
+2025-02-22 02:09:28,422 INFO: KRcdyCVf8LbKJMbKAAAG: Sending packet MESSAGE data 2["player_joined",{"players":[{"name":"Ziada","isHost":true},{"name":"Ahmad","isHost":false}]}]
+2025-02-22 02:09:28,424 INFO: emitting event "update_players" to 7014 [/]
+2025-02-22 02:09:28,424 INFO: BZDlx4eQNwA0VZVfAAAE: Sending packet MESSAGE data 2["update_players",{"players":["Ziada","Ahmad"]}]
+2025-02-22 02:09:28,428 INFO: KRcdyCVf8LbKJMbKAAAG: Sending packet MESSAGE data 2["update_players",{"players":["Ziada","Ahmad"]}]
+2025-02-22 02:09:31,346 INFO: BZDlx4eQNwA0VZVfAAAE: Received packet MESSAGE data 2["start_game",{"game_id":"7014"}]
+2025-02-22 02:09:31,347 INFO: received event "start_game" from 9UT3Kt45WSs6pzi5AAAF [/]
+2025-02-22 02:09:31,349 DEBUG: Starting game 7014
+2025-02-22 02:09:31,350 DEBUG: Number of players: 2
+2025-02-22 02:09:31,351 DEBUG: Players list: ['Ziada', 'Ahmad']
+2025-02-22 02:09:31,352 INFO: emitting event "game_started" to 7014 [/]
+2025-02-22 02:09:31,353 INFO: BZDlx4eQNwA0VZVfAAAE: Sending packet MESSAGE data 2["game_started",{"game_id":"7014","redirect_url":"/game/7014","transfer_id":"cc6f4761-1b57-41bd-89d3-7a46879360f0"}]
+2025-02-22 02:09:31,354 INFO: KRcdyCVf8LbKJMbKAAAG: Sending packet MESSAGE data 2["game_started",{"game_id":"7014","redirect_url":"/game/7014","transfer_id":"cc6f4761-1b57-41bd-89d3-7a46879360f0"}]
+2025-02-22 02:09:31,466 INFO: Player disconnected: Ziada
+2025-02-22 02:09:31,483 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:09:31,483 DEBUG: Is session permanent: True
+2025-02-22 02:09:31,486 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:09:31,603 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:09:31,604 DEBUG: Is session permanent: True
+2025-02-22 02:09:31,604 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:09:31,609 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:09:31,609 DEBUG: Is session permanent: True
+2025-02-22 02:09:31,609 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:09:31,972 INFO: bn9Pt5Z_tTold2fJAAAI: Sending packet OPEN data {'sid': 'bn9Pt5Z_tTold2fJAAAI', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 02:09:32,013 INFO: bn9Pt5Z_tTold2fJAAAI: Received request to upgrade to websocket
+2025-02-22 02:09:32,015 INFO: bn9Pt5Z_tTold2fJAAAI: Received packet MESSAGE data 0
+2025-02-22 02:09:32,017 INFO: bn9Pt5Z_tTold2fJAAAI: Sending packet MESSAGE data 0{"sid":"0VdzBRN401kdAOXNAAAJ"}
+2025-02-22 02:09:32,019 DEBUG: Client connected. Session: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:09:32,020 WARNING: Player name not found in session
+2025-02-22 02:09:32,294 INFO: Player disconnected: Ahmad
+2025-02-22 02:09:32,307 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:09:32,310 DEBUG: Is session permanent: True
+2025-02-22 02:09:32,310 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:09:32,421 INFO: bn9Pt5Z_tTold2fJAAAI: Upgrade to websocket successful
+2025-02-22 02:09:32,429 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:09:32,429 DEBUG: Is session permanent: True
+2025-02-22 02:09:32,432 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:09:32,441 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:09:32,445 DEBUG: Is session permanent: True
+2025-02-22 02:09:32,446 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:09:32,815 INFO: bn9Pt5Z_tTold2fJAAAI: Received packet MESSAGE data 2["join_game_room",{"game_id":"7014","player_name":"Ziada"}]
+2025-02-22 02:09:32,816 INFO: received event "join_game_room" from 0VdzBRN401kdAOXNAAAJ [/]
+2025-02-22 02:09:32,818 DEBUG: Received join_game_room event - game_id: 7014, player_name: None
+2025-02-22 02:09:32,818 INFO: 0VdzBRN401kdAOXNAAAJ is entering room 7014 [/]
+2025-02-22 02:09:32,820 INFO: Player None joined game room 7014
+2025-02-22 02:09:32,820 DEBUG: Current players in room 7014: ['Ziada', 'Ahmad']
+2025-02-22 02:09:32,820 INFO: emitting event "game_state" to 7014 [/]
+2025-02-22 02:09:32,822 INFO: bn9Pt5Z_tTold2fJAAAI: Sending packet MESSAGE data 2["game_state",{"message":"None \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ahmad"]}]
+2025-02-22 02:09:32,967 INFO: bn9Pt5Z_tTold2fJAAAI: Received packet MESSAGE data 2["request_players",{"game_id":"7014"}]
+2025-02-22 02:09:32,967 INFO: received event "request_players" from 0VdzBRN401kdAOXNAAAJ [/]
+2025-02-22 02:09:32,969 DEBUG: Received request_players event for game 7014
+2025-02-22 02:09:32,970 DEBUG: Sending player list for game 7014: ['Ziada', 'Ahmad']
+2025-02-22 02:09:32,971 INFO: emitting event "game_state" to 7014 [/]
+2025-02-22 02:09:32,971 INFO: bn9Pt5Z_tTold2fJAAAI: Sending packet MESSAGE data 2["game_state",{"players":["Ziada","Ahmad"],"message":"\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0644\u0627\u0639\u0628\u064a\u0646"}]
+2025-02-22 02:09:33,025 INFO: H_e7ybyrkjPdhH-NAAAK: Sending packet OPEN data {'sid': 'H_e7ybyrkjPdhH-NAAAK', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 02:09:33,057 INFO: H_e7ybyrkjPdhH-NAAAK: Received request to upgrade to websocket
+2025-02-22 02:09:33,061 INFO: H_e7ybyrkjPdhH-NAAAK: Received packet MESSAGE data 0
+2025-02-22 02:09:33,062 INFO: H_e7ybyrkjPdhH-NAAAK: Sending packet MESSAGE data 0{"sid":"P5gme4WiKc9HOCEwAAAL"}
+2025-02-22 02:09:33,065 DEBUG: Client connected. Session: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:09:33,065 WARNING: Player name not found in session
+2025-02-22 02:09:33,290 INFO: H_e7ybyrkjPdhH-NAAAK: Upgrade to websocket successful
+2025-02-22 02:09:33,307 INFO: H_e7ybyrkjPdhH-NAAAK: Received packet MESSAGE data 2["join_game_room",{"game_id":"7014","player_name":"Ahmad"}]
+2025-02-22 02:09:33,310 INFO: received event "join_game_room" from P5gme4WiKc9HOCEwAAAL [/]
+2025-02-22 02:09:33,314 DEBUG: Received join_game_room event - game_id: 7014, player_name: None
+2025-02-22 02:09:33,315 INFO: P5gme4WiKc9HOCEwAAAL is entering room 7014 [/]
+2025-02-22 02:09:33,319 INFO: Player None joined game room 7014
+2025-02-22 02:09:33,324 DEBUG: Current players in room 7014: ['Ziada', 'Ahmad']
+2025-02-22 02:09:33,326 INFO: emitting event "game_state" to 7014 [/]
+2025-02-22 02:09:33,328 INFO: bn9Pt5Z_tTold2fJAAAI: Sending packet MESSAGE data 2["game_state",{"message":"None \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ahmad"]}]
+2025-02-22 02:09:33,330 INFO: H_e7ybyrkjPdhH-NAAAK: Sending packet MESSAGE data 2["game_state",{"message":"None \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ahmad"]}]
+2025-02-22 02:09:33,332 INFO: H_e7ybyrkjPdhH-NAAAK: Received packet MESSAGE data 2["request_players",{"game_id":"7014"}]
+2025-02-22 02:09:33,333 INFO: received event "request_players" from P5gme4WiKc9HOCEwAAAL [/]
+2025-02-22 02:09:33,336 DEBUG: Received request_players event for game 7014
+2025-02-22 02:09:33,339 DEBUG: Sending player list for game 7014: ['Ziada', 'Ahmad']
+2025-02-22 02:09:33,341 INFO: emitting event "game_state" to 7014 [/]
+2025-02-22 02:09:33,344 INFO: bn9Pt5Z_tTold2fJAAAI: Sending packet MESSAGE data 2["game_state",{"players":["Ziada","Ahmad"],"message":"\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0644\u0627\u0639\u0628\u064a\u0646"}]
+2025-02-22 02:09:33,345 INFO: H_e7ybyrkjPdhH-NAAAK: Sending packet MESSAGE data 2["game_state",{"players":["Ziada","Ahmad"],"message":"\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0644\u0627\u0639\u0628\u064a\u0646"}]
+2025-02-22 02:12:34,987 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:12:34,989 DEBUG: Is session permanent: True
+2025-02-22 02:12:34,990 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:12:35,105 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:12:35,105 DEBUG: Is session permanent: True
+2025-02-22 02:12:35,105 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:12:35,112 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:12:35,112 DEBUG: Is session permanent: True
+2025-02-22 02:12:35,112 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:12:35,579 INFO: Iq6GDBMT1eD9dC4FAAAM: Sending packet OPEN data {'sid': 'Iq6GDBMT1eD9dC4FAAAM', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 02:12:35,627 INFO: Iq6GDBMT1eD9dC4FAAAM: Received request to upgrade to websocket
+2025-02-22 02:12:35,633 INFO: Iq6GDBMT1eD9dC4FAAAM: Received packet MESSAGE data 0
+2025-02-22 02:12:35,635 INFO: Iq6GDBMT1eD9dC4FAAAM: Sending packet MESSAGE data 0{"sid":"Kt66LncuGOD7hXFKAAAN"}
+2025-02-22 02:12:35,637 DEBUG: Client connected. Session: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:12:35,638 WARNING: Player name not found in session
+2025-02-22 02:12:35,971 INFO: Iq6GDBMT1eD9dC4FAAAM: Upgrade to websocket successful
+2025-02-22 02:12:35,980 INFO: Iq6GDBMT1eD9dC4FAAAM: Received packet MESSAGE data 2["join_game_room",{"game_id":"7014","player_name":"Ziada"}]
+2025-02-22 02:12:35,982 INFO: received event "join_game_room" from Kt66LncuGOD7hXFKAAAN [/]
+2025-02-22 02:12:35,984 DEBUG: Received join_game_room event - game_id: 7014, player_name: None
+2025-02-22 02:12:35,986 INFO: Kt66LncuGOD7hXFKAAAN is entering room 7014 [/]
+2025-02-22 02:12:35,987 INFO: Player None joined game room 7014
+2025-02-22 02:12:35,987 DEBUG: Current players in room 7014: ['Ziada', 'Ahmad']
+2025-02-22 02:12:35,987 INFO: emitting event "game_state" to 7014 [/]
+2025-02-22 02:12:35,989 INFO: H_e7ybyrkjPdhH-NAAAK: Sending packet MESSAGE data 2["game_state",{"message":"None \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ahmad"]}]
+2025-02-22 02:12:35,989 INFO: Iq6GDBMT1eD9dC4FAAAM: Sending packet MESSAGE data 2["game_state",{"message":"None \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ahmad"]}]
+2025-02-22 02:12:35,992 INFO: Iq6GDBMT1eD9dC4FAAAM: Received packet MESSAGE data 2["request_players",{"game_id":"7014"}]
+2025-02-22 02:12:35,992 INFO: received event "request_players" from Kt66LncuGOD7hXFKAAAN [/]
+2025-02-22 02:12:35,995 DEBUG: Received request_players event for game 7014
+2025-02-22 02:12:35,995 DEBUG: Sending player list for game 7014: ['Ziada', 'Ahmad']
+2025-02-22 02:12:35,996 INFO: emitting event "game_state" to 7014 [/]
+2025-02-22 02:12:35,997 INFO: H_e7ybyrkjPdhH-NAAAK: Sending packet MESSAGE data 2["game_state",{"players":["Ziada","Ahmad"],"message":"\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0644\u0627\u0639\u0628\u064a\u0646"}]
+2025-02-22 02:12:36,000 INFO: Iq6GDBMT1eD9dC4FAAAM: Sending packet MESSAGE data 2["game_state",{"players":["Ziada","Ahmad"],"message":"\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0644\u0627\u0639\u0628\u064a\u0646"}]
+2025-02-22 02:13:16,477 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:13:16,478 DEBUG: Is session permanent: True
+2025-02-22 02:13:16,478 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:13:16,591 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:13:16,593 DEBUG: Is session permanent: True
+2025-02-22 02:13:16,593 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:13:16,598 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:13:16,600 DEBUG: Is session permanent: True
+2025-02-22 02:13:16,600 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:13:17,097 INFO: lcIb1oujH5KlYor4AAAO: Sending packet OPEN data {'sid': 'lcIb1oujH5KlYor4AAAO', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 02:13:17,143 INFO: lcIb1oujH5KlYor4AAAO: Received request to upgrade to websocket
+2025-02-22 02:13:17,168 INFO: lcIb1oujH5KlYor4AAAO: Received packet MESSAGE data 0
+2025-02-22 02:13:17,169 INFO: lcIb1oujH5KlYor4AAAO: Sending packet MESSAGE data 0{"sid":"vCsP5WOjRCHYA7yTAAAP"}
+2025-02-22 02:13:17,174 DEBUG: Client connected. Session: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:13:17,177 WARNING: Player name not found in session
+2025-02-22 02:13:17,476 INFO: lcIb1oujH5KlYor4AAAO: Upgrade to websocket successful
+2025-02-22 02:13:17,478 INFO: lcIb1oujH5KlYor4AAAO: Received packet MESSAGE data 2["join_game_room",{"game_id":"7014","player_name":"Ziada"}]
+2025-02-22 02:13:17,482 INFO: received event "join_game_room" from vCsP5WOjRCHYA7yTAAAP [/]
+2025-02-22 02:13:17,484 INFO: lcIb1oujH5KlYor4AAAO: Received packet MESSAGE data 2["request_players",{"game_id":"7014"}]
+2025-02-22 02:13:17,486 INFO: received event "request_players" from vCsP5WOjRCHYA7yTAAAP [/]
+2025-02-22 02:13:17,487 DEBUG: Received request_players event for game 7014
+2025-02-22 02:13:17,487 DEBUG: Sending player list for game 7014: ['Ziada', 'Ahmad']
+2025-02-22 02:13:17,487 INFO: emitting event "game_state" to 7014 [/]
+2025-02-22 02:13:17,497 INFO: H_e7ybyrkjPdhH-NAAAK: Sending packet MESSAGE data 2["game_state",{"players":["Ziada","Ahmad"],"message":"\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0644\u0627\u0639\u0628\u064a\u0646"}]
+2025-02-22 02:13:17,500 DEBUG: Received join_game_room event - game_id: 7014, player_name: None
+2025-02-22 02:13:17,500 INFO: vCsP5WOjRCHYA7yTAAAP is entering room 7014 [/]
+2025-02-22 02:13:17,502 INFO: Player None joined game room 7014
+2025-02-22 02:13:17,502 DEBUG: Current players in room 7014: ['Ziada', 'Ahmad']
+2025-02-22 02:13:17,502 INFO: emitting event "game_state" to 7014 [/]
+2025-02-22 02:13:17,503 INFO: H_e7ybyrkjPdhH-NAAAK: Sending packet MESSAGE data 2["game_state",{"message":"None \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ahmad"]}]
+2025-02-22 02:13:17,504 INFO: lcIb1oujH5KlYor4AAAO: Sending packet MESSAGE data 2["game_state",{"message":"None \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ahmad"]}]
+2025-02-22 02:16:10,779 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:16:10,782 DEBUG: Is session permanent: True
+2025-02-22 02:16:10,782 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:16:10,884 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:16:10,885 DEBUG: Is session permanent: True
+2025-02-22 02:16:10,885 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:16:10,890 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}>
+2025-02-22 02:16:10,891 DEBUG: Is session permanent: True
+2025-02-22 02:16:10,891 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:16:11,357 INFO: cleAG-AMDApxopDKAAAQ: Sending packet OPEN data {'sid': 'cleAG-AMDApxopDKAAAQ', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 02:16:11,402 INFO: cleAG-AMDApxopDKAAAQ: Received request to upgrade to websocket
+2025-02-22 02:16:11,406 INFO: cleAG-AMDApxopDKAAAQ: Received packet MESSAGE data 0
+2025-02-22 02:16:11,408 INFO: cleAG-AMDApxopDKAAAQ: Sending packet MESSAGE data 0{"sid":"s6jl7Ko30bHuj3abAAAR"}
+2025-02-22 02:16:11,410 DEBUG: Client connected. Session: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:16:11,410 WARNING: Player name not found in session
+2025-02-22 02:16:11,718 INFO: cleAG-AMDApxopDKAAAQ: Upgrade to websocket successful
+2025-02-22 02:16:11,720 INFO: cleAG-AMDApxopDKAAAQ: Received packet MESSAGE data 2["join_game_room",{"game_id":"7014","player_name":"Ziada"}]
+2025-02-22 02:16:11,725 INFO: received event "join_game_room" from s6jl7Ko30bHuj3abAAAR [/]
+2025-02-22 02:16:11,725 INFO: cleAG-AMDApxopDKAAAQ: Received packet MESSAGE data 2["request_players",{"game_id":"7014"}]
+2025-02-22 02:16:11,729 INFO: received event "request_players" from s6jl7Ko30bHuj3abAAAR [/]
+2025-02-22 02:16:11,729 DEBUG: Received join_game_room event - game_id: 7014, player_name: None
+2025-02-22 02:16:11,729 INFO: s6jl7Ko30bHuj3abAAAR is entering room 7014 [/]
+2025-02-22 02:16:11,732 INFO: Player None joined game room 7014
+2025-02-22 02:16:11,732 DEBUG: Current players in room 7014: ['Ziada', 'Ahmad']
+2025-02-22 02:16:11,732 INFO: emitting event "game_state" to 7014 [/]
+2025-02-22 02:16:11,734 INFO: H_e7ybyrkjPdhH-NAAAK: Sending packet MESSAGE data 2["game_state",{"message":"None \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ahmad"]}]
+2025-02-22 02:16:11,736 INFO: cleAG-AMDApxopDKAAAQ: Sending packet MESSAGE data 2["game_state",{"message":"None \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ahmad"]}]
+2025-02-22 02:16:11,738 DEBUG: Received request_players event for game 7014
+2025-02-22 02:16:11,740 DEBUG: Sending player list for game 7014: ['Ziada', 'Ahmad']
+2025-02-22 02:16:11,740 INFO: emitting event "game_state" to 7014 [/]
+2025-02-22 02:16:11,742 INFO: H_e7ybyrkjPdhH-NAAAK: Sending packet MESSAGE data 2["game_state",{"players":["Ziada","Ahmad"],"message":"\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0644\u0627\u0639\u0628\u064a\u0646"}]
+2025-02-22 02:16:11,744 INFO: cleAG-AMDApxopDKAAAQ: Sending packet MESSAGE data 2["game_state",{"players":["Ziada","Ahmad"],"message":"\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0644\u0627\u0639\u0628\u064a\u0646"}]
+2025-02-22 02:22:19,730 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
+2025-02-22 02:22:19,916 INFO:  * Restarting with stat
+2025-02-22 02:22:20,591 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
+2025-02-22 02:22:22,591 INFO: Server initialized for eventlet.
+2025-02-22 02:22:22,596 INFO: Starting server...
+2025-02-22 02:22:22,609 WARNING:  * Debugger is active!
+2025-02-22 02:22:22,627 INFO:  * Debugger PIN: 531-980-121
+2025-02-22 02:22:22,744 INFO: hWioAjdarvsOQiHBAAAA: Sending packet OPEN data {'sid': 'hWioAjdarvsOQiHBAAAA', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 02:22:22,749 INFO: MKZts4baNenO_4KeAAAB: Sending packet OPEN data {'sid': 'MKZts4baNenO_4KeAAAB', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 02:22:22,759 INFO: hWioAjdarvsOQiHBAAAA: Received request to upgrade to websocket
+2025-02-22 02:22:22,762 INFO: hWioAjdarvsOQiHBAAAA: Received packet MESSAGE data 0
+2025-02-22 02:22:22,763 INFO: hWioAjdarvsOQiHBAAAA: Sending packet MESSAGE data 0{"sid":"yr7fxZZMnVAWvwhbAAAC"}
+2025-02-22 02:22:22,767 DEBUG: Client connected. Session: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:22:22,768 WARNING: Player name not found in session
+2025-02-22 02:22:22,792 INFO: MKZts4baNenO_4KeAAAB: Received request to upgrade to websocket
+2025-02-22 02:22:22,794 INFO: hWioAjdarvsOQiHBAAAA: Upgrade to websocket successful
+2025-02-22 02:22:22,795 INFO: MKZts4baNenO_4KeAAAB: Received packet MESSAGE data 0
+2025-02-22 02:22:22,797 INFO: MKZts4baNenO_4KeAAAB: Sending packet MESSAGE data 0{"sid":"zLFSxAykPBd_A28CAAAD"}
+2025-02-22 02:22:22,797 DEBUG: Client connected. Session: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة')], '_permanent': True}
+2025-02-22 02:22:22,799 WARNING: Player name not found in session
+2025-02-22 02:22:22,809 INFO: hWioAjdarvsOQiHBAAAA: Received packet MESSAGE data 2["join_game_room",{"game_id":"7014","player_name":"Ziada"}]
+2025-02-22 02:22:22,811 INFO: received event "join_game_room" from yr7fxZZMnVAWvwhbAAAC [/]
+2025-02-22 02:22:22,813 DEBUG: Received join_game_room event - game_id: 7014, player_name: None
+2025-02-22 02:22:22,813 ERROR: Game 7014 not found in game_rooms
+2025-02-22 02:22:22,814 ERROR: Error joining game room: غرفة اللعب غير موجودة
+2025-02-22 02:22:22,814 INFO: emitting event "game_error" to yr7fxZZMnVAWvwhbAAAC [/]
+2025-02-22 02:22:22,817 INFO: hWioAjdarvsOQiHBAAAA: Sending packet MESSAGE data 2["game_error",{"message":"\u063a\u0631\u0641\u0629 \u0627\u0644\u0644\u0639\u0628 \u063a\u064a\u0631 \u0645\u0648\u062c\u0648\u062f\u0629"}]
+2025-02-22 02:22:22,819 INFO: MKZts4baNenO_4KeAAAB: Upgrade to websocket successful
+2025-02-22 02:22:22,820 INFO: hWioAjdarvsOQiHBAAAA: Received packet MESSAGE data 2["request_players",{"game_id":"7014"}]
+2025-02-22 02:22:22,821 INFO: received event "request_players" from yr7fxZZMnVAWvwhbAAAC [/]
+2025-02-22 02:22:22,824 DEBUG: Received request_players event for game 7014
+2025-02-22 02:22:22,824 ERROR: Game 7014 not found in game_rooms
+2025-02-22 02:22:22,825 ERROR: Error handling request_players: غرفة اللعب غير موجودة
+2025-02-22 02:22:22,825 INFO: emitting event "game_error" to yr7fxZZMnVAWvwhbAAAC [/]
+2025-02-22 02:22:22,826 INFO: hWioAjdarvsOQiHBAAAA: Sending packet MESSAGE data 2["game_error",{"message":"\u063a\u0631\u0641\u0629 \u0627\u0644\u0644\u0639\u0628 \u063a\u064a\u0631 \u0645\u0648\u062c\u0648\u062f\u0629"}]
+2025-02-22 02:22:22,828 INFO: MKZts4baNenO_4KeAAAB: Received packet MESSAGE data 2["join_game_room",{"game_id":"7014","player_name":"Ahmad"}]
+2025-02-22 02:22:22,829 INFO: received event "join_game_room" from zLFSxAykPBd_A28CAAAD [/]
+2025-02-22 02:22:22,831 INFO: MKZts4baNenO_4KeAAAB: Received packet MESSAGE data 2["request_players",{"game_id":"7014"}]
+2025-02-22 02:22:22,831 INFO: received event "request_players" from zLFSxAykPBd_A28CAAAD [/]
+2025-02-22 02:22:22,833 DEBUG: Received join_game_room event - game_id: 7014, player_name: None
+2025-02-22 02:22:22,833 ERROR: Game 7014 not found in game_rooms
+2025-02-22 02:22:22,834 ERROR: Error joining game room: غرفة اللعب غير موجودة
+2025-02-22 02:22:22,834 INFO: emitting event "game_error" to zLFSxAykPBd_A28CAAAD [/]
+2025-02-22 02:22:22,835 INFO: MKZts4baNenO_4KeAAAB: Sending packet MESSAGE data 2["game_error",{"message":"\u063a\u0631\u0641\u0629 \u0627\u0644\u0644\u0639\u0628 \u063a\u064a\u0631 \u0645\u0648\u062c\u0648\u062f\u0629"}]
+2025-02-22 02:22:22,837 DEBUG: Received request_players event for game 7014
+2025-02-22 02:22:22,838 ERROR: Game 7014 not found in game_rooms
+2025-02-22 02:22:22,838 ERROR: Error handling request_players: غرفة اللعب غير موجودة
+2025-02-22 02:22:22,840 INFO: emitting event "game_error" to zLFSxAykPBd_A28CAAAD [/]
+2025-02-22 02:22:22,841 INFO: MKZts4baNenO_4KeAAAB: Sending packet MESSAGE data 2["game_error",{"message":"\u063a\u0631\u0641\u0629 \u0627\u0644\u0644\u0639\u0628 \u063a\u064a\u0631 \u0645\u0648\u062c\u0648\u062f\u0629"}]
+2025-02-22 02:22:56,998 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
+2025-02-22 02:22:57,153 INFO:  * Restarting with stat
+2025-02-22 02:29:14,076 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
+2025-02-22 02:29:14,354 INFO:  * Restarting with stat
+2025-02-22 02:29:15,895 INFO: Server initialized for eventlet.
+2025-02-22 02:29:15,899 INFO: Starting server...
+2025-02-22 02:29:15,910 WARNING:  * Debugger is active!
+2025-02-22 02:29:15,926 INFO:  * Debugger PIN: 531-980-121
+2025-02-22 02:29:24,168 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}>
+2025-02-22 02:29:24,172 DEBUG: Is session permanent: True
+2025-02-22 02:29:24,172 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}
+2025-02-22 02:29:24,302 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}>
+2025-02-22 02:29:24,302 DEBUG: Is session permanent: True
+2025-02-22 02:29:24,304 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}
+2025-02-22 02:29:24,443 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}>
+2025-02-22 02:29:24,445 DEBUG: Is session permanent: True
+2025-02-22 02:29:24,445 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}
+2025-02-22 02:29:26,452 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}>
+2025-02-22 02:29:26,454 DEBUG: Is session permanent: True
+2025-02-22 02:29:26,454 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}
+2025-02-22 02:29:26,537 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}>
+2025-02-22 02:29:26,539 DEBUG: Is session permanent: True
+2025-02-22 02:29:26,541 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}
+2025-02-22 02:29:26,550 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}>
+2025-02-22 02:29:26,551 DEBUG: Is session permanent: True
+2025-02-22 02:29:26,552 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}
+2025-02-22 02:29:36,215 INFO: mgN2iHxsALkZiaLBAAAA: Sending packet OPEN data {'sid': 'mgN2iHxsALkZiaLBAAAA', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 02:29:36,235 INFO: mgN2iHxsALkZiaLBAAAA: Received request to upgrade to websocket
+2025-02-22 02:29:36,240 INFO: mgN2iHxsALkZiaLBAAAA: Received packet MESSAGE data 0
+2025-02-22 02:29:36,242 INFO: mgN2iHxsALkZiaLBAAAA: Sending packet MESSAGE data 0{"sid":"VN4AG_hC2Duf-ARXAAAB"}
+2025-02-22 02:29:36,247 DEBUG: Client connected. Session: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}
+2025-02-22 02:29:36,248 WARNING: Player name not found in session
+2025-02-22 02:29:36,262 INFO: mgN2iHxsALkZiaLBAAAA: Upgrade to websocket successful
+2025-02-22 02:29:36,266 INFO: mgN2iHxsALkZiaLBAAAA: Received packet MESSAGE data 2["create_game",{"game_id":2975,"player_name":"Ziada","game_type":"charades"}]
+2025-02-22 02:29:36,268 INFO: received event "create_game" from VN4AG_hC2Duf-ARXAAAB [/]
+2025-02-22 02:29:36,269 INFO: Creating game: {'game_id': 2975, 'player_name': 'Ziada', 'game_type': 'charades'}
+2025-02-22 02:29:36,269 DEBUG: Session state before game creation: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}
+2025-02-22 02:29:36,273 DEBUG: Session contents before game creation: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}
+2025-02-22 02:29:36,275 DEBUG: Create game request - Game ID: 2975
+2025-02-22 02:29:36,275 DEBUG: Create game request - Player Name: Ziada
+2025-02-22 02:29:36,276 DEBUG: Create game request - Game Type: charades
+2025-02-22 02:29:36,277 DEBUG: Creating game for player: Ziada
+2025-02-22 02:29:36,277 DEBUG: Session after create: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True, 'game_id': '2975', 'is_host': True, 'player_name': 'Ziada'}
+2025-02-22 02:29:36,277 DEBUG: Game room after create: {'host': 'Ziada', 'players': [{'name': 'Ziada', 'isHost': True}], 'game_type': 'charades', 'status': 'waiting', 'scores': {}, 'current_player': '', 'current_item': '', 'round_start_time': None}
+2025-02-22 02:29:36,280 DEBUG: Player name set in session: Ziada
+2025-02-22 02:29:36,280 DEBUG: Session after creating game: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True, 'game_id': '2975', 'is_host': True, 'player_name': 'Ziada'}
+2025-02-22 02:29:36,282 INFO: Game room 2975 created by Ziada
+2025-02-22 02:29:36,283 INFO: emitting event "game_created" to VN4AG_hC2Duf-ARXAAAB [/]
+2025-02-22 02:29:36,283 INFO: mgN2iHxsALkZiaLBAAAA: Sending packet MESSAGE data 2["game_created",{"game_id":"2975","host":"Ziada","players":[{"name":"Ziada","isHost":true}]}]
+2025-02-22 02:29:36,286 INFO: VN4AG_hC2Duf-ARXAAAB is entering room 2975 [/]
+2025-02-22 02:29:46,041 INFO: OUNJpVHXn3-XfawVAAAC: Sending packet OPEN data {'sid': 'OUNJpVHXn3-XfawVAAAC', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 02:29:46,067 INFO: OUNJpVHXn3-XfawVAAAC: Received request to upgrade to websocket
+2025-02-22 02:29:46,071 INFO: OUNJpVHXn3-XfawVAAAC: Received packet MESSAGE data 0
+2025-02-22 02:29:46,078 INFO: OUNJpVHXn3-XfawVAAAC: Sending packet MESSAGE data 0{"sid":"9iYYIx4_Wqu_WUu1AAAD"}
+2025-02-22 02:29:46,082 DEBUG: Client connected. Session: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}
+2025-02-22 02:29:46,086 WARNING: Player name not found in session
+2025-02-22 02:29:46,106 INFO: OUNJpVHXn3-XfawVAAAC: Upgrade to websocket successful
+2025-02-22 02:29:46,114 INFO: OUNJpVHXn3-XfawVAAAC: Received packet MESSAGE data 2["join_game",{"game_id":"2975","player_name":"Ahmad","game_type":"charades"}]
+2025-02-22 02:29:46,118 INFO: received event "join_game" from 9iYYIx4_Wqu_WUu1AAAD [/]
+2025-02-22 02:29:46,120 DEBUG: Session after join: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True, 'game_id': '2975', 'is_host': False, 'player_name': 'Ahmad'}
+2025-02-22 02:29:46,123 DEBUG: Game room after join: {'host': 'Ziada', 'players': [{'name': 'Ziada', 'isHost': True}, {'name': 'Ahmad', 'isHost': False}], 'game_type': 'charades', 'status': 'waiting', 'scores': {}, 'current_player': '', 'current_item': '', 'round_start_time': None}
+2025-02-22 02:29:46,126 INFO: Player Ahmad joined game 2975
+2025-02-22 02:29:46,126 INFO: 9iYYIx4_Wqu_WUu1AAAD is entering room 2975 [/]
+2025-02-22 02:29:46,130 INFO: emitting event "join_success" to 9iYYIx4_Wqu_WUu1AAAD [/]
+2025-02-22 02:29:46,132 INFO: OUNJpVHXn3-XfawVAAAC: Sending packet MESSAGE data 2["join_success",{"players":[{"name":"Ziada","isHost":true},{"name":"Ahmad","isHost":false}],"host":"Ziada"}]
+2025-02-22 02:29:46,135 INFO: emitting event "player_joined" to 2975 [/]
+2025-02-22 02:29:46,137 INFO: mgN2iHxsALkZiaLBAAAA: Sending packet MESSAGE data 2["player_joined",{"players":[{"name":"Ziada","isHost":true},{"name":"Ahmad","isHost":false}]}]
+2025-02-22 02:29:46,140 INFO: OUNJpVHXn3-XfawVAAAC: Sending packet MESSAGE data 2["player_joined",{"players":[{"name":"Ziada","isHost":true},{"name":"Ahmad","isHost":false}]}]
+2025-02-22 02:29:46,142 INFO: emitting event "update_players" to 2975 [/]
+2025-02-22 02:29:46,145 INFO: mgN2iHxsALkZiaLBAAAA: Sending packet MESSAGE data 2["update_players",{"players":["Ziada","Ahmad"]}]
+2025-02-22 02:29:46,148 INFO: OUNJpVHXn3-XfawVAAAC: Sending packet MESSAGE data 2["update_players",{"players":["Ziada","Ahmad"]}]
+2025-02-22 02:29:49,151 INFO: mgN2iHxsALkZiaLBAAAA: Received packet MESSAGE data 2["start_game",{"game_id":"2975"}]
+2025-02-22 02:29:49,153 INFO: received event "start_game" from VN4AG_hC2Duf-ARXAAAB [/]
+2025-02-22 02:29:49,157 DEBUG: Starting game 2975
+2025-02-22 02:29:49,157 DEBUG: Number of players: 2
+2025-02-22 02:29:49,160 DEBUG: Players list: ['Ziada', 'Ahmad']
+2025-02-22 02:29:49,161 INFO: emitting event "game_started" to 2975 [/]
+2025-02-22 02:29:49,165 INFO: mgN2iHxsALkZiaLBAAAA: Sending packet MESSAGE data 2["game_started",{"game_id":"2975","redirect_url":"/game/2975","transfer_id":"05175462-d576-49a0-b911-85c19a758f16"}]
+2025-02-22 02:29:49,168 INFO: OUNJpVHXn3-XfawVAAAC: Sending packet MESSAGE data 2["game_started",{"game_id":"2975","redirect_url":"/game/2975","transfer_id":"05175462-d576-49a0-b911-85c19a758f16"}]
+2025-02-22 02:29:49,286 INFO: Player disconnected: Ziada
+2025-02-22 02:29:49,315 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}>
+2025-02-22 02:29:49,318 DEBUG: Is session permanent: True
+2025-02-22 02:29:49,319 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}
+2025-02-22 02:29:49,466 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}>
+2025-02-22 02:29:49,467 DEBUG: Is session permanent: True
+2025-02-22 02:29:49,467 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}
+2025-02-22 02:29:49,472 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}>
+2025-02-22 02:29:49,474 DEBUG: Is session permanent: True
+2025-02-22 02:29:49,475 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}
+2025-02-22 02:29:49,832 INFO: -OSQ8X1zOVL9zj9rAAAE: Sending packet OPEN data {'sid': '-OSQ8X1zOVL9zj9rAAAE', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 02:29:49,873 INFO: -OSQ8X1zOVL9zj9rAAAE: Received request to upgrade to websocket
+2025-02-22 02:29:49,876 INFO: -OSQ8X1zOVL9zj9rAAAE: Received packet MESSAGE data 0
+2025-02-22 02:29:49,879 INFO: -OSQ8X1zOVL9zj9rAAAE: Sending packet MESSAGE data 0{"sid":"YaA0QAvNZo-mfwqTAAAF"}
+2025-02-22 02:29:49,880 DEBUG: Client connected. Session: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}
+2025-02-22 02:29:49,883 WARNING: Player name not found in session
+2025-02-22 02:29:50,210 INFO: -OSQ8X1zOVL9zj9rAAAE: Upgrade to websocket successful
+2025-02-22 02:29:50,219 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}>
+2025-02-22 02:29:50,222 DEBUG: Is session permanent: True
+2025-02-22 02:29:50,224 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}
+2025-02-22 02:29:50,232 INFO: Player disconnected: Ahmad
+2025-02-22 02:29:50,236 INFO: -OSQ8X1zOVL9zj9rAAAE: Received packet MESSAGE data 2["join_game_room",{"game_id":"2975","player_name":"Ziada"}]
+2025-02-22 02:29:50,237 INFO: received event "join_game_room" from YaA0QAvNZo-mfwqTAAAF [/]
+2025-02-22 02:29:50,238 INFO: -OSQ8X1zOVL9zj9rAAAE: Received packet MESSAGE data 2["request_players",{"game_id":"2975"}]
+2025-02-22 02:29:50,240 INFO: received event "request_players" from YaA0QAvNZo-mfwqTAAAF [/]
+2025-02-22 02:29:50,243 DEBUG: Received request_players event for game 2975
+2025-02-22 02:29:50,244 DEBUG: Sending player list for game 2975: ['Ziada', 'Ahmad']
+2025-02-22 02:29:50,245 INFO: emitting event "game_state" to 2975 [/]
+2025-02-22 02:29:50,250 DEBUG: Received join_game_room event - game_id: 2975, player_name: None
+2025-02-22 02:29:50,252 INFO: YaA0QAvNZo-mfwqTAAAF is entering room 2975 [/]
+2025-02-22 02:29:50,254 INFO: Player None joined game room 2975
+2025-02-22 02:29:50,256 DEBUG: Current players in room 2975: ['Ziada', 'Ahmad']
+2025-02-22 02:29:50,257 INFO: emitting event "game_state" to 2975 [/]
+2025-02-22 02:29:50,263 INFO: -OSQ8X1zOVL9zj9rAAAE: Sending packet MESSAGE data 2["game_state",{"message":"None \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ahmad"]}]
+2025-02-22 02:29:50,488 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}>
+2025-02-22 02:29:50,489 DEBUG: Is session permanent: True
+2025-02-22 02:29:50,490 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}
+2025-02-22 02:29:50,496 DEBUG: Session before connection: <SecureCookieSession {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}>
+2025-02-22 02:29:50,498 DEBUG: Is session permanent: True
+2025-02-22 02:29:50,498 DEBUG: Session contents before connection: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}
+2025-02-22 02:29:50,920 INFO: qU6WNkD4RJJQvcpfAAAG: Sending packet OPEN data {'sid': 'qU6WNkD4RJJQvcpfAAAG', 'upgrades': ['websocket'], 'pingTimeout': 15000000, 'pingInterval': 25000000, 'maxPayload': 1000000}
+2025-02-22 02:29:50,952 INFO: qU6WNkD4RJJQvcpfAAAG: Received request to upgrade to websocket
+2025-02-22 02:29:50,956 INFO: qU6WNkD4RJJQvcpfAAAG: Received packet MESSAGE data 0
+2025-02-22 02:29:50,956 INFO: qU6WNkD4RJJQvcpfAAAG: Sending packet MESSAGE data 0{"sid":"MT4xEYUYYd8bOAQNAAAH"}
+2025-02-22 02:29:50,959 DEBUG: Client connected. Session: {'_flashes': [('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'حدث خطأ أثناء الدخول للعبة'), ('message', 'اللاعب غير موجود في هذه الغرفة')], '_permanent': True}
+2025-02-22 02:29:50,960 WARNING: Player name not found in session
+2025-02-22 02:29:51,147 INFO: qU6WNkD4RJJQvcpfAAAG: Upgrade to websocket successful
+2025-02-22 02:29:51,169 INFO: qU6WNkD4RJJQvcpfAAAG: Received packet MESSAGE data 2["join_game_room",{"game_id":"2975","player_name":"Ahmad"}]
+2025-02-22 02:29:51,169 INFO: received event "join_game_room" from MT4xEYUYYd8bOAQNAAAH [/]
+2025-02-22 02:29:51,172 DEBUG: Received join_game_room event - game_id: 2975, player_name: None
+2025-02-22 02:29:51,172 INFO: MT4xEYUYYd8bOAQNAAAH is entering room 2975 [/]
+2025-02-22 02:29:51,173 INFO: Player None joined game room 2975
+2025-02-22 02:29:51,173 DEBUG: Current players in room 2975: ['Ziada', 'Ahmad']
+2025-02-22 02:29:51,173 INFO: emitting event "game_state" to 2975 [/]
+2025-02-22 02:29:51,174 INFO: -OSQ8X1zOVL9zj9rAAAE: Sending packet MESSAGE data 2["game_state",{"message":"None \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ahmad"]}]
+2025-02-22 02:29:51,175 INFO: qU6WNkD4RJJQvcpfAAAG: Sending packet MESSAGE data 2["game_state",{"message":"None \u0627\u0646\u0636\u0645 \u0644\u0644\u0639\u0628\u0629","players":["Ziada","Ahmad"]}]
+2025-02-22 02:29:51,176 INFO: qU6WNkD4RJJQvcpfAAAG: Received packet MESSAGE data 2["request_players",{"game_id":"2975"}]
+2025-02-22 02:29:51,178 INFO: received event "request_players" from MT4xEYUYYd8bOAQNAAAH [/]
+2025-02-22 02:29:51,179 DEBUG: Received request_players event for game 2975
+2025-02-22 02:29:51,179 DEBUG: Sending player list for game 2975: ['Ziada', 'Ahmad']
+2025-02-22 02:29:51,179 INFO: emitting event "game_state" to 2975 [/]
+2025-02-22 02:29:51,182 INFO: -OSQ8X1zOVL9zj9rAAAE: Sending packet MESSAGE data 2["game_state",{"players":["Ziada","Ahmad"],"message":"\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0644\u0627\u0639\u0628\u064a\u0646"}]
+2025-02-22 02:29:51,182 INFO: qU6WNkD4RJJQvcpfAAAG: Sending packet MESSAGE data 2["game_state",{"players":["Ziada","Ahmad"],"message":"\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0644\u0627\u0639\u0628\u064a\u0646"}]

@@ -106,7 +106,6 @@ def register_charades_routes(socketio):
 
     @socketio.on('start_game')
     def handle_start_game(data):
-        """Handle game start request."""
         try:
             room_id = session.get('room')
             player_name = session.get('name')
@@ -133,22 +132,12 @@ def register_charades_routes(socketio):
             game.start_round()
             
             # Generate transfer ID for state preservation
-            transfer_id = f"{room_id}_{datetime.now().timestamp()}_{player_name}"
-            game_state_transfer[transfer_id] = {
-                'game_id': room_id,
-                'player_name': player_name,
-                'is_host': True,
-                'players': game.players,
-                'current_player': game.current_player,
-                'current_item': game.current_item,
-                'scores': game.scores
-            }
+            transfer_id = f"{room_id}_{datetime.now().timestamp()}"
             
-            # Notify all players
+            # Notify all players with the correct URL
             emit('game_started', {
                 'url': f'/game/{room_id}',
-                'transfer_id': transfer_id,
-                'scores': game.scores
+                'transfer_id': transfer_id
             }, room=room_id)
             
         except Exception as e:

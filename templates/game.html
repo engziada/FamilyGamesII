@@ -32,16 +32,16 @@
                     <div id="item-display" class="item-display">Movie/Series/Play Name</div>
                 </div>
                 {% if player_type == 'guest' %}
-                <button id="guessButton" class="btn btn-secondary" onclick="handleCorrectGuess()">أنا اللي عرفتها</button>
+                <button id="guessButton" class="btn btn-secondary">أنا اللي عرفتها</button>
                 {% endif %}
             </div>
 
             <!-- Control Buttons -->
             <div class="control-buttons">
-                <button class="btn btn-secondary" onclick="leaveGame()">أنا منسحب</button>
+                <button class="btn btn-secondary" id="leaveButton">أنا منسحب</button>
                 {% if player_type == 'host' %}
-                <button id="nextRoundButton" class="btn btn-primary" onclick="startNextRound()">الدور اللي بعده</button>
-                <button class="btn btn-secondary" onclick="endGame()">إقفل الأوضة</button>
+                <button id="nextRoundButton" class="btn btn-primary">الدور اللي بعده</button>
+                <button id="endGameButton" class="btn btn-secondary">إقفل الأوضة</button>
                 {% endif %}
             </div>
         </div>
@@ -68,168 +68,8 @@
     </div>
 </div>
 
-<script>
-    let socket;
-    try {
-        socket = io();
-        console.log('Socket.IO initialized successfully');
-    } catch (error) {
-        console.error('Error initializing Socket.IO:', error);
-        document.getElementById('game-status').textContent = 'حدث خطأ في الاتصال. يرجى تحديث الصفحة.';
-        throw error;
-    }
+{% endblock %}
 
-    const gameId = document.getElementById('game-id').value;
-    const playerName = document.getElementById('player-name').value;
-    const playerType = document.getElementById('player-type').value;
-    const playerScore = document.getElementById('player-score').value;
-    const isHost = document.getElementById('is-host').value === 'true';
-    let timerInterval;
-    
-    // Initialize player list on page load
-    function initializePlayers() {
-        const playersList = document.getElementById('players-list');
-        const initialPlayersInput = document.getElementById('initial-players');
-        
-        try {
-            const initialPlayers = JSON.parse(initialPlayersInput.value);
-            updateScores(initialPlayers);
-        } catch (error) {
-            console.error('Error parsing initial players:', error);
-        }
-    }
-    
-    // Update player list
-    function updatePlayerList(players) {
-        const playersList = document.getElementById('players-list');
-        if (!Array.isArray(players)) {
-            console.error('Players is not an array:', players);
-            return;
-        }
-        
-        playersList.innerHTML = players
-            .map(player => `<div class="player-item ${player === playerName ? 'current-user' : ''}">${player}</div>`)
-            .join('');
-    }
-    
-    // Update scores
-    function updateScores(scores) {
-        const playersList = document.getElementById('players-list');
-        const scoresDiv = document.getElementById('scores');
-        const players = Object.keys(scores);
-
-        playersList.innerHTML = players
-            .map(player => `<div class="player-item ${player === playerName ? 'current-user' : ''}">${player}</div>`)
-            .join('');
-
-        scoresDiv.innerHTML = players
-            .map(player => `<div class="score-item">${scores[player]}</div>`)
-            .join('');
-    }
-    
-    // Initialize game room connection
-    socket.on('connect', () => {
-        socket.emit('join_game_room', {
-            game_id: gameId,
-            player_name: playerName
-        });
-        
-        // Request initial player list
-        socket.emit('request_players', {
-            game_id: gameId
-        });
-    });
-
-    // Listen for player list updates
-    socket.on('update_players', (data) => {
-        updatePlayerList(data.players);
-    });
-
-    // Handle game state updates
-    socket.on('game_state', (data) => {
-        if (data.players) {
-            updatePlayerList(data.players);
-        }
-        if (data.message) {
-            document.getElementById('game-status').textContent = data.message;
-        }
-    });
-
-    socket.on('new_item', (data) => {
-        const itemDisplay = document.getElementById('item-display');
-        itemDisplay.textContent = data.item;
-        itemDisplay.classList.add('visible');
-    });
-
-    socket.on('timer_start', (data) => {
-        startTimer(data.duration);
-        // Show guess button for non-current players
-        const currentPlayer = document.getElementById('current-player').textContent;
-        if (playerName !== currentPlayer) {
-            document.getElementById('guessButton').classList.add('visible');
-        } else {
-            document.getElementById('guessButton').classList.remove('visible');
-        }
-    });
-
-    socket.on('score_update', (data) => {
-        updateScores(data.scores);
-        if (data.last_item) {
-            document.getElementById('game-status').textContent = 'الإجابة الصحيحة: ' + data.last_item;
-        }
-    });
-
-    socket.on('round_ended', (data) => {
-        clearInterval(timerInterval);
-        document.getElementById('item-display').classList.remove('visible');
-        document.getElementById('guessButton').classList.remove('visible');
-        updateScores(data.scores);
-        if (data.timeout) {
-            document.getElementById('game-status').textContent = 'انتهى الوقت! الكلمة كانت: ' + data.last_item;
-        }
-    });
-
-    function updateCurrentPlayer(currentPlayer) {
-        document.getElementById('current-player').textContent = currentPlayer;
-        if (playerName === currentPlayer) {
-            document.getElementById('game-status').textContent = 'دورك! مثّل الكلمة دي';
-        } else {
-            document.getElementById('game-status').textContent = `دور ${currentPlayer}`;
-        }
-    }
-
-    function startTimer(duration) {
-        clearInterval(timerInterval);
-        let timeLeft = duration;
-        const timerElement = document.getElementById('timer');
-        
-        const updateTimer = () => {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            
-            if (timeLeft === 0) {
-                clearInterval(timerInterval);
-                socket.emit('round_timeout', { game_id: gameId });
-                return;
-            }
-            timeLeft--;
-        };
-        
-        updateTimer();
-        timerInterval = setInterval(updateTimer, 1000);
-    }
-
-    function handleCorrectGuess() {
-        socket.emit('guess_correct', {
-            game_id: gameId,
-            player_name: playerName
-        });
-        document.getElementById('guessButton').classList.remove('visible');
-    }
-    
-    // Initialize when page loads
-    document.addEventListener('DOMContentLoaded', initializePlayers);
-</script>
-
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charades.js') }}"></script>
 {% endblock %}
