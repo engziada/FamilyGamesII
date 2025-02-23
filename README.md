@@ -90,6 +90,15 @@ FamilyGamesII/
 - Improved game status visibility
 - Command to revert: `git checkout $(git rev-parse HEAD)`
 
+### Checkpoint 4 (2025-02-24 00:06)
+- Fixed item display for current player's turn
+- Enhanced game state synchronization
+- Improved item and category visibility handling
+- Fixed parameter order in displayItem function
+- Updated player turn management
+- Added proper display toggling for game items
+- Command to revert: `git checkout $(git rev-parse HEAD)`
+
 ## Development Guidelines
 1. Code Style
    - Clean, Pythonic code

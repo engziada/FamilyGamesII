@@ -5,10 +5,11 @@
     <!-- Hidden inputs for game data -->
     <input type="hidden" id="game-id" value="{{ game_id }}">
     <input type="hidden" id="player-name" value="{{ player_name }}">
+    <input type="hidden" id="transfer-id" value="{{ transfer_id }}">
     <input type="hidden" id="is-host" value="{{ 'true' if is_host else 'false' }}">
     <input type="hidden" id="game-type" value="{{ game_type }}">
-    <input type="hidden" id="initial-state" value="{{ initial_state|tojson|safe if initial_state else '{}' }}">
-    <input type="hidden" id="initial-players" value="{{ players|tojson|safe if players else '[]' }}">
+    <input type="hidden" id="initial-state" value='{{ initial_state|tojson if initial_state else "{}" }}'>
+    <input type="hidden" id="initial-players" value='{{ players|tojson if players else "[]" }}'>
 
     <div class="game-title">بدون كلام</div>
     <div class="game-layout">
@@ -30,16 +31,16 @@
             <!-- Game Display Section -->
             <div class="game-display-section">
                 <div class="section-content">
-                    <div id="item-display" class="item-display">Movie/Series/Play Name</div>
+                    <div id="item-display" class="item-display" style="display: none;"></div>
                 </div>
+                <button id="readyButton" class="btn btn-success" style="display: none;">جاهز</button>
                 {% if player_type == 'guest' %}
-                <button id="guessButton" class="btn btn-secondary">أنا اللي عرفتها</button>
+                <button id="guessButton" class="btn btn-secondary" style="display: none;">أنا اللي عرفتها</button>
                 {% endif %}
             </div>
 
             <!-- Game Controls -->
             <div class="game-controls">
-                <button id="readyButton" class="btn btn-success" style="display: none;">جاهز</button>
                 {% if player_type == 'guest' %}
                 <button id="guess-btn" class="btn btn-primary" style="display: none;">تخمين</button>
                 {% endif %}

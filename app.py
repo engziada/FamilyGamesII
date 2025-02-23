@@ -60,11 +60,19 @@ def get_player_sid(player_name):
 
 def load_charades_items():
     with open('static/data/charades_items.json', 'r', encoding='utf-8') as f:
-        return json.load(f)['items']
+        return json.load(f)
 
 def get_random_item():
+    """Get a random item from the charades items list"""
     items = load_charades_items()
-    return random.choice(items)
+    if not items:
+        return None
+    
+    random_item = random.choice(items['items'])
+    return {
+        'item': random_item['name'],
+        'category': random_item['category']
+    }
 
 def calculate_score(start_time):
     elapsed_seconds = (datetime.now() - start_time).total_seconds()
@@ -95,46 +103,46 @@ def transfer_state(transfer_id):
 
 @app.route('/game/<game_id>')
 def game(game_id):
-    """Handle game room access."""
-    transfer_id = request.args.get('transfer_id')
-    player_name = request.args.get('player_name')
-    is_host = request.args.get('is_host', 'false').lower() == 'true'
-    
-    # Clear any stale flash messages
-    session.pop('_flashes', None)
-    
-    if not game_id or game_id not in game_rooms:
-        flash('غرفة اللعب غير موجودة')
+    """Game page route."""
+    try:
+        game_id = str(game_id)
+        if game_id not in game_rooms:
+            flash('غرفة اللعب غير موجودة', 'error')
+            return redirect(url_for('index'))
+            
+        game = game_rooms[game_id]
+        player_name = request.args.get('player_name') or session.get('player_name')
+        transfer_id = request.args.get('transfer_id')
+        
+        logger.debug(f"Game route - game_id: {game_id}, player_name: {player_name}, transfer_id: {transfer_id}")
+        
+        # Ensure player info exists
+        if not player_name:
+            flash('لم يتم العثور على اسم اللاعب', 'error')
+            return redirect(url_for('index'))
+        
+        # Check if player is in the game
+        if not any(p['name'] == player_name for p in game.players):
+            flash('انت مش في اللعبة دي', 'error')
+            return redirect(url_for('index'))
+            
+        # Update session with current game info
+        session['game_id'] = game_id
+        session['player_name'] = player_name
+        session['is_host'] = any(p['name'] == player_name and p.get('isHost', False) for p in game.players)
+        session.permanent = True
+        session.modified = True
+        
+        return render_template('game.html', 
+                            game_id=game_id,
+                            player_name=player_name,
+                            transfer_id=transfer_id,
+                            is_host=session['is_host'])
+                            
+    except Exception as e:
+        logger.error(f"Error in game route: {str(e)}")
+        flash('حدث خطأ غير متوقع', 'error')
         return redirect(url_for('index'))
-    
-    # Store game info in session
-    session['game_id'] = game_id
-    session['player_name'] = player_name
-    session['is_host'] = is_host
-    session.modified = True
-    
-    game_room = game_rooms[game_id]
-    if player_name not in [p['name'] for p in game_room.players]:
-        flash('غير مسموح بالدخول للعبة')
-        return redirect(url_for('index'))
-    
-    # Get initial game state from transfer if available
-    game_state = None
-    if transfer_id:
-        game_state = transfer_state(transfer_id)
-        if isinstance(game_state, tuple) and game_state[1] == 404:
-            game_state = None
-    
-    # Get players list from game room
-    players = [p['name'] for p in game_room.players]
-    
-    return render_template('game.html', 
-                         game_id=game_id,
-                         player_name=player_name,
-                         is_host=is_host,
-                         game_type=game_room.game_type,
-                         initial_state=game_state,
-                         players=players)
 
 @socketio.on('connect')
 def handle_connect():
@@ -229,6 +237,7 @@ def handle_join_game(data):
         session['game_id'] = game_id
         session['is_host'] = False
         session['player_name'] = player_name
+        session.permanent = True  # Make session permanent
         session.modified = True
         
         # Add player to game
@@ -236,60 +245,73 @@ def handle_join_game(data):
         
         logger.debug(f"Session after join: {dict(session)}")
         logger.debug(f"Game room after join: {game.to_dict()}")
-        logger.info(f"Player {player_name} joined game {game_id}")
         
-        # Join socket room
+        # Join the socket room
         join_room(game_id)
         
-        # Notify player of successful join
+        # Emit success event with game info
         emit('join_success', {
-            'players': game.players,
+            'game_id': game_id,
+            'players': [p['name'] for p in game.players],
             'host': game.host
         })
         
         # Notify other players
-        emit('player_joined', {'players': game.players}, room=game_id)
+        emit('player_joined', {
+            'players': [p['name'] for p in game.players]
+        }, room=game_id)
         
-        # Update player list for all clients
-        emit('update_players', {'players': [p['name'] for p in game.players]}, room=game_id)
-        
+    except ValueError as e:
+        emit('error', {'message': str(e)})
     except Exception as e:
-        logger.error(f"Error joining game: {str(e)}")
-        emit('game_error', {'message': str(e)})
+        logger.error(f"Error in handle_join_game: {str(e)}")
+        emit('error', {'message': 'حدث خطأ غير متوقع'})
 
 @socketio.on('start_game')
 def handle_start_game(data):
     """Handle game start event."""
     try:
         game_id = str(data['game_id'])
+        player_name = session.get('player_name')
+        
+        if not player_name:
+            raise ValueError("لم يتم العثور على اسم اللاعب")
+            
         if game_id not in game_rooms:
-            raise ValueError("Game room not found")
+            raise ValueError("غرفة اللعب غير موجودة")
             
         game = game_rooms[game_id]
-        if session.get('player_name') != game.host:
-            raise ValueError("فقط اللعيب الكبير يقدر يبدأ اللعبة")
-            
+        
+        # Verify the player is the host
+        if not any(p['name'] == player_name and p.get('isHost', False) for p in game.players):
+            raise ValueError("فقط المضيف يمكنه بدء اللعبة")
+        
         # Start the game
         game.start_game()
+        game.current_player = game.host  # Host starts first
         
-        # Notify all players that game is starting
-        emit_game_state(game_id, f'اللعبة بدأت! دور {game.current_player}')
+        # Assign initial item to the first player
+        initial_item = get_random_item()
+        game.set_current_item(initial_item)
         
-        # Generate transfer ID for state persistence
+        # Generate transfer ID for secure redirect
         transfer_id = str(uuid.uuid4())
         
-        # Emit game started event with redirect info
-        emit('game_started', {
-            'game_id': game_id,
-            'redirect_url': f'/game/{game_id}',
-            'transfer_id': transfer_id
-        }, room=game_id)
+        # Update all players' sessions
+        for player in game.players:
+            socketio.emit('game_started', {
+                'game_id': game_id,
+                'redirect_url': f'/game/{game_id}',
+                'transfer_id': transfer_id
+            }, room=game_id)
         
-        logger.info(f"Game {game_id} started by {session.get('player_name')}")
+        logger.info(f"Game {game_id} started by {player_name}")
         
-    except Exception as e:
-        logger.error(f"Error starting game: {str(e)}")
+    except ValueError as e:
         emit('error', {'message': str(e)})
+    except Exception as e:
+        logger.error(f"Error in handle_start_game: {str(e)}")
+        emit('error', {'message': 'حدث خطأ غير متوقع'})
 
 @socketio.on('guess_correct')
 def handle_guess_correct(data):
@@ -328,8 +350,9 @@ def handle_guess_correct(data):
         
         # Send new word to next player
         emit('new_item', {
-            'item': game.current_item
-        }, room=next_player)
+            'item': game.current_item['item'],
+            'category': game.current_item['category']
+        }, room=get_player_sid(next_player))
         
         # Start new timer
         emit('timer_start', {
@@ -350,35 +373,20 @@ def handle_round_timeout(data):
             
         game = game_rooms[game_id]
         if game.status != 'playing':
-            raise ValueError("اللعبة لم تبدأ بعد")
+            return
             
-        current_player = game.current_player
+        # Get new item for next player
+        next_item = get_random_item()
+        game.next_round(next_item)
         
-        # Deduct points for timeout
-        game.scores[current_player] -= 5
-        
-        # Move to next player
-        current_idx = next((i for i, p in enumerate(game.players) if p['name'] == current_player), 0)
-        next_idx = (current_idx + 1) % len(game.players)
-        next_player = game.players[next_idx]['name']
-        
-        # Update game state
-        game.current_player = next_player
-        game.current_item = get_random_item()
-        game.round_start_time = datetime.now()
-        
-        # Notify all players
-        emit_game_state(game_id, f'دور {next_player}', scores=game.scores, last_item=game.current_item, timeout=True)
-        
-        # Send new word to next player
+        # Send new item to the next player
         emit('new_item', {
-            'item': game.current_item
-        }, room=next_player)
-        
-        # Start new timer
-        emit('timer_start', {
-            'duration': 120
-        }, room=game_id)
+            'item': next_item['item'],
+            'category': next_item['category']
+        }, room=get_player_sid(game.current_player))
+
+        # Update game state for all players
+        emit_game_state(game_id, f"انتهى الوقت! دور {game.current_player}", current_player=game.current_player)
         
     except Exception as e:
         logger.error(f"Error handling round timeout: {str(e)}")
@@ -550,14 +558,8 @@ def handle_player_ready(data):
         if game.current_player != player_name:
             raise ValueError("مش دورك")
             
-        # Get new item and start timer
-        game.current_item = get_random_item()
-        game.round_start_time = datetime.now()
-        
-        # Send new word to current player
-        emit('new_item', {
-            'item': game.current_item
-        }, room=player_name)
+        # Start the timer for this round
+        game.start_round_timer()
         
         # Start timer for all players
         emit('timer_start', {
@@ -570,6 +572,66 @@ def handle_player_ready(data):
     except Exception as e:
         logger.error(f"Error handling player ready: {str(e)}")
         emit('game_error', {'message': str(e)})
+
+@socketio.on('verify_game')
+def handle_verify_game(data):
+    """Handle game verification after page load."""
+    try:
+        game_id = str(data.get('game_id'))
+        player_name = data.get('player_name')
+        transfer_id = data.get('transfer_id')
+        
+        logger.debug(f"Verifying game - game_id: {game_id}, player_name: {player_name}, transfer_id: {transfer_id}")
+        
+        if not all([game_id, player_name, transfer_id]):
+            raise ValueError("بيانات غير مكتملة")
+            
+        if game_id not in game_rooms:
+            raise ValueError("غرفة اللعب غير موجودة")
+            
+        game = game_rooms[game_id]
+        
+        # Check if player is in the game
+        if not any(p['name'] == player_name for p in game.players):
+            raise ValueError("انت مش في اللعبة دي")
+        
+        # Update session
+        session['game_id'] = game_id
+        session['player_name'] = player_name
+        session['is_host'] = any(p['name'] == player_name and p.get('isHost', False) for p in game.players)
+        session.permanent = True
+        session.modified = True
+        
+        # Join the socket room
+        join_room(game_id)
+        logger.info(f"Player {player_name} verified and joined game room {game_id}")
+        
+        # Send current game state
+        emit('game_state', {
+            'players': [p['name'] for p in game.players],
+            'current_player': game.current_player,
+            'status': game.status,
+            'scores': game.scores
+        })
+        
+        # If this is the current player and there's an item, send it
+        if game.current_player == player_name and game.current_item:
+            emit('new_item', {
+                'item': game.current_item['item'],
+                'category': game.current_item['category']
+            })
+            
+    except ValueError as e:
+        emit('error', {
+            'message': str(e),
+            'redirect': url_for('index')
+        })
+    except Exception as e:
+        logger.error(f"Error in verify_game: {str(e)}")
+        emit('error', {
+            'message': 'حدث خطأ غير متوقع',
+            'redirect': url_for('index')
+        })
 
 def emit_game_state(game_id, message=None, **kwargs):
     """Emit game state to all players in a room."""

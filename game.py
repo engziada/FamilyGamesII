@@ -29,8 +29,20 @@ class CharadesGame:
         if len(self.players) < 2:
             raise ValueError("عدد اللاعبين غير كافي")
         self.status = 'playing'
+        # Start with the first player and assign their item
         self.current_player = self.players[0]['name']
-
+        # Clear any existing state
+        self.current_item = None
+        self.round_start_time = None
+        
+    def set_current_item(self, item):
+        """Set the current item for the player's turn"""
+        self.current_item = item
+        
+    def start_round_timer(self):
+        """Start the timer for the current round"""
+        self.round_start_time = datetime.now()
+        
     def next_round(self, item):
         if not self.players:
             raise ValueError("لا يوجد لاعبين")
@@ -40,8 +52,9 @@ class CharadesGame:
         next_idx = (current_idx + 1) % len(self.players)
         self.current_player = self.players[next_idx]['name']
         
+        # Set the new item but don't start timer yet
         self.current_item = item
-        self.round_start_time = datetime.now()
+        self.round_start_time = None
 
     def add_score(self, player_name, points):
         if player_name not in self.scores:

@@ -129,64 +129,30 @@ function setupLobbySocketListeners() {
         
         // Store game data in sessionStorage before redirecting
         sessionStorage.setItem('gameData', JSON.stringify({
-            game_id: data.game_id,
-            transfer_id: data.transfer_id,
-            player_name: playerName,
-            is_host: document.getElementById('host-name') !== null
+            gameId: data.game_id,
+            playerName: playerName,
+            transferId: data.transfer_id
         }));
-
-        // Create a form and submit it to handle the redirection properly
-        const form = document.createElement('form');
-        form.method = 'GET';
-        // form.action = data.url;
-        form.action = data.redirect_url;
-
-        // Add transfer_id as hidden input
-        const transferInput = document.createElement('input');
-        transferInput.type = 'hidden';
-        transferInput.name = 'transfer_id';
-        transferInput.value = data.transfer_id;
-        form.appendChild(transferInput);
-
-        // Add player_name as hidden input
-        const playerInput = document.createElement('input');
-        playerInput.type = 'hidden';
-        playerInput.name = 'player_name';
-        playerInput.value = playerName;
-        form.appendChild(playerInput);
-
-        // Add is_host as hidden input
-        const isHostInput = document.createElement('input');
-        isHostInput.type = 'hidden';
-        isHostInput.name = 'is_host';
-        isHostInput.value = document.getElementById('host-name') !== null;
-        form.appendChild(isHostInput);
-
-        // Add the form to the document and submit it
-        document.body.appendChild(form);
         
-        // Disable the start button if it exists
-        const startButton = document.querySelector('#create-game-modal .buttons button');
-        if (startButton) {
-            startButton.disabled = true;
-            startButton.textContent = 'جاري بدء اللعبة...';
-        }
+        // Redirect to game page with necessary parameters
+        window.location.href = `${data.redirect_url}?transfer_id=${data.transfer_id}&player_name=${encodeURIComponent(playerName)}`;
+    });
 
-        // Submit the form after a very short delay to ensure socket events are processed
+    window.socket.on('error', (data) => {
+        console.error('Game error:', data);
+        showError(data.message);
+    });
+}
+
+function showError(message) {
+    const errorDiv = document.getElementById('error-message');
+    if (errorDiv) {
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
         setTimeout(() => {
-            form.submit();
-        }, 100);
-    });
-
-    window.socket.on('error_message', (data) => {
-        alert(data.message);
-        // Re-enable start button if there was an error
-        const startButton = document.querySelector('#create-game-modal .buttons button');
-        if (startButton && startButton.disabled) {
-            startButton.disabled = false;
-            startButton.textContent = 'يالا نبدأ';
-        }
-    });
+            errorDiv.style.display = 'none';
+        }, 5000);
+    }
 }
 
 function updateLobbyPlayerList(players, host) {
@@ -216,87 +182,101 @@ function leaveGame() {
     window.location.href = '/';
 }
 
-// Charades Game JavaScript Module
+// Initialize game when document is ready
+document.addEventListener('DOMContentLoaded', () => {
+    // Check if we're on the game page
+    if (window.location.pathname.startsWith('/game/')) {
+        // Get game data from hidden inputs
+        const gameId = document.getElementById('game-id')?.value;
+        const playerName = document.getElementById('player-name')?.value;
+        const transferId = document.getElementById('transfer-id')?.value;
+        const isHost = document.getElementById('is-host')?.value === 'true';
+        
+        if (gameId && playerName) {
+            // Initialize socket connection
+            window.socket = io();
+            
+            // Set up socket event listeners
+            window.socket.on('connect', () => {
+                console.log('Socket connected, verifying game session...');
+                window.socket.emit('verify_game', {
+                    game_id: gameId,
+                    player_name: playerName,
+                    transfer_id: transferId
+                });
+            });
+            
+            window.socket.on('game_state', (data) => {
+                console.log('Received game state:', data);
+                if (window.charadesGame) {
+                    window.charadesGame.updateGameState(data);
+                }
+            });
+            
+            window.socket.on('error', (data) => {
+                console.error('Game error:', data);
+                showError(data.message);
+                // Only redirect if we get a specific redirect flag
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                }
+            });
+            
+            // Initialize game instance
+            window.charadesGame = new CharadesGame(gameId, playerName, isHost);
+        } else {
+            console.error('Missing required game data');
+            window.location.href = '/';
+        }
+    } else {
+        // Initialize lobby socket connection if we're on the index page
+        if (window.location.pathname === '/') {
+            window.socket = io();
+            setupLobbySocketListeners();
+        }
+    }
+});
+
 class CharadesGame {
-    constructor(socket, gameId, playerName, isHost) {
-        this.socket = socket;
+    constructor(gameId, playerName, isHost) {
         this.gameId = gameId;
         this.playerName = playerName;
-        this.playerType = null;
-        this.playerScore = null;
         this.isHost = isHost;
-        this.timerInterval = null;
-        
-        // Bind methods to preserve 'this' context
-        this.handleBeforeUnload = this.handleBeforeUnload.bind(this);
-        this.cleanup = this.cleanup.bind(this);
-        
-        // Add cleanup handlers
-        window.addEventListener('beforeunload', this.handleBeforeUnload);
-        this.initialize();
-    }
-
-    initialize() {
-        if (!this.socket || !this.gameId || !this.playerName) {
-            console.error('Missing required game information');
-            return;
-        }
-
-        // Setup socket event listeners
+        this.socket = window.socket;
         this.setupSocketListeners();
     }
-
+    
+    updateGameState(data) {
+        if (data.message) {
+            this.updateStatus(data.message);
+        }
+        if (data.players) {
+            this.updatePlayersList(data.players);
+        }
+        if (data.current_player) {
+            this.updateCurrentPlayer(data.current_player);
+        }
+        if (data.scores) {
+            this.updateScores(data.scores);
+        }
+    }
+    
     setupSocketListeners() {
-        // Remove any existing listeners first
-        this.cleanup();
-
-        this.socket.on('game_state', (data) => {
-            if (data.message) {
-                this.updateStatus(data.message);
-            }
-            if (data.players) {
-                this.updatePlayersList(data.players);
-            }
-            if (data.current_player) {
-                this.updateCurrentPlayer(data.current_player);
-            }
-            if (data.scores) {
-                this.updateScores(data.scores);
+        this.socket.on('new_item', (data) => {
+            console.log('Received new item:', data);
+            if (data.item) {
+                this.displayItem(data.category, data.item);
             }
         });
-
-        this.socket.on('disconnect', () => {
-            console.log('Socket disconnected');
-            this.cleanup();
-        });
-    }
-
-    cleanup() {
-        if (this.socket) {
-            // Remove all listeners
-            this.socket.removeAllListeners('game_state');
-            this.socket.removeAllListeners('disconnect');
-            
-            // Clear any running timers
-            if (this.timerInterval) {
-                clearInterval(this.timerInterval);
-                this.timerInterval = null;
-            }
-        }
-    }
-
-    handleBeforeUnload(event) {
-        // Cleanup before page unload
-        this.cleanup();
         
-        if (this.socket && this.socket.connected) {
-            this.socket.emit('leave_game', {
-                game_id: this.gameId,
-                player_name: this.playerName
-            });
-        }
+        this.socket.on('round_end', (data) => {
+            console.log('Round ended:', data);
+            this.hideItemDisplay();
+            this.updateScores(data.scores);
+            this.updateStatus(data.message);
+        });
     }
-
+    
     updateStatus(message) {
         const statusElement = document.getElementById('game-status');
         if (statusElement) {
@@ -319,22 +299,28 @@ class CharadesGame {
     }
 
     updateCurrentPlayer(player) {
-        const currentTurnElement = document.getElementById('current-turn');
-        if (currentTurnElement) {
-            const currentPlayerName = document.getElementById('player-name').value;
-            const displayText = player === currentPlayerName ? 
-                `${player} (أنت)` : player;
-            currentTurnElement.textContent = displayText;
-            
-            // Update the current player highlight in the players list
-            const playerItems = document.querySelectorAll('.player-item');
-            playerItems.forEach(item => {
-                if (item.textContent.includes(player)) {
-                    item.classList.add('current-turn');
-                } else {
-                    item.classList.remove('current-turn');
-                }
-            });
+        const currentTurn = document.getElementById('current-turn');
+        const readyButton = document.getElementById('readyButton');
+        const itemDisplay = document.getElementById('item-display');
+        
+        if (currentTurn) {
+            currentTurn.textContent = player;
+        }
+
+        // Show/hide ready button based on if it's our turn
+        if (readyButton) {
+            readyButton.style.display = player === this.playerName ? 'block' : 'none';
+        }
+
+        // Show/hide item display based on if it's our turn
+        if (itemDisplay) {
+            if (player === this.playerName) {
+                itemDisplay.style.display = 'block';
+                itemDisplay.classList.add('visible');
+            } else {
+                itemDisplay.style.display = 'none';
+                itemDisplay.classList.remove('visible');
+            }
         }
     }
 
@@ -349,6 +335,46 @@ class CharadesGame {
                     return `<div class="score-item ${isCurrentPlayer ? 'current-player' : ''}">${score}</div>`;
                 })
                 .join('');
+        }
+    }
+
+    displayItem(category, itemData) {
+        const itemDisplay = document.getElementById('item-display');
+        const readyButton = document.getElementById('readyButton');
+        
+        if (itemDisplay && readyButton) {
+            // Show the item with animation
+            itemDisplay.innerHTML = `
+                <div class="item-category">${category}</div>
+                <div class="item-name">${itemData}</div>
+            `;
+            itemDisplay.style.display = 'block';
+            itemDisplay.classList.add('visible');
+            
+            // Show ready button since it's our turn
+            readyButton.style.display = 'block';
+        }
+    }
+
+    hideItemDisplay() {
+        const itemDisplay = document.getElementById('item-display');
+        const readyButton = document.getElementById('readyButton');
+        const guessButton = document.getElementById('guessButton');
+        
+        if (itemDisplay) {
+            itemDisplay.classList.remove('visible');
+            setTimeout(() => {
+                itemDisplay.style.display = 'none';
+                itemDisplay.innerHTML = '';
+            }, 300);
+        }
+        
+        if (readyButton) {
+            readyButton.style.display = 'none';
+        }
+        
+        if (guessButton) {
+            guessButton.style.display = 'none';
         }
     }
 }
@@ -448,8 +474,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const gameId = document.getElementById('game-id')?.value;
         const playerName = document.getElementById('player-name')?.value;
         const isHost = document.getElementById('is-host')?.value === 'true';
-        const initialStateElem = document.getElementById('initial-state');
-        const initialState = initialStateElem ? JSON.parse(initialStateElem.value) : {};
+        
+        // Safely parse initial state
+        let initialState = {};
+        try {
+            const initialStateElem = document.getElementById('initial-state');
+            if (initialStateElem && initialStateElem.value) {
+                initialState = JSON.parse(initialStateElem.value.trim());
+            }
+        } catch (error) {
+            console.error('Error parsing initial state:', error);
+            initialState = {};
+        }
         
         if (!gameId || !playerName) {
             console.error('Missing required game information');
@@ -477,6 +513,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (initialState.status) {
                 window.charadesGame.updateStatus(initialState.status);
+            }
+            // Show initial item if we're the current player
+            if (initialState.item && initialState.current_player === playerName) {
+                const itemDisplay = document.getElementById('item-display');
+                const readyButton = document.getElementById('readyButton');
+                
+                if (itemDisplay && readyButton) {
+                    itemDisplay.innerHTML = `
+                        <div class="item-category">${initialState.item.category}</div>
+                        <div class="item-name">${initialState.item.item}</div>
+                    `;
+                    itemDisplay.style.display = 'block';
+                    readyButton.style.display = 'block';
+                    
+                    updateStatusMessage('دورك! اضغط "جاهز" عندما تكون مستعد');
+                }
             }
         }
         
@@ -578,22 +630,28 @@ function updatePlayersList(players) {
 }
 
 function updateCurrentPlayer(player) {
-    const currentTurnElement = document.getElementById('current-turn');
-    if (currentTurnElement) {
-        const currentPlayerName = document.getElementById('player-name').value;
-        const displayText = player === currentPlayerName ? 
-            `${player} (أنت)` : player;
-        currentTurnElement.textContent = displayText;
-        
-        // Update the current player highlight in the players list
-        const playerItems = document.querySelectorAll('.player-item');
-        playerItems.forEach(item => {
-            if (item.textContent.includes(player)) {
-                item.classList.add('current-turn');
-            } else {
-                item.classList.remove('current-turn');
-            }
-        });
+    const currentTurn = document.getElementById('current-turn');
+    const readyButton = document.getElementById('readyButton');
+    const itemDisplay = document.getElementById('item-display');
+    
+    if (currentTurn) {
+        currentTurn.textContent = player;
+    }
+
+    // Show/hide ready button based on if it's our turn
+    if (readyButton) {
+        readyButton.style.display = player === document.getElementById('player-name').value ? 'block' : 'none';
+    }
+
+    // Show/hide item display based on if it's our turn
+    if (itemDisplay) {
+        if (player === document.getElementById('player-name').value) {
+            itemDisplay.style.display = 'block';
+            itemDisplay.classList.add('visible');
+        } else {
+            itemDisplay.style.display = 'none';
+            itemDisplay.classList.remove('visible');
+        }
     }
 }
 
@@ -610,3 +668,48 @@ function updateScores(scores) {
             .join('');
     }
 }
+
+function updateStatusMessage(message) {
+    const statusElement = document.getElementById('game-status');
+    if (statusElement) {
+        statusElement.textContent = message;
+    }
+}
+
+function startTimer(duration) {
+    const timerElement = document.getElementById('timer');
+    if (timerElement) {
+        let timeLeft = duration;
+        timerElement.textContent = `الوقت المتبقي: ${timeLeft} ثانية`;
+        window.charadesGame.timerInterval = setInterval(() => {
+            timeLeft -= 1;
+            timerElement.textContent = `الوقت المتبقي: ${timeLeft} ثانية`;
+            if (timeLeft <= 0) {
+                clearInterval(window.charadesGame.timerInterval);
+                window.charadesGame.timerInterval = null;
+            }
+        }, 1000);
+    }
+}
+
+function stopTimer() {
+    if (window.charadesGame.timerInterval) {
+        clearInterval(window.charadesGame.timerInterval);
+        window.charadesGame.timerInterval = null;
+    }
+}
+
+// When the game page loads, verify the session
+document.addEventListener('DOMContentLoaded', () => {
+    const gameData = JSON.parse(sessionStorage.getItem('gameData') || '{}');
+    const urlParams = new URLSearchParams(window.location.search);
+    const transferId = urlParams.get('transfer_id');
+    
+    if (gameData.transferId === transferId) {
+        window.socket.emit('verify_game', {
+            game_id: gameData.gameId,
+            player_name: gameData.playerName,
+            transfer_id: transferId
+        });
+    }
+});
