@@ -379,6 +379,13 @@ def handle_round_timeout(data):
         next_item = get_random_item()
         game.next_round(next_item)
         
+        # Emit the current (unsolved) item to all players before changing it
+        emit('reveal_item', {
+            'item': game.current_item['item'],
+            'category': game.current_item['category'],
+            'player': game.current_player
+        }, room=game_id)
+        
         # Send new item to the next player
         emit('new_item', {
             'item': next_item['item'],

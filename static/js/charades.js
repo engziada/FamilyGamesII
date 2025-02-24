@@ -236,11 +236,68 @@ class CharadesGame {
         this.gameStatus = 'waiting';
         this.timerInterval = null;
         
+        // Initialize audio elements
+        this.backgroundMusic = new Audio('/static/sounds/background.mp3');
+        this.backgroundMusic.loop = true;
+        this.backgroundMusic.volume = 0.3; // Low volume
+        
+        this.guessedSound = new Audio('/static/sounds/guessed.mp3');
+        this.timeoutSound = new Audio('/static/sounds/timeout.mp3');
+        
         // Initialize socket connection
         this.initializeSocket();
         
         // Set up UI event listeners
         this.setupUIEventListeners();
+        
+        // Add CSS for reveal message
+        const style = document.createElement('style');
+        style.textContent = `
+            .reveal-message {
+                display: none;
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background-color: rgba(0, 0, 0, 0.9);
+                color: white;
+                padding: 40px;
+                border-radius: 20px;
+                z-index: 1000;
+                text-align: center;
+                animation: fadeIn 0.5s ease-in;
+                min-width: 400px;
+                min-height: 300px;
+            }
+            
+            .reveal-content {
+                padding: 40px;
+            }
+            
+            .reveal-message h3 {
+                margin: 0 0 30px 0;
+                color: #ffd700;
+                font-size: 2.4em;
+            }
+            
+            .reveal-message p {
+                font-size: 1.6em;
+                margin: 15px 0;
+            }
+            
+            .reveal-message strong {
+                color: #ffd700;
+                font-size: 1.4em;
+                display: inline-block;
+                margin: 10px 0;
+            }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+                to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            }
+        `;
+        document.head.appendChild(style);
     }
 
     initializeSocket() {
@@ -278,9 +335,20 @@ class CharadesGame {
             this.updateGameState(data);
         });
 
+        this.socket.on('correct_guess', (data) => {
+            console.log('Correct guess:', data);
+            this.guessedSound.play().catch(err => console.log('Error playing guessed sound:', err));
+            // Any other correct guess handling...
+        });
+
+        this.socket.on('timer_start', (data) => {
+            console.log('Timer started:', data);
+            this.startTimer(data.duration);
+        });
+
         this.socket.on('error', (data) => {
             console.error('Game error:', data);
-            showError(data.message);
+            this.showError(data.message);
         });
 
         // Handle new items
@@ -308,6 +376,37 @@ class CharadesGame {
             console.error('Game error:', data);
             this.showError(data.message);
         });
+
+        // Add reveal item listener
+        this.socket.on('reveal_item', (data) => {
+            console.log('Item revealed:', data);
+            
+            // Create or get the reveal message element
+            let revealMsg = document.getElementById('reveal-message');
+            if (!revealMsg) {
+                revealMsg = document.createElement('div');
+                revealMsg.id = 'reveal-message';
+                revealMsg.className = 'reveal-message';
+                document.body.appendChild(revealMsg);
+            }
+            
+            // Show the revealed item
+            revealMsg.innerHTML = `
+                <div class="reveal-content">
+                    <h3>انتهى الدور!</h3>
+                    <p>الكلمة كانت:</p>
+                    <p><strong>${data.item}</strong></p>
+                    <p>التصنيف: ${data.category}</p>
+                    <p>كان دور: ${data.player}</p>
+                </div>
+            `;
+            revealMsg.style.display = 'block';
+            
+            // Hide after 10 seconds
+            setTimeout(() => {
+                revealMsg.style.display = 'none';
+            }, 10000);
+        });
     }
 
     setupUIEventListeners() {
@@ -316,6 +415,10 @@ class CharadesGame {
         if (startButton && this.isHost) {
             startButton.addEventListener('click', () => {
                 console.log('Starting game...');
+                // Try to start background music on host's first interaction
+                if (this.backgroundMusic && !this.backgroundMusic.playing) {
+                    this.backgroundMusic.play().catch(err => console.log('Error playing background music:', err));
+                }
                 this.socket.emit('start_game', {
                     game_id: this.gameId
                 });
@@ -327,6 +430,10 @@ class CharadesGame {
         if (readyButton) {
             readyButton.addEventListener('click', () => {
                 console.log('Player ready, starting turn...');
+                // Try to start background music on player's first interaction
+                if (this.backgroundMusic && !this.backgroundMusic.playing) {
+                    this.backgroundMusic.play().catch(err => console.log('Error playing background music:', err));
+                }
                 this.socket.emit('player_ready', {
                     game_id: this.gameId
                 });
@@ -427,6 +534,26 @@ class CharadesGame {
             
             if (timeLeft <= 0) {
                 clearInterval(this.timerInterval);
+                
+                // Play timeout sound twice
+                const playTimeoutTwice = async () => {
+                    try {
+                        await this.timeoutSound.play();
+                        this.timeoutSound.currentTime = 0; // Reset to start
+                        setTimeout(async () => {
+                            try {
+                                await this.timeoutSound.play();
+                            } catch (err) {
+                                console.log('Error playing second timeout sound:', err);
+                            }
+                        }, 1000); // Play second sound after 1 second
+                    } catch (err) {
+                        console.log('Error playing first timeout sound:', err);
+                    }
+                };
+                
+                playTimeoutTwice();
+                
                 this.socket.emit('round_timeout', {
                     game_id: this.gameId
                 });
@@ -538,6 +665,16 @@ class CharadesGame {
             setTimeout(() => {
                 errorDiv.style.display = 'none';
             }, 5000);
+        }
+    }
+    
+    cleanup() {
+        if (this.backgroundMusic) {
+            this.backgroundMusic.pause();
+            this.backgroundMusic.currentTime = 0;
+        }
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
         }
     }
 }
