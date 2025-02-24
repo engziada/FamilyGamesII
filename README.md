@@ -99,6 +99,16 @@ FamilyGamesII/
 - Added proper display toggling for game items
 - Command to revert: `git checkout $(git rev-parse HEAD)`
 
+### Checkpoint 5 (2025-02-24 02:45)
+- Implemented proper timer display in minutes:seconds format (e.g. "2:00" instead of 120)
+- Timer now shows countdown properly for all players
+- Timer triggers round end and player switch when time is up
+- Successfully tested timer synchronization between players
+- To revert to this checkpoint:
+```powershell
+git checkout checkpoint-5
+```
+
 ## Development Guidelines
 1. Code Style
    - Clean, Pythonic code
