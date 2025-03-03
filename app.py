@@ -75,6 +75,11 @@ def get_random_item():
     }
 
 def calculate_score(start_time):
+    """Calculate score based on elapsed time since round start"""
+    if start_time is None:
+        logger.warning("Cannot calculate score: start_time is None")
+        return 0
+        
     elapsed_seconds = (datetime.now() - start_time).total_seconds()
     if elapsed_seconds <= 60:  # First minute
         return 10
@@ -129,7 +134,16 @@ def game(game_id):
         # Update session with current game info
         session['game_id'] = game_id
         session['player_name'] = player_name
-        session['is_host'] = any(p['name'] == player_name and p.get('isHost', False) for p in game.players)
+        # Check if player is host
+        is_host = False
+        if game.host == player_name:  # Check host property
+            is_host = True
+        else:  # Check isHost flag in players list
+            for player in game.players:
+                if player['name'] == player_name and player.get('isHost', False):
+                    is_host = True
+                    break
+        session['is_host'] = is_host
         session.permanent = True
         session.modified = True
         
@@ -137,7 +151,8 @@ def game(game_id):
                             game_id=game_id,
                             player_name=player_name,
                             transfer_id=transfer_id,
-                            is_host=session['is_host'])
+                            is_host=session['is_host'],
+                            player_type='host' if session['is_host'] else 'guest')
                             
     except Exception as e:
         logger.error(f"Error in game route: {str(e)}")
@@ -229,7 +244,6 @@ def handle_join_game(data):
             raise ValueError("غرفة اللعب غير موجودة")
             
         game = game_rooms[game_id]
-        
         if game.status != 'waiting':
             raise ValueError("اللعبة بدأت بالفعل")
             
@@ -327,23 +341,42 @@ def handle_guess_correct(data):
             raise ValueError("اللعبة لم تبدأ بعد")
             
         # Calculate scores
-        points = calculate_score(game.round_start_time)
-        current_player = game.current_player
-        
-        if points > 0:
-            # Award points to both players
-            game.scores[current_player] += points
-            game.scores[guesser_name] += points
+        if game.round_start_time is not None:
+            points = calculate_score(game.round_start_time)
+            current_player = game.current_player
+            
+            if points > 0:
+                # Award points to both players
+                if current_player not in game.scores:
+                    game.scores[current_player] = 0
+                if guesser_name not in game.scores:
+                    game.scores[guesser_name] = 0
+                    
+                game.scores[current_player] += points
+                game.scores[guesser_name] += points
         
         # Move to next player
-        current_idx = next((i for i, p in enumerate(game.players) if p['name'] == current_player), 0)
+        current_idx = next((i for i, p in enumerate(game.players) if p['name'] == game.current_player), 0)
         next_idx = (current_idx + 1) % len(game.players)
         next_player = game.players[next_idx]['name']
         
         # Update game state
         game.current_player = next_player
         game.current_item = get_random_item()
-        game.round_start_time = datetime.now()
+        game.round_start_time = None  # Reset timer until player is ready
+        
+        # Force reset timer on all clients to ensure synchronization
+        # Include next player information in the event
+        logger.info(f"Emitting force_reset_timer to all players in game {game_id} for correct guess")
+        emit('force_reset_timer', {
+            'next_player': next_player,
+            'game_status': game.status
+        }, room=game_id)
+        
+        # Emit timer start event to all players
+        emit('timer_start', {
+            'duration': 120
+        }, room=game_id)
         
         # Notify all players of the score update
         emit_game_state(game_id, f'دور {next_player}', scores=game.scores, last_item=game.current_item)
@@ -354,9 +387,11 @@ def handle_guess_correct(data):
             'category': game.current_item['category']
         }, room=get_player_sid(next_player))
         
-        # Start new timer
-        emit('timer_start', {
-            'duration': 120
+        logger.info(f"Emitting correct guess to all players in game {game_id}")
+        emit('correct_guess', {
+            'guesser': guesser_name,
+            'performer': current_player,
+            'scores': game.scores
         }, room=game_id)
         
     except Exception as e:
@@ -372,12 +407,31 @@ def handle_round_timeout(data):
             raise ValueError("غرفة اللعب غير موجودة")
             
         game = game_rooms[game_id]
-        if game.status != 'playing':
+        if game.status not in ['playing', 'round_active']:
+            logger.warning(f"Round timeout ignored: game status is {game.status}, expected 'playing' or 'round_active'")
             return
             
         # Get new item for next player
         next_item = get_random_item()
         game.next_round(next_item)
+        
+        # Set game status back to 'playing' so the next player needs to click 'Ready'
+        game.status = 'playing'
+        
+        # Emit round_timeout event to all clients
+        logger.info(f"Emitting round_timeout to all players in game {game_id}")
+        emit('round_timeout', {
+            'next_player': game.current_player,
+            'game_status': game.status
+        }, room=game_id)
+        
+        # Force reset timer on all clients to ensure synchronization
+        # Include next player information in the event
+        logger.info(f"Emitting force_reset_timer to all players in game {game_id}")
+        emit('force_reset_timer', {
+            'next_player': game.current_player,
+            'game_status': game.status
+        }, room=game_id)
         
         # Emit the current (unsolved) item to all players before changing it
         emit('reveal_item', {
@@ -395,9 +449,82 @@ def handle_round_timeout(data):
         # Update game state for all players
         emit_game_state(game_id, f"انتهى الوقت! دور {game.current_player}", current_player=game.current_player)
         
+        # Log the successful turn transition
+        logger.info(f"Round timeout: Turn transitioned to {game.current_player} in game {game_id}")
+        
     except Exception as e:
         logger.error(f"Error handling round timeout: {str(e)}")
         emit('game_error', {'message': str(e)})
+
+@socketio.on('player_passed')
+def handle_player_passed(data):
+    try:
+        game_id = str(data.get('game_id'))
+        player_name = data.get('player_name')
+        
+        if game_id not in game_rooms:
+            raise ValueError("غرفة اللعب غير موجودة")
+            
+        game = game_rooms[game_id]
+        
+        # Verify that the player requesting to pass is the current player
+        if game.current_player != player_name:
+            logger.warning(f"Player {player_name} tried to pass but is not the current player")
+            emit('error', {'message': "أنت مش دورك عشان تعمل تخطي"})
+            return
+            
+        # Verify that the game is in an active round
+        if game.status != 'round_active':
+            logger.warning(f"Player {player_name} tried to pass but game status is {game.status}")
+            emit('error', {'message': "لا يمكن تخطي الدور في هذه المرحلة"})
+            return
+        
+        logger.info(f"Player {player_name} passed their turn in game {game_id}")
+        
+        # Get new item for next player
+        next_item = get_random_item()
+        game.next_round(next_item)
+        
+        # Set game status back to 'playing' so the next player needs to click 'Ready'
+        game.status = 'playing'
+        
+        # Emit pass_turn event to all clients
+        logger.info(f"Emitting pass_turn to all players in game {game_id}")
+        emit('pass_turn', {
+            'player': player_name,
+            'next_player': game.current_player,
+            'game_status': game.status
+        }, room=game_id)
+        
+        # Force reset timer on all clients to ensure synchronization
+        logger.info(f"Emitting force_reset_timer to all players in game {game_id}")
+        emit('force_reset_timer', {
+            'next_player': game.current_player,
+            'game_status': game.status
+        }, room=game_id)
+        
+        # Emit the current (unsolved) item to all players before changing it
+        emit('reveal_item', {
+            'item': game.current_item['item'],
+            'category': game.current_item['category'],
+            'player': game.current_player
+        }, room=game_id)
+        
+        # Send new item to the next player
+        emit('new_item', {
+            'item': next_item['item'],
+            'category': next_item['category']
+        }, room=get_player_sid(game.current_player))
+
+        # Update game state for all players
+        emit_game_state(game_id, f"{player_name} تخطى دوره! دور {game.current_player}", current_player=game.current_player)
+        
+        # Log the successful turn transition
+        logger.info(f"Turn passed: Turn transitioned from {player_name} to {game.current_player} in game {game_id}")
+        
+    except Exception as e:
+        logger.error(f"Error handling player pass: {str(e)}")
+        emit('error', {'message': str(e)})
 
 @socketio.on('cancel_game')
 def handle_cancel_game():
@@ -439,21 +566,71 @@ def handle_leave_game(data):
             
             # Remove player from the game room's player list
             game = game_rooms[room_id]
-            game.remove_player(player_name)
+            was_host = game.host == player_name
+            host_transferred = game.remove_player(player_name)
             
             # Debug log after removal
             logger.debug(f"Game room state after leave: {game.to_dict()}")
             
             # Get the updated player list
-            players = [p['name'] for p in game.players]
+            players = game.players
+            
+            if not players:
+                # No players left, remove the game room
+                del game_rooms[room_id]
+                logger.info(f"Game room {room_id} removed - no players left")
+                return
+            
+            # If host was transferred, verify the transfer was successful
+            if host_transferred:
+                new_host = next((p['name'] for p in players if p.get('isHost', False)), None)
+                if new_host:
+                    logger.info(f"Host transferred from {player_name} to {new_host} in room {room_id}")
+                    
+                    # Verify game state is consistent
+                    if game.host != new_host:
+                        logger.error(f"Host inconsistency detected. Game host: {game.host}, Expected: {new_host}")
+                        game.host = new_host  # Fix inconsistency
+                    
+                    # Check if turn was also transferred (when host was the current player)
+                    turn_transferred = game.current_player == new_host and player_name != new_host
+                    
+                    # Prepare message based on whether turn was also transferred
+                    message = f"{player_name} غادر اللعبة. {new_host} هو المضيف الجديد"
+                    if turn_transferred and game.status == 'playing':
+                        message += f" وحان دوره الآن"
+                    
+                    # Notify all clients about host transfer
+                    emit('host_transferred', {
+                        'message': message,
+                        'newHost': new_host,
+                        'players': players,
+                        'gameState': game.to_dict()  # Send full game state
+                    }, room=room_id)
+                    
+                    # Send special notification to new host
+                    new_host_sid = get_player_sid(new_host)
+                    if new_host_sid:
+                        emit('you_are_host', {
+                            'message': 'أنت الآن مضيف اللعبة'
+                        }, room=new_host_sid)
+                else:
+                    logger.error(f"Host transfer failed in room {room_id}")
+                    # Handle failed host transfer
+                    emit('game_error', {
+                        'message': 'فشل نقل استضافة اللعبة'
+                    }, room=room_id)
+            else:
+                # Regular player left event
+                emit('player_left', {
+                    'message': f"{player_name} خرج من اللعبة",
+                    'players': players
+                }, room=room_id)
             
             # Emit update_players event to all clients in the room
-            emit('update_players', {'players': players}, room=room_id)
-            
-            # Emit player_left event with updated player list
-            emit('player_left', {
-                'message': f"{player_name} خرج من اللعبة",
-                'players': game.players
+            emit('update_players', {
+                'players': players,
+                'gameState': game.to_dict()
             }, room=room_id)
             
             logger.info(f"Player {player_name} disconnected from game {room_id}")
@@ -471,6 +648,9 @@ def handle_leave_game(data):
             
     except Exception as e:
         logger.error(f"Error in handle_leave_game: {str(e)}")
+        emit('game_error', {
+            'message': 'حدث خطأ أثناء مغادرة اللعبة'
+        }, room=room_id)
 
 @socketio.on('join_game_room')
 def on_join_game_room(data):
@@ -549,32 +729,45 @@ def handle_next_round(data):
 
 @socketio.on('player_ready')
 def handle_player_ready(data):
-    """Handle when a player indicates they are ready to start their turn"""
     try:
         game_id = str(data.get('game_id'))
-        player_name = session.get('player_name')
         
-        if not game_id or game_id not in game_rooms:
+        if game_id not in game_rooms:
             raise ValueError("غرفة اللعب غير موجودة")
             
         game = game_rooms[game_id]
-        if game.status != 'playing':
-            raise ValueError("اللعبة لم تبدأ بعد")
-            
-        # Verify it's this player's turn
+        player_name = session.get('player_name')
+        
+        # Verify that the player is the current player
         if game.current_player != player_name:
             raise ValueError("مش دورك")
             
-        # Start the timer for this round
+        # Update game status to round_active
+        game.status = 'round_active'
+        
+        # Start the round timer
         game.start_round_timer()
         
-        # Start timer for all players
-        emit('timer_start', {
-            'duration': 120
+        # Force reset timer on all clients to ensure synchronization
+        # Include current player information in the event
+        logger.info(f"Emitting force_reset_timer to all players in game {game_id} for player_ready")
+        emit('force_reset_timer', {
+            'current_player': player_name,
+            'game_status': game.status
         }, room=game_id)
         
-        # Notify all players that the round is starting
-        emit_game_state(game_id, f"بدأ دور {player_name}", current_player=player_name)
+        # Emit timer start event to all players
+        emit('timer_start', {
+            'duration': 60  # 60 seconds per round
+        }, room=game_id)
+        
+        # Update game state for all players
+        emit_game_state(game_id, f"دور {player_name}", 
+                      status=game.status,
+                      current_player=game.current_player,
+                      timer={'duration': 60, 'start_time': datetime.now().isoformat()})
+        
+        logger.info(f"Player {player_name} is ready in game {game_id}")
         
     except Exception as e:
         logger.error(f"Error handling player ready: {str(e)}")
@@ -639,6 +832,86 @@ def handle_verify_game(data):
             'message': 'حدث خطأ غير متوقع',
             'redirect': url_for('index')
         })
+
+@socketio.on('host_withdraw')
+def handle_host_withdraw(data):
+    try:
+        room_id = str(data.get('roomId'))
+        host_name = data.get('playerName')
+        
+        if room_id in game_rooms:
+            game = game_rooms[room_id]
+            
+            # Verify this is actually the host
+            if game.host != host_name:
+                emit('error', {'message': 'Only the host can perform this action'})
+                return
+            
+            # Remove host and transfer to next player if any
+            host_transferred = game.remove_player(host_name)
+            
+            # Get updated player list with full player objects
+            players = game.players
+            
+            if not players:
+                # No players left, remove the game room
+                del game_rooms[room_id]
+                logger.info(f"Game room {room_id} removed - no players left")
+                return
+            
+            # Emit host withdrawn event with full player objects
+            emit('host_withdrawn', {
+                'message': f"{host_name} انسحب من اللعبة",
+                'players': players,
+                'newHost': game.host if host_transferred else None
+            }, room=room_id)
+            
+            # Leave the room
+            leave_room(room_id)
+            
+            # Clear host's session
+            session.pop('game_id', None)
+            session.pop('is_host', None)
+            session.pop('player_name', None)
+            session.modified = True
+            
+            logger.info(f"Host {host_name} withdrawn from game {room_id}")
+            
+    except Exception as e:
+        logger.error(f"Error in handle_host_withdraw: {str(e)}")
+        emit('error', {'message': str(e)})
+
+@socketio.on('close_room')
+def handle_close_room(data):
+    try:
+        room_id = str(data.get('roomId'))
+        host_name = data.get('playerName')
+        
+        if room_id in game_rooms:
+            game = game_rooms[room_id]
+            
+            # Verify this is actually the host
+            if game.host != host_name:
+                emit('error', {'message': 'Only the host can perform this action'})
+                return
+            
+            # Remove the game room first
+            del game_rooms[room_id]
+            logger.info(f"Game room {room_id} closed by host {host_name}")
+            
+            # Notify all players that the room is being closed
+            emit('room_closed', {
+                'message': f"تم إغلاق الغرفة من قبل {host_name}",
+                'redirect': '/'
+            }, room=room_id, broadcast=True)
+            
+            # Clear host's own session
+            session.clear()
+            session['_permanent'] = True
+            
+    except Exception as e:
+        logger.error(f"Error in handle_close_room: {str(e)}")
+        emit('error', {'message': str(e)})
 
 def emit_game_state(game_id, message=None, **kwargs):
     """Emit game state to all players in a room."""

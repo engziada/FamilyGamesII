@@ -21,9 +21,41 @@ class CharadesGame:
         self.players.append({'name': player_name, 'isHost': False})
 
     def remove_player(self, player_name):
+        was_host = any(p['name'] == player_name and p.get('isHost', True) for p in self.players)
+        was_current_player = self.current_player == player_name
         self.players = [p for p in self.players if p['name'] != player_name]
         if player_name in self.scores:
             del self.scores[player_name]
+        
+        # If the host left and there are other players, transfer host to the next player
+        if was_host and self.players:
+            new_host = self.players[0]['name']
+            self.transfer_host(new_host)
+            
+            # If the host was also the current player, transfer the turn to the new host
+            if was_current_player and self.status == 'playing':
+                self.current_player = new_host
+            
+            return True
+        # If the current player left but wasn't the host, move to the next player
+        elif was_current_player and self.status == 'playing' and self.players:
+            # Find the next player in the list
+            self.current_player = self.players[0]['name']
+            return False
+        return False
+
+    def transfer_host(self, new_host):
+        """Transfer host privileges to another player"""
+        # Remove host flag from all players
+        for player in self.players:
+            player['isHost'] = False
+        
+        # Set the new host
+        for player in self.players:
+            if player['name'] == new_host:
+                player['isHost'] = True
+                self.host = new_host
+                break
 
     def start_game(self):
         if len(self.players) < 2:

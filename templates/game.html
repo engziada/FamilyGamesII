@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 
+{% block head %}
+{% endblock %}
+
 {% block content %}
 <div class="game-container">
     <!-- Hidden inputs for game data -->
@@ -34,24 +37,25 @@
                     <div id="item-display" class="item-display" style="display: none;"></div>
                 </div>
                 <button id="readyButton" class="btn btn-success" style="display: none;">جاهز</button>
-                {% if player_type == 'guest' %}
-                <button id="guessButton" class="btn btn-secondary" style="display: none;">أنا اللي عرفتها</button>
-                {% endif %}
+                <button id="passButton" class="btn btn-warning" style="display: none;">تخطي دوري</button>
             </div>
 
             <!-- Game Controls -->
             <div class="game-controls">
-                {% if player_type == 'guest' %}
-                <button id="guess-btn" class="btn btn-primary" style="display: none;">تخمين</button>
-                {% endif %}
                 <div id="current-turn" class="current-turn"></div>
             </div>
 
             <!-- Control Buttons -->
             <div class="control-buttons">
-                <button class="btn btn-secondary" id="leaveButton">أنا منسحب</button>
                 {% if player_type == 'host' %}
-                <button id="endGameButton" class="btn btn-secondary">إقفل الأوضة</button>
+                <button id="startButton" class="btn btn-primary" style="display: none;">ابدأ اللعبة</button>
+                <button id="nextButton" class="btn btn-primary" style="display: none;">اللي بعده</button>
+                <button id="revealButton" class="btn btn-info" style="display: none;">اكشف الإجابة</button>
+                <button id="leave-room" class="btn btn-warning">أنا منسحب</button>
+                <button id="close-room" class="btn btn-danger">إقفل الأوضه</button>
+                {% else %}
+                <button id="guessButton" class="btn btn-primary" style="display: none;">أنا اللي عرفتها</button>
+                <button id="leaveButton" class="btn btn-secondary">أنا منسحب</button>
                 {% endif %}
             </div>
         </div>

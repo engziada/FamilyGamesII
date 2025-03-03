@@ -17,7 +17,7 @@
             <p>قم بتمثيل الكلمة بدون استخدام الكلام وخلي صحابك يخمنوا!</p>
             <div class="players">عدد اللاعبين: 2-8</div>
             <div class="buttons">
-                <button class="btn" onclick="showGameModal('charades-game', 'create')">لعبة جديدة</button>
+                <button class="btn btn-primary" onclick="showGameModal('charades-game', 'create')">لعبة جديدة</button>
                 <button class="btn btn-secondary" onclick="showGameModal('charades-game', 'join')">هادخل مع حد</button>
             </div>
         </div>
@@ -43,7 +43,7 @@
             <ul id="host-players-list"></ul>
         </div>
         <div class="buttons" style="display: flex; justify-content: space-between; margin-top: 20px;">
-            <button class="btn" onclick="createGame()">أوضة جديدة</button>
+            <button class="btn btn-primary" onclick="createGame()">أوضة جديدة</button>
             <button class="btn btn-secondary" onclick="hideModal('create-game-modal')">إلغاء</button>
         </div>
     </div>
@@ -63,7 +63,7 @@
                 <input type="text" id="room-code" placeholder="اكتب رقم الأوضة">
             </div>
             <div class="buttons" style="display: flex; justify-content: space-between; margin-top: 20px;">
-                <button class="btn" onclick="joinGame()">يالا</button>
+                <button class="btn btn-primary" onclick="joinGame()">يالا</button>
                 <button class="btn btn-secondary" onclick="hideModal('join-game-modal')">إلغاء</button>
             </div>
         </div>
