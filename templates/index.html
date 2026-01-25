@@ -1,88 +1,154 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container animate__animated animate__fadeIn">
-    <header class="text-center" style="margin-bottom: 40px;">
-        <h1 style="font-size: 2.5em; color: var(--primary-color); margin-bottom: 20px;">أهلاً بكم في ألعاب العيلة!</h1>
-        <p style="font-size: 1.2em; color: var(--text-color);">استمتع بأجمل الألعاب مع العائلة والأصدقاء</p>
+<div class="container">
+    <header>
+        <h1>أهلاً بكم في ألعاب العيلة!</h1>
+        <p>استمتع بأجمل الألعاب مع العائلة والأصدقاء في مكان واحد</p>
     </header>
 
-    <div class="games-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-        <!-- بدون كلام -->
-        <div class="game-card" data-game="charades">
+    <div class="games-grid">
+        <!-- Charades Card -->
+        <div class="card game-card animate__animated animate__fadeInUp">
+            <div class="game-icon">
+                <i class="fas fa-mask"></i>
+            </div>
             <h3>بدون كلام</h3>
-            <div class="game-image">
-                <!-- Temporarily removed missing image -->
-                <div class="placeholder-image">بدون كلام</div>
+            <p>قم بتمثيل الكلمة بدون استخدام الكلام وخلي صحابك يخمنوا! اللعبة الأشهر في كل تجمعاتنا.</p>
+            <div class="game-meta">
+                <span><i class="fas fa-users"></i> 2 - 8 لاعبين</span>
             </div>
-            <p>قم بتمثيل الكلمة بدون استخدام الكلام وخلي صحابك يخمنوا!</p>
-            <div class="players">عدد اللاعبين: 2-8</div>
             <div class="buttons">
-                <button class="btn btn-primary" onclick="showGameModal('charades-game', 'create')">لعبة جديدة</button>
-                <button class="btn btn-secondary" onclick="showGameModal('charades-game', 'join')">هادخل مع حد</button>
+                <button class="btn btn-primary" onclick="Utils.showGameModal('charades', 'create')">
+                    <i class="fas fa-plus"></i> لعبة جديدة
+                </button>
+                <button class="btn btn-outline" onclick="Utils.showGameModal('charades', 'join')">
+                    <i class="fas fa-sign-in-alt"></i> انضمام
+                </button>
             </div>
         </div>
 
-        <!-- المزيد من الألعاب ستضاف هنا -->
+        <!-- Pictionary Card -->
+        <div class="card game-card animate__animated animate__fadeInUp">
+            <div class="game-icon">
+                <i class="fas fa-paint-brush"></i>
+            </div>
+            <h3>ارسم وخمن</h3>
+            <p>لعبة الرسم والذكاء. ارسم الكلمة وحاول تخلي صحابك يعرفوها في أسرع وقت!</p>
+            <div class="game-meta">
+                <span><i class="fas fa-users"></i> 2 - 8 لاعبين</span>
+            </div>
+            <div class="buttons">
+                <button class="btn btn-primary" onclick="Utils.showGameModal('pictionary', 'create')">
+                    <i class="fas fa-plus"></i> لعبة جديدة
+                </button>
+                <button class="btn btn-outline" onclick="Utils.showGameModal('pictionary', 'join')">
+                    <i class="fas fa-sign-in-alt"></i> انضمام
+                </button>
+            </div>
+        </div>
+
+        <!-- Trivia Card -->
+        <div class="card game-card animate__animated animate__fadeInUp">
+            <div class="game-icon">
+                <i class="fas fa-lightbulb"></i>
+            </div>
+            <h3>بنك المعلومات</h3>
+            <p>اختبر معلوماتك العامة مع أهلك وأصحابك في مسابقة ثقافية ممتعة. أسئلة في كل المجالات!</p>
+            <div class="game-meta">
+                <span><i class="fas fa-users"></i> 2 - 8 لاعبين</span>
+            </div>
+            <div class="buttons">
+                <button class="btn btn-primary" onclick="Utils.showGameModal('trivia', 'create')">
+                    <i class="fas fa-plus"></i> لعبة جديدة
+                </button>
+                <button class="btn btn-outline" onclick="Utils.showGameModal('trivia', 'join')">
+                    <i class="fas fa-sign-in-alt"></i> انضمام
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Modal for Creating New Game -->
+<!-- Create Game Modal -->
 <div id="create-game-modal" class="modal">
+    <input type="hidden" id="modal-game-type" value="charades">
     <div class="modal-content">
-        <h2 style="margin-bottom: 20px;">أوضة الإنتظار</h2>
+        <h2 id="modal-title" style="margin-bottom: 1.5rem;">إنشاء غرفة جديدة</h2>
         <div class="input-group">
-            <label for="host-name">اسم اللعيب الكبير:</label>
-            <input type="text" id="host-name" placeholder="اكتب اسمك">
+            <label for="host-name">اسمك</label>
+            <input type="text" id="host-name" placeholder="اكتب اسمك هنا...">
         </div>
-        <div id="room-info" style="margin: 20px 0; display: none;">
-            <p>رقم الأوضة: <span id="room-id" style="font-weight: bold; color: var(--primary-color);"></span></p>
-            <p>شارك هذا الرقم مع أصحابك للإنضمام للعبة</p>
+        <div class="input-group">
+            <label>نظام اللعب</label>
+            <select id="game-teams" class="input-control" style="width: 100%; padding: 0.8rem; border-radius: 12px; border: 2px solid #dfe6e9;">
+                <option value="false">فردي (كل واحد لنفسه)</option>
+                <option value="true">فرق (فريقين ضد بعض)</option>
+            </select>
         </div>
-        <div class="players-list" style="display: none;">
-            <h3>اللعيبة في الأوضة:</h3>
-            <ul id="host-players-list"></ul>
+        <div class="input-group">
+            <label>الصعوبة</label>
+            <select id="game-difficulty" class="input-control" style="width: 100%; padding: 0.8rem; border-radius: 12px; border: 2px solid #dfe6e9;">
+                <option value="all">كل المستويات</option>
+                <option value="easy">سهل (أفلام ومسلسلات مشهورة)</option>
+                <option value="medium">متوسط</option>
+                <option value="hard">صعب (حاجات محتاجة تمثيل بجد)</option>
+            </select>
         </div>
-        <div class="buttons" style="display: flex; justify-content: space-between; margin-top: 20px;">
-            <button class="btn btn-primary" onclick="createGame()">أوضة جديدة</button>
-            <button class="btn btn-secondary" onclick="hideModal('create-game-modal')">إلغاء</button>
+        <div class="input-group">
+            <label>كلمات خاصة (اختياري)</label>
+            <textarea id="custom-words" placeholder="اكتب الكلمات هنا، افصل بين كل كلمة بفاصلة (,)" style="width: 100%; padding: 0.8rem; border-radius: 12px; border: 2px solid #dfe6e9; font-family: inherit; height: 80px;"></textarea>
+        </div>
+        <div id="room-info" style="margin: 1.5rem 0; display: none; padding: 1rem; background: #f8f9fa; border-radius: 12px;">
+            <p>رقم الغرفة: <span id="room-id" style="font-weight: 800; color: var(--primary); font-size: 1.2rem;"></span></p>
+            <p style="font-size: 0.9rem; color: var(--text-light);">شارك هذا الرقم مع أصدقائك للإنضمام</p>
+        </div>
+        <div class="players-list" style="display: none; margin-bottom: 1.5rem;">
+            <h4 style="margin-bottom: 0.5rem;">اللاعبين في الغرفة:</h4>
+            <ul id="host-players-list" style="list-style: none;"></ul>
+        </div>
+        <div class="buttons" style="display: flex; gap: 1rem;">
+            <button class="btn btn-primary" style="flex: 2;" onclick="Lobby.createGame()">أنشئ الغرفة</button>
+            <button class="btn btn-outline" style="flex: 1;" onclick="Utils.hideModal('create-game-modal')">إلغاء</button>
         </div>
     </div>
 </div>
 
-<!-- Modal for Joining Game -->
+<!-- Join Game Modal -->
 <div id="join-game-modal" class="modal">
     <div class="modal-content">
         <div id="join-form">
-            <h2 style="margin-bottom: 20px;">الإنضمام للعبة</h2>
+            <h2 style="margin-bottom: 1.5rem;">انضمام للعبة</h2>
             <div class="input-group">
-                <label for="player-name">اسمك:</label>
-                <input type="text" id="player-name" placeholder="اكتب اسمك">
+                <label for="player-name">اسمك</label>
+                <input type="text" id="player-name" placeholder="اكتب اسمك...">
             </div>
             <div class="input-group">
-                <label for="room-code">رقم الأوضة:</label>
-                <input type="text" id="room-code" placeholder="اكتب رقم الأوضة">
+                <label for="room-code">رقم الغرفة</label>
+                <input type="text" id="room-code" placeholder="اكتب رقم الغرفة...">
             </div>
-            <div class="buttons" style="display: flex; justify-content: space-between; margin-top: 20px;">
-                <button class="btn btn-primary" onclick="joinGame()">يالا</button>
-                <button class="btn btn-secondary" onclick="hideModal('join-game-modal')">إلغاء</button>
+            <div class="buttons" style="display: flex; gap: 1rem;">
+                <button class="btn btn-primary" style="flex: 2;" onclick="Lobby.joinGame()">انضم الآن</button>
+                <button class="btn btn-outline" style="flex: 1;" onclick="Utils.hideModal('join-game-modal')">إلغاء</button>
             </div>
         </div>
         <div id="join-lobby" style="display: none;">
-            <h2 style="margin-bottom: 20px;">أوضة الإنتظار</h2>
-            <p style="margin-bottom: 20px; color: var(--primary-color); font-weight: bold;">رقم الأوضة: <span id="join-room-id"></span></p>
-            <div class="players-list">
-                <h3>اللعيبة في الأوضة:</h3>
-                <ul id="join-players-list"></ul>
+            <h2 style="margin-bottom: 1.5rem;">في انتظار البداية</h2>
+            <p style="margin-bottom: 1rem; color: var(--primary); font-weight: 700;">رقم الغرفة: <span id="join-room-id"></span></p>
+            <div class="players-list" style="margin-bottom: 1.5rem;">
+                <h4 style="margin-bottom: 0.5rem;">اللاعبين الموجودين:</h4>
+                <ul id="join-players-list" style="list-style: none;"></ul>
             </div>
-            <p class="waiting-message" style="text-align: center; margin-top: 20px; color: var(--accent-color);">
-                في انتظار اللعيب الكبير يبدأ اللعبة...
+            <p class="animate__animated animate__pulse animate__infinite" style="color: var(--accent); font-weight: 600;">
+                في انتظار المضيف لبدء اللعبة...
             </p>
-            <div class="buttons" style="display: flex; justify-content: center; margin-top: 20px;">
-                <button class="btn btn-secondary" onclick="leaveGame()">خروج</button>
+            <div class="buttons" style="margin-top: 1.5rem;">
+                <button class="btn btn-outline" onclick="Lobby.leaveGame()">خروج</button>
             </div>
         </div>
     </div>
 </div>
+
+<div id="error-message"></div>
 {% endblock %}
 
 {% block scripts %}
