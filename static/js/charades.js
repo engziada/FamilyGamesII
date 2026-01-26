@@ -409,6 +409,11 @@ class GameEngine {
         if (data.current_player) this.updateCurrentPlayer(data.current_player);
         if (data.scores || data.team_scores) this.updateScores(data);
         
+        if (data.current_question) {
+            this.displayQuestion(data.current_question);
+        } else if (data.current_item) {
+            this.displayItem(data.current_item.category, data.current_item);
+        }
         
         this.updateButtonVisibility();
     }

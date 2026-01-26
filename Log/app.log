@@ -2103,8 +2103,6 @@
 2026-01-26 10:24:20,606 INFO:  * Restarting with stat
 2026-01-26 10:24:21,920 WARNING:  * Debugger is active!
 2026-01-26 10:24:21,923 INFO:  * Debugger PIN: 483-311-837
-2026-01-28 01:37:54,334 INFO:  * Restarting with stat
-2026-01-28 01:37:55,731 WARNING:  * Debugger is active!
-2026-01-28 01:37:55,773 INFO:  * Debugger PIN: 531-980-121
-2026-01-28 01:43:44,003 INFO: Closing room 2992
-2026-01-28 02:04:27,448 INFO: Closing room 1954
+2026-01-26 10:45:09,488 INFO:  * Restarting with stat
+2026-01-26 10:45:10,543 WARNING:  * Debugger is active!
+2026-01-26 10:45:10,545 INFO:  * Debugger PIN: 483-311-837
