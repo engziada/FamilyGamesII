@@ -151,6 +151,8 @@ def handle_start_game(data):
             game_obj.start_game()
             if game_obj.game_type in ['charades', 'pictionary']:
                 game_obj.set_current_item(game_obj.get_item())
+                if game_obj.game_type == 'pictionary':
+                    game_obj.clear_canvas()
             elif game_obj.game_type == 'trivia':
                 game_obj.current_question = game_obj.get_random_question()
             
@@ -169,7 +171,7 @@ def handle_player_ready(data):
         game_obj.status = 'round_active'
         if hasattr(game_obj, 'start_round_timer'): game_obj.start_round_timer()
         emit('force_reset_timer', {'current_player': game_obj.current_player, 'game_status': game_obj.status}, room=game_obj.game_id)
-        limit = game_obj.settings.get('time_limit', 120) if game_obj.game_type in ['charades', 'pictionary'] else 30
+        limit = game_obj.settings.get('time_limit', 90)
         emit('timer_start', {'duration': limit}, room=game_obj.game_id)
         emit_game_state(game_obj.game_id)
 
@@ -288,7 +290,7 @@ def handle_verify_game(data):
                 if game_obj.game_type in ['charades', 'pictionary'] and game_obj.current_item: emit('new_item', game_obj.current_item)
                 elif game_obj.game_type == 'trivia' and game_obj.current_question: emit('new_question', game_obj.current_question)
             
-            if game_obj.game_type == 'pictionary' and hasattr(game_obj, 'canvas_data') and game_obj.canvas_data:
+            if game_obj.game_type == 'pictionary' and hasattr(game_obj, 'canvas_data'):
                 emit('sync_canvas', game_obj.canvas_data)
 
 @socketio.on('leave_game')
@@ -304,6 +306,14 @@ def handle_leave(data):
             emit('player_left', {'message': f'{pname} غادر', 'players': game_obj.players}, room=rid)
             emit_game_state(rid)
         leave_room(rid)
+
+@socketio.on('close_room')
+def handle_close(data):
+    room_id = str(data.get('roomId'))
+    if room_id in game_rooms and game_rooms[room_id].host == session.get('player_name'):
+        logger.info(f"Closing room {room_id}")
+        del game_rooms[room_id]
+        socketio.emit('room_closed', {'message': 'تم إغلاق الغرفة من قبل المضيف'}, room=room_id)
 
 def emit_game_state(gid):
     if gid in game_rooms:

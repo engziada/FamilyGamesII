@@ -19,6 +19,18 @@ class TriviaGame:
             'difficulty': 'all',
             'time_limit': 30
         }
+        self.questions = self.load_and_shuffle_questions()
+        self.question_index = 0
+
+    def load_and_shuffle_questions(self):
+        try:
+            with open('games/trivia/questions.json', 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                questions = data.get('questions', [])
+                random.shuffle(questions)
+                return questions
+        except:
+            return []
 
     def add_player(self, player_name):
         if len(self.players) >= 8:
@@ -49,16 +61,21 @@ class TriviaGame:
         current_idx = next((i for i, p in enumerate(self.players) if p['name'] == self.current_player), 0)
         next_idx = (current_idx + 1) % len(self.players)
         self.current_player = self.players[next_idx]['name']
-        self.current_question = self.get_random_question()
+        self.current_question = self.get_question()
         self.round_start_time = None
 
+    def get_question(self):
+        if not self.questions:
+            self.questions = self.load_and_shuffle_questions()
+        if not self.questions: return None
+
+        q = self.questions[self.question_index]
+        self.question_index = (self.question_index + 1) % len(self.questions)
+        if self.question_index == 0: random.shuffle(self.questions)
+        return q
+
     def get_random_question(self):
-        try:
-            with open('games/trivia/questions.json', 'r', encoding='utf-8') as f:
-                questions = json.load(f).get('questions', [])
-                return random.choice(questions)
-        except:
-            return None
+        return self.get_question()
 
     def add_score(self, player_name, points):
         self.scores[player_name] = self.scores.get(player_name, 0) + points

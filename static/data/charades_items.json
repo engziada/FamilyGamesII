@@ -1,30 +1,200 @@
 {
     "items": [
-        {"category": "فيلم", "name": "الأب الروحي", "difficulty": "hard"},
-        {"category": "فيلم", "name": "تيتانيك", "difficulty": "easy"},
-        {"category": "مسرحية", "name": "البؤساء", "difficulty": "hard"},
-        {"category": "فيلم", "name": "العراف", "difficulty": "medium"},
-        {"category": "مسلسل", "name": "الوصية", "difficulty": "medium"},
-        {"category": "فيلم", "name": "ريا وسكينة", "difficulty": "easy"},
-        {"category": "مسرحية", "name": "مدرسة المشاغبين", "difficulty": "easy"},
-        {"category": "فيلم", "name": "العيال كبرت", "difficulty": "easy"},
-        {"category": "مسلسل", "name": "شمس الزناتي", "difficulty": "medium"},
-        {"category": "مسرحية", "name": "الناظر", "difficulty": "medium"},
-        {"category": "مسرحية", "name": "المتزوج", "difficulty": "medium"},
-        {"category": "فيلم", "name": "الكيت كات", "difficulty": "hard"},
-        {"category": "فيلم", "name": "باب الحديد", "difficulty": "hard"},
-        {"category": "فيلم", "name": "يوم من عمري", "difficulty": "medium"},
-        {"category": "فيلم", "name": "صلاح الدين", "difficulty": "medium"},
-        {"category": "مسلسل", "name": "الحفيد", "difficulty": "easy"},
-        {"category": "مسلسل", "name": "زيزينيا", "difficulty": "medium"},
-        {"category": "فيلم", "name": "الكرنك", "difficulty": "hard"},
-        {"category": "فيلم", "name": "شيء من الخوف", "difficulty": "hard"},
-        {"category": "فيلم", "name": "الأرض", "difficulty": "hard"},
-        {"category": "فيلم", "name": "طباخ الريس", "difficulty": "easy"},
-        {"category": "فيلم", "name": "كده رضا", "difficulty": "easy"},
-        {"category": "مسلسل", "name": "رأفت الهجان", "difficulty": "medium"},
-        {"category": "مسلسل", "name": "ليالي الحلمية", "difficulty": "medium"},
-        {"category": "فيلم", "name": "الإرهاب والكباب", "difficulty": "medium"},
-        {"category": "فيلم", "name": "فول الصين العظيم", "difficulty": "easy"}
+        {
+            "name": "مدرسة المشاغبين",
+            "category": "مسرحية",
+            "year": "1973",
+            "starring": "عادل إمام، سعيد صالح، أحمد زكي",
+            "type": "كوميدي"
+        },
+        {
+            "name": "العيال كبرت",
+            "category": "مسرحية",
+            "year": "1979",
+            "starring": "سعيد صالح، أحمد زكي، يونس شلبي",
+            "type": "كوميدي"
+        },
+        {
+            "name": "الواد سيد الشغال",
+            "category": "مسرحية",
+            "year": "1985",
+            "starring": "عادل إمام، عمر الحريري",
+            "type": "كوميدي"
+        },
+        {
+            "name": "سك على بناتك",
+            "category": "مسرحية",
+            "year": "1980",
+            "starring": "فؤاد المهندس، شريهان",
+            "type": "كوميدي"
+        },
+        {
+            "name": "المتزوجون",
+            "category": "مسرحية",
+            "year": "1978",
+            "starring": "سمير غانم، جورج سيدهم",
+            "type": "كوميدي"
+        },
+        {
+            "name": "رأفت الهجان",
+            "category": "مسلسل",
+            "year": "1988",
+            "starring": "محمود عبد العزيز، يسرا",
+            "type": "دراما، جاسوسية"
+        },
+        {
+            "name": "ليالي الحلمية",
+            "category": "مسلسل",
+            "year": "1987",
+            "starring": "يحيى الفخراني، صلاح السعدني",
+            "type": "دراما"
+        },
+        {
+            "name": "عائلة الحاج متولي",
+            "category": "مسلسل",
+            "year": "2001",
+            "starring": "نور الشريف، ماجدة زكي",
+            "type": "دراما، كوميدي"
+        },
+        {
+            "name": "لن أعيش في جلباب أبي",
+            "category": "مسلسل",
+            "year": "1996",
+            "starring": "نور الشريف، عبلة كامل",
+            "type": "دراما"
+        },
+        {
+            "name": "الاختيار",
+            "category": "مسلسل",
+            "year": "2020",
+            "starring": "أمير كرارة، أحمد العوضي",
+            "type": "أكشن، دراما"
+        },
+        {
+            "name": "الكيت كات",
+            "category": "فيلم",
+            "year": "1991",
+            "starring": "محمود عبد العزيز",
+            "type": "دراما"
+        },
+        {
+            "name": "الإرهاب والكباب",
+            "category": "فيلم",
+            "year": "1992",
+            "starring": "عادل إمام، يسرا",
+            "type": "كوميدي"
+        },
+        {
+            "name": "الفيل الأزرق",
+            "category": "فيلم",
+            "year": "2014",
+            "starring": "كريم عبد العزيز، نيللي كريم",
+            "type": "غموض، رعب"
+        },
+        {
+            "name": "الناصر صلاح الدين",
+            "category": "فيلم",
+            "year": "1963",
+            "starring": "أحمد مظهر، نادية لطفي",
+            "type": "تاريخي"
+        },
+        {
+            "name": "الأرض",
+            "category": "فيلم",
+            "year": "1970",
+            "starring": "محمود المليجي",
+            "type": "دراما"
+        },
+        {
+            "name": "طباخ الريس",
+            "category": "فيلم",
+            "year": "2008",
+            "starring": "طلعت زكريا، خالد زكي",
+            "type": "كوميدي"
+        },
+        {
+            "name": "تيتانيك النسخة العربية",
+            "category": "فيلم",
+            "year": "2016",
+            "starring": "شادي سرور، بشرى",
+            "type": "كوميدي"
+        },
+        {
+            "name": "كده رضا",
+            "category": "فيلم",
+            "year": "2007",
+            "starring": "أحمد حلمي، منة شلبي",
+            "type": "كوميدي"
+        },
+        {
+            "name": "عسل أسود",
+            "category": "فيلم",
+            "year": "2010",
+            "starring": "أحمد حلمي، إدوارد",
+            "type": "كوميدي، دراما"
+        },
+        {
+            "name": "الجزيرة",
+            "category": "فيلم",
+            "year": "2007",
+            "starring": "أحمد السقا، هند صبري",
+            "type": "أكشن، دراما"
+        },
+        {
+            "name": "باب الحديد",
+            "category": "فيلم",
+            "year": "1958",
+            "starring": "فريد شوقي، هند رستم",
+            "type": "دراما"
+        },
+        {
+            "name": "دعاء الكروان",
+            "category": "فيلم",
+            "year": "1959",
+            "starring": "فاتن حمامة، أحمد مظهر",
+            "type": "دراما"
+        },
+        {
+            "name": "الزوجة الثانية",
+            "category": "فيلم",
+            "year": "1967",
+            "starring": "سعاد حسني، شكري سرحان",
+            "type": "دراما"
+        },
+        {
+            "name": "شيء من الخوف",
+            "category": "فيلم",
+            "year": "1969",
+            "starring": "شادية، محمود مرسي",
+            "type": "دراما"
+        },
+        {
+            "name": "خلي بالك من زوزو",
+            "category": "فيلم",
+            "year": "1972",
+            "starring": "سعاد حسني، حسين فهمي",
+            "type": "استعراضي، دراما"
+        },
+        {
+            "name": "ما وراء الطبيعة",
+            "category": "مسلسل",
+            "year": "2020",
+            "starring": "أحمد أمين، رزان جمال",
+            "type": "خيال، رعب"
+        },
+        {
+            "name": "ببجي",
+            "category": "لعبة (مثال)",
+            "year": "2017",
+            "starring": "كل الناس",
+            "type": "أكشن"
+        },
+        {
+            "name": "البحث عن فضيحة",
+            "category": "فيلم",
+            "year": "1973",
+            "starring": "عادل إمام، ميرفت أمين، سمير صبري",
+            "type": "كوميدي"
+        }
     ]
 }

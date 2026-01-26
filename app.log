@@ -1,11 +1,14 @@
-2026-01-25 23:51:54,384 INFO:  * Restarting with stat
-2026-01-25 23:51:55,155 WARNING:  * Debugger is active!
-2026-01-25 23:51:55,157 INFO:  * Debugger PIN: 483-311-837
-(4495) wsgi starting up on http://127.0.0.1:5000
-(4495) accepted ('127.0.0.1', 43150)
-127.0.0.1 - - [25/Jan/2026 23:52:05] "GET / HTTP/1.1" 200 9195 0.015929
-(4495) accepted ('127.0.0.1', 39756)
-127.0.0.1 - - [25/Jan/2026 23:52:29] "GET / HTTP/1.1" 200 9219 0.001452
-127.0.0.1 - - [25/Jan/2026 23:52:29] "GET /static/css/style.css HTTP/1.1" 200 7488 0.011888
-(4495) accepted ('127.0.0.1', 39766)
-127.0.0.1 - - [25/Jan/2026 23:52:29] "GET /static/js/charades.js HTTP/1.1" 200 29147 0.002332
+2026-01-26 01:53:44,250 INFO:  * Restarting with stat
+2026-01-26 01:53:45,146 WARNING:  * Debugger is active!
+2026-01-26 01:53:45,148 INFO:  * Debugger PIN: 483-311-837
+(7039) wsgi starting up on http://127.0.0.1:5000
+(7039) accepted ('127.0.0.1', 59552)
+127.0.0.1 - - [26/Jan/2026 01:53:50] "GET / HTTP/1.1" 200 9134 0.018654
+127.0.0.1 - - [26/Jan/2026 01:53:50] "GET /static/css/style.css HTTP/1.1" 200 7488 0.031521
+(7039) accepted ('127.0.0.1', 59554)
+127.0.0.1 - - [26/Jan/2026 01:53:50] "GET /static/js/charades.js HTTP/1.1" 200 30045 0.003804
+(7039) accepted ('127.0.0.1', 59168)
+127.0.0.1 - - [26/Jan/2026 01:54:20] "GET / HTTP/1.1" 200 9134 0.001387
+127.0.0.1 - - [26/Jan/2026 01:54:20] "GET /static/css/style.css HTTP/1.1" 200 7488 0.004932
+(7039) accepted ('127.0.0.1', 59176)
+127.0.0.1 - - [26/Jan/2026 01:54:20] "GET /static/js/charades.js HTTP/1.1" 200 30045 0.001550

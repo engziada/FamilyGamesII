@@ -29,6 +29,21 @@ class CharadesGame:
             for w in words:
                 self.custom_items.append({'item': w, 'category': 'كلمات مخصصة', 'difficulty': 'custom'})
 
+        # Load and shuffle items for this room
+        self.room_items = self.load_and_shuffle_items()
+        self.item_index = 0
+
+    def load_and_shuffle_items(self):
+        try:
+            with open('static/data/charades_items.json', 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                items = data.get('items', [])
+                random.shuffle(items)
+                return items
+        except Exception as e:
+            print(f"Error loading items: {e}")
+            return []
+
     def add_player(self, player_name):
         if len(self.players) >= 8:
             raise ValueError("غرفة اللعب ممتلئة")
@@ -127,7 +142,9 @@ class CharadesGame:
             return 5
         return 0
 
-    def to_dict(self, **kwargs):
+    def to_dict(self, include_item=False, **kwargs):
+        # Compatibility with include_answer if called from generic code
+        show = include_item or kwargs.get('include_answer', False)
         return {
             'game_id': self.game_id,
             'host': self.host,
@@ -138,18 +155,35 @@ class CharadesGame:
             'team_scores': self.team_scores,
             'settings': self.settings,
             'current_player': self.current_player,
-            'current_item': self.current_item,
+            'current_item': self.current_item if show else None,
             'round_start_time': self.round_start_time.isoformat() if self.round_start_time else None
         }
 
     def get_item(self):
         """Get an item based on game settings"""
-        # If we have custom items, there is a 50% chance to pick one of them if difficulty is all
-        # or 100% if difficulty is 'custom'
         if self.custom_items and (self.settings.get('difficulty') == 'custom' or random.random() < 0.5):
             return random.choice(self.custom_items)
 
-        return self.get_random_item(self.settings.get('difficulty', 'all'))
+        if not self.room_items:
+            self.room_items = self.load_and_shuffle_items()
+
+        if not self.room_items:
+            return None
+
+        item_data = self.room_items[self.item_index]
+        self.item_index = (self.item_index + 1) % len(self.room_items)
+
+        # Re-shuffle if we cycled through all items
+        if self.item_index == 0:
+            random.shuffle(self.room_items)
+
+        return {
+            'item': item_data['name'],
+            'category': item_data['category'],
+            'year': item_data.get('year', ''),
+            'starring': item_data.get('starring', ''),
+            'type': item_data.get('type', '')
+        }
 
     @staticmethod
     def get_random_item(difficulty='all'):

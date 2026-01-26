@@ -65,6 +65,12 @@ const Lobby = {
         const customWords = document.getElementById('custom-words').value;
         const gameType = document.getElementById('modal-game-type').value;
 
+        const timeLimitMap = {
+            'easy': 120,
+            'medium': 90,
+            'hard': 60
+        };
+
         const gameId = Math.floor(1000 + Math.random() * 9000);
         this.init();
 
@@ -74,9 +80,9 @@ const Lobby = {
             game_type: gameType,
             settings: {
                 teams: teams,
-                difficulty: difficulty,
+                difficulty: 'all', // Item difficulty now defaults to all
                 custom_words: customWords,
-                time_limit: gameType === 'charades' ? 120 : 30
+                time_limit: timeLimitMap[difficulty] || 90
             }
         });
 
@@ -402,11 +408,6 @@ class GameEngine {
         if (data.current_player) this.updateCurrentPlayer(data.current_player);
         if (data.scores || data.team_scores) this.updateScores(data);
         
-        if (this.gameType === 'charades' && this.isHost && data.current_item) {
-            this.displayItem(data.current_item.category, data.current_item.item);
-        } else if (this.gameType === 'trivia' && this.isHost && data.current_question) {
-            this.displayQuestion(data.current_question);
-        }
         
         this.updateButtonVisibility();
     }
@@ -486,13 +487,20 @@ class GameEngine {
         this.updateButtonVisibility();
     }
 
-    displayItem(category, item) {
+    displayItem(category, itemData) {
         const el = document.getElementById('item-display');
         if (el) {
             el.style.display = 'block';
+            const item = typeof itemData === 'object' ? itemData.item : itemData;
+            const year = itemData.year ? `<div style="font-size: 1rem; color: var(--text-light); margin-bottom: 0.5rem;">سنة الإنتاج: ${itemData.year}</div>` : '';
+            const starring = itemData.starring ? `<div style="font-size: 1rem; color: var(--text-light); margin-bottom: 1rem;">بطولة: ${itemData.starring}</div>` : '';
+            const type = itemData.type ? `<span class="badge" style="background: var(--secondary); color: white; font-size: 0.8rem; padding: 4px 10px; border-radius: 20px;">${itemData.type}</span>` : '';
+
             el.innerHTML = `
-                <div class="item-category">التصنيف: ${category}</div>
+                <div class="item-category">${category} ${type}</div>
                 <div class="item-name">${item}</div>
+                ${year}
+                ${starring}
             `;
             setTimeout(() => el.classList.add('visible'), 100);
         }
@@ -703,11 +711,17 @@ class GameEngine {
             msg.className = 'reveal-message';
             document.body.appendChild(msg);
         }
+
+        const year = data.year ? `<p style="font-size: 0.9rem; color: var(--text-light);">سنة الإنتاج: ${data.year}</p>` : '';
+        const starring = data.starring ? `<p style="font-size: 0.9rem; color: var(--text-light);">بطولة: ${data.starring}</p>` : '';
+
         msg.innerHTML = `
             <div class="reveal-content">
                 <h3>انتهى الدور!</h3>
-                <p>الكلمة كانت: <strong>${data.item}</strong></p>
+                <p>الكلمة كانت: <strong style="font-size: 1.5rem; color: var(--primary);">${data.item}</strong></p>
                 <p>التصنيف: ${data.category}</p>
+                ${year}
+                ${starring}
             </div>
         `;
         msg.style.display = 'block';
