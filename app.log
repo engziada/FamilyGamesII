@@ -1,9 +1,0 @@
-2026-01-26 10:45:09,488 INFO:  * Restarting with stat
-2026-01-26 10:45:10,543 WARNING:  * Debugger is active!
-2026-01-26 10:45:10,545 INFO:  * Debugger PIN: 483-311-837
-(13040) wsgi starting up on http://127.0.0.1:5000
-(13040) accepted ('127.0.0.1', 36096)
-127.0.0.1 - - [26/Jan/2026 10:45:15] "GET / HTTP/1.1" 200 9134 0.017441
-127.0.0.1 - - [26/Jan/2026 10:45:15] "GET /static/css/style.css HTTP/1.1" 200 7488 0.028470
-(13040) accepted ('127.0.0.1', 36108)
-127.0.0.1 - - [26/Jan/2026 10:45:15] "GET /static/js/charades.js HTTP/1.1" 200 30498 0.002878

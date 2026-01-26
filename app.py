@@ -153,8 +153,6 @@ def handle_start_game(data):
                 game_obj.set_current_item(game_obj.get_item())
                 if game_obj.game_type == 'pictionary':
                     game_obj.clear_canvas()
-            elif game_obj.game_type == 'trivia':
-                game_obj.current_question = game_obj.get_random_question()
             
             emit('game_started', {
                 'game_id': game_id,
@@ -318,6 +316,8 @@ def handle_verify_game(data):
             if game_obj.game_type == 'trivia' and game_obj.status == 'round_active':
                 # Start timer for the person who just joined/refreshed
                 emit('timer_start', {'duration': game_obj.settings.get('time_limit', 30)})
+                # Also ensure they have the latest question
+                emit('new_question', game_obj.to_dict(include_answer=False).get('current_question'))
             elif game_obj.current_player == pname:
                 if game_obj.game_type in ['charades', 'pictionary'] and game_obj.current_item: emit('new_item', game_obj.current_item)
             

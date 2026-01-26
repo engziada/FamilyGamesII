@@ -274,7 +274,14 @@ header h1 {
 }
 
 .item-card {
-    animation: flipInX 0.8s;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.item-card.visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .item-category {
@@ -342,6 +349,18 @@ header h1 {
 .score-val {
     font-weight: 800;
     color: var(--primary);
+}
+
+/* --- Trivia Options --- */
+.options-grid button {
+    transition: var(--transition);
+}
+
+.options-grid button:hover {
+    background-color: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: scale(1.05);
 }
 
 /* --- Reveal Message --- */
