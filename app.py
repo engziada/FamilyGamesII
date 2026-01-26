@@ -246,19 +246,36 @@ def handle_round_timeout(data):
 def handle_player_passed(data):
     game_obj = game_rooms.get(str(data.get('game_id')))
     if game_obj and game_obj.current_player == session.get('player_name'):
-        emit('reveal_item', game_obj.current_item, room=game_obj.game_id)
+        handle_turn_skip(game_obj, session.get('player_name'))
+
+@socketio.on('force_next_turn')
+def handle_force_next_turn(data):
+    game_obj = game_rooms.get(str(data.get('game_id')))
+    if game_obj and game_obj.host == session.get('player_name'):
+        handle_turn_skip(game_obj, "المضيف")
+
+def handle_turn_skip(game_obj, skipper_name):
+    emit('reveal_item', game_obj.current_item, room=game_obj.game_id)
+    if game_obj.game_type in ['charades', 'pictionary']:
         item = game_obj.get_item()
         game_obj.next_round(item)
-        game_obj.status = 'playing'
-        emit('pass_turn', {'player': session.get('player_name'), 'next_player': game_obj.current_player, 'game_status': game_obj.status}, room=game_obj.game_id)
+    else:
+        game_obj.next_round()
         
-        if game_obj.game_type == 'pictionary':
-            game_obj.clear_canvas()
-            emit('clear_canvas', room=game_obj.game_id)
-            
-        emit_game_state(game_obj.game_id)
-        sid = get_player_sid(game_obj.current_player)
-        if sid: emit('new_item', game_obj.current_item, room=sid)
+    game_obj.status = 'playing'
+    emit('pass_turn', {'player': skipper_name, 'next_player': game_obj.current_player, 'game_status': game_obj.status}, room=game_obj.game_id)
+
+    if game_obj.game_type == 'pictionary':
+        game_obj.clear_canvas()
+        emit('clear_canvas', room=game_obj.game_id)
+
+    emit_game_state(game_obj.game_id)
+    sid = get_player_sid(game_obj.current_player)
+    if sid:
+        if game_obj.game_type in ['charades', 'pictionary']:
+            emit('new_item', game_obj.current_item, room=sid)
+        elif game_obj.game_type == 'trivia':
+            emit('new_question', game_obj.current_question, room=sid)
 
 @socketio.on('draw')
 def handle_draw(data):

@@ -292,6 +292,7 @@ class GameEngine {
         };
 
         bindClick('startButton', () => this.socket.emit('start_game', { game_id: this.gameId }));
+        bindClick('nextButton', () => this.socket.emit('force_next_turn', { game_id: this.gameId }));
         bindClick('readyButton', () => {
             document.getElementById('readyButton').style.display = 'none';
             this.socket.emit('player_ready', { game_id: this.gameId });
@@ -448,9 +449,9 @@ class GameEngine {
                 if (btns.next && this.isHost) btns.next.style.display = 'block';
                 break;
             case 'round_active':
-                if (btns.guess && currentPlayer !== this.playerName && !this.isHost) btns.guess.style.display = 'block';
+                if (btns.guess && currentPlayer !== this.playerName) btns.guess.style.display = 'block';
                 if (btns.pass && currentPlayer === this.playerName) btns.pass.style.display = 'block';
-                if (btns.reveal && this.isHost) btns.reveal.style.display = 'block';
+                if (btns.next && this.isHost) btns.next.style.display = 'block';
                 break;
         }
     }
