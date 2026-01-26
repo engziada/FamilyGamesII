@@ -125,9 +125,12 @@ class CharadesGame:
         self.round_start_time = None
 
     def add_score(self, player_name, points):
-        if player_name not in self.scores:
-            self.scores[player_name] = 0
-        self.scores[player_name] += points
+        self.scores[player_name] = self.scores.get(player_name, 0) + points
+        if self.settings.get('teams'):
+            p = next((p for p in self.players if p['name'] == player_name), None)
+            if p:
+                team_id = str(p['team'])
+                self.team_scores[team_id] = self.team_scores.get(team_id, 0) + points
 
     @staticmethod
     def calculate_score(start_time):

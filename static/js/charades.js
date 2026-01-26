@@ -355,6 +355,12 @@ class GameEngine {
         this.socket.on('correct_guess', (data) => {
             this.guessedSound.play().catch(e => console.log(e));
             Utils.showMessage(`${data.guesser} عرف الإجابة!`);
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#FF6B6B', '#4ECDC4', '#FFE66D', '#BC7AF9']
+            });
         });
         
         this.socket.on('round_timeout', (data) => {
@@ -389,6 +395,14 @@ class GameEngine {
         this.socket.on('answer_result', (data) => {
             this.guessedSound.play().catch(e => {});
             Utils.showMessage(`${data.player} جاوب ${data.is_correct ? 'صح ✅' : 'غلط ❌'}. الإجابة كانت: ${data.correct_answer}`);
+            if (data.is_correct) {
+                confetti({
+                    particleCount: 80,
+                    spread: 60,
+                    origin: { y: 0.7 },
+                    colors: ['#6BCB77', '#FFE66D', '#4ECDC4']
+                });
+            }
         });
 
         this.socket.on('draw', (stroke) => {

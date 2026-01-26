@@ -239,11 +239,6 @@ def handle_guess_correct(data):
         if points > 0:
             game_obj.add_score(game_obj.current_player, points)
             game_obj.add_score(guesser, points)
-            if game_obj.settings.get('teams'):
-                p1 = next((p for p in game_obj.players if p['name'] == game_obj.current_player), None)
-                p2 = next((p for p in game_obj.players if p['name'] == guesser), None)
-                if p1: game_obj.team_scores[str(p1['team'])] += points
-                if p2: game_obj.team_scores[str(p2['team'])] += points
 
         current_performer = game_obj.current_player
         game_obj.next_round(game_obj.get_item())
@@ -372,8 +367,13 @@ def handle_verify_game(data):
             player_sids[pname] = request.sid
             emit_game_state(gid)
             if game_obj.game_type == 'trivia' and game_obj.status == 'round_active':
-                # Start timer for the person who just joined/refreshed
-                emit('timer_start', {'duration': game_obj.settings.get('time_limit', 30)})
+                # Start timer for the person who just joined/refreshed with remaining time
+                remaining = game_obj.settings.get('time_limit', 30)
+                if game_obj.round_start_time:
+                    elapsed = (datetime.now() - game_obj.round_start_time).total_seconds()
+                    remaining = max(0, remaining - elapsed)
+
+                emit('timer_start', {'duration': remaining})
                 # Also ensure they have the latest question
                 emit('new_question', game_obj.to_dict(include_answer=False).get('current_question'))
             elif game_obj.current_player == pname:
