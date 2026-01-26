@@ -406,7 +406,7 @@ class GameEngine {
         if (data.status) this.setGameStatus(data.status);
         if (data.message) Utils.showMessage(data.message);
         if (data.players) this.updatePlayersList(data.players);
-        if (data.current_player) this.updateCurrentPlayer(data.current_player);
+        if (data.current_player !== undefined) this.updateCurrentPlayer(data.current_player);
         if (data.scores || data.team_scores) this.updateScores(data);
         
         if (data.current_question) {
@@ -467,16 +467,25 @@ class GameEngine {
 
     updateCurrentPlayer(player) {
         const el = document.getElementById('current-turn');
-        if (el) el.textContent = this.gameType === 'trivia' ? 'الكل!' : player;
+        if (el) {
+            if (this.gameType === 'trivia') {
+                el.textContent = 'الكل!';
+            } else if (player) {
+                el.textContent = player;
+            } else {
+                el.textContent = '...';
+            }
+        }
 
         const isMe = (player === this.playerName);
         const itemDisplay = document.getElementById('item-display');
         const pictionaryArea = document.getElementById('pictionary-area');
 
         if (itemDisplay) {
-            if (isMe || this.gameType === 'trivia') {
+            // In Trivia, everyone sees the question. In others, only the performer (isMe) sees it.
+            if (this.gameType === 'trivia' || isMe) {
                 itemDisplay.style.display = 'block';
-                itemDisplay.classList.add('visible');
+                // Don't add .visible here if we're about to call displayQuestion/displayItem
             } else {
                 itemDisplay.style.display = 'none';
                 itemDisplay.classList.remove('visible');
