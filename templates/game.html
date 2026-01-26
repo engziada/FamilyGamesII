@@ -1,8 +1,5 @@
 {% extends "base.html" %}
 
-{% block head %}
-{% endblock %}
-
 {% block content %}
 <div class="game-container">
     <!-- Hidden inputs for game data -->
@@ -10,78 +7,98 @@
     <input type="hidden" id="player-name" value="{{ player_name }}">
     <input type="hidden" id="transfer-id" value="{{ transfer_id }}">
     <input type="hidden" id="is-host" value="{{ 'true' if is_host else 'false' }}">
-    <input type="hidden" id="game-type" value="{{ game_type }}">
-    <input type="hidden" id="initial-state" value='{{ initial_state|tojson if initial_state else "{}" }}'>
-    <input type="hidden" id="initial-players" value='{{ players|tojson if players else "[]" }}'>
 
-    <div class="game-title">بدون كلام</div>
-    <div class="game-layout">
-        <!-- Left Section -->
-        <div class="game-main">
-            <!-- Timer Section -->
-            <div class="countdown-section">
-                <div id="timer" class="timer">02:00</div>
+    <div class="game-board">
+        <div class="status-bar">
+            <div class="turn-indicator">
+                <i class="fas fa-user-circle"></i>
+                الدور على: <span id="current-turn">...</span>
             </div>
-
-            <!-- Player Turn Section -->
-            <div class="player-turn-section">
-                <div class="section-content">
-                    <div class="turn-label">اللي عليه الدور:</div>
-                    <div id="current-turn" class="current-turn-player"></div>
-                </div>
-            </div>
-
-            <!-- Game Display Section -->
-            <div class="game-display-section">
-                <div class="section-content">
-                    <div id="item-display" class="item-display" style="display: none;"></div>
-                </div>
-                <button id="readyButton" class="btn btn-success" style="display: none;">جاهز</button>
-                <button id="passButton" class="btn btn-warning" style="display: none;">تخطي دوري</button>
-            </div>
-
-            <!-- Game Controls -->
-            <div class="game-controls">
-                <div id="current-turn" class="current-turn"></div>
-            </div>
-
-            <!-- Control Buttons -->
-            <div class="control-buttons">
-                {% if player_type == 'host' %}
-                <button id="startButton" class="btn btn-primary" style="display: none;">ابدأ اللعبة</button>
-                <button id="nextButton" class="btn btn-primary" style="display: none;">اللي بعده</button>
-                <button id="revealButton" class="btn btn-info" style="display: none;">اكشف الإجابة</button>
-                <button id="leave-room" class="btn btn-warning">أنا منسحب</button>
-                <button id="close-room" class="btn btn-danger">إقفل الأوضه</button>
-                {% else %}
-                <button id="guessButton" class="btn btn-primary" style="display: none;">أنا اللي عرفتها</button>
-                <button id="leaveButton" class="btn btn-secondary">أنا منسحب</button>
-                {% endif %}
+            <div id="timer" class="timer-box">
+                <i class="fas fa-clock"></i>
+                <span>02:00</span>
             </div>
         </div>
 
-        <!-- Right Section - Players List and Scores -->
-        <div class="players-section">
-            <div class="section-title">النتيجة</div>
-            <div class="players-grid">
-                <div class="players-names">
-                    <div class="grid-header">اللاعيبة</div>
-                    <div id="players-list" class="players-list"></div>
-                </div>
-                <div class="players-scores">
-                    <div class="grid-header">النتيجة</div>
-                    <div id="scores" class="scores-list"></div>
-                </div>
+        <div class="display-area card">
+            <div id="item-display" class="item-card" style="display: none;">
+                <!-- Content populated by JS -->
             </div>
+
+            <!-- Pictionary Canvas -->
+            <div id="pictionary-area" style="display: none; width: 100%; position: relative;">
+                <div class="canvas-controls" style="display: flex; gap: 0.5rem; margin-bottom: 1rem; justify-content: center;">
+                    <button class="btn btn-outline" onclick="window.gameInstance.clearCanvas()" id="clear-btn" style="padding: 0.5rem 1rem;"><i class="fas fa-eraser"></i> مسح</button>
+                    <input type="color" id="draw-color" value="#000000" style="width: 40px; height: 40px; border: none; border-radius: 5px; cursor: pointer;">
+                    <input type="range" id="draw-size" min="1" max="20" value="5" style="width: 100px;">
+                </div>
+                <canvas id="game-canvas" width="600" height="400" style="border: 2px solid #eee; border-radius: 12px; background: white; cursor: crosshair; width: 100%; height: auto; touch-action: none;"></canvas>
+            </div>
+
+            <div id="waiting-area" class="waiting-area">
+                <i class="fas fa-hourglass-start fa-3x" style="color: var(--primary); margin-bottom: 1.5rem;"></i>
+                <h3>في انتظار بدء الجولة...</h3>
+            </div>
+
+            <div class="game-actions" style="margin-top: 2rem; display: flex; gap: 1rem;">
+                <button id="readyButton" class="btn btn-primary" style="display: none;">
+                    <i class="fas fa-play"></i> أنا جاهز!
+                </button>
+                <button id="passButton" class="btn btn-outline" style="display: none;">
+                    <i class="fas fa-forward"></i> تخطي
+                </button>
+                <button id="guessButton" class="btn btn-secondary" style="display: none;">
+                    <i class="fas fa-check"></i> عرفتها!
+                </button>
+            </div>
+        </div>
+
+        <div class="host-controls card" style="display: flex; gap: 1rem; justify-content: center; align-items: center; padding: 1rem;">
+            {% if player_type == 'host' %}
+            <button id="startButton" class="btn btn-primary" style="display: none;">
+                <i class="fas fa-play-circle"></i> ابدأ اللعبة
+            </button>
+            <button id="nextButton" class="btn btn-secondary" style="display: none;">
+                <i class="fas fa-step-forward"></i> الجولة التالية
+            </button>
+            <button id="close-room" class="btn btn-outline" style="color: var(--danger); border-color: var(--danger);">
+                <i class="fas fa-times-circle"></i> إنهاء اللعبة
+            </button>
+            {% else %}
+            <button id="leaveButton" class="btn btn-outline">
+                <i class="fas fa-sign-out-alt"></i> انسحاب
+            </button>
+            {% endif %}
         </div>
     </div>
 
-    <!-- Game Status Bar -->
-    <div class="game-status-bar">
-        <div id="game-status" class="status-message">حالة اللعبة</div>
+    <div class="sidebar">
+        <div class="card player-list-card">
+            <h4><i class="fas fa-users"></i> اللاعبين</h4>
+            <div id="players-list">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <div class="card score-card">
+            <h4><i class="fas fa-trophy"></i> النتائج</h4>
+            <div id="scores">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <div class="card info-card" style="padding: 1rem; font-size: 0.8rem; color: var(--text-light); text-align: center;">
+            <p>رقم الغرفة: <strong>{{ game_id }}</strong></p>
+            <p>أنت تلعب بصفتك: <strong>{{ player_name }}</strong></p>
+        </div>
     </div>
 </div>
 
+<div id="game-status" class="status-bar" style="position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); width: auto; min-width: 300px; display: none;">
+    <!-- Used for snackbar style notifications -->
+</div>
+
+<div id="error-message"></div>
 {% endblock %}
 
 {% block scripts %}

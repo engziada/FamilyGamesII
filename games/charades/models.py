@@ -1,176 +1,227 @@
-"""
-Models for the Charades game.
-Contains data structures and game logic for the Charades game.
-"""
 from datetime import datetime
-import random
 import json
-import os
-from dataclasses import dataclass, asdict
-from typing import List, Dict, Tuple, Optional
-
-@dataclass
-class PlayerScore:
-    """Data class to represent a player's score"""
-    name: str
-    score: int
-    is_host: bool = False
+import random
 
 class CharadesGame:
-    def __init__(self, room_id: str, host: str):
-        """Initialize a new Charades game.
-        
-        Args:
-            room_id (str): Unique identifier for the game room
-            host (str): Name of the player hosting the game
-        """
-        self.room_id = room_id
+    def __init__(self, game_id, host, settings=None):
+        self.game_id = game_id
         self.host = host
-        self.players: List[PlayerScore] = [PlayerScore(name=host, score=0, is_host=True)]
-        self.status = "waiting"
-        self.current_player: Optional[str] = None
-        self.current_item: Optional[Tuple[str, str]] = None  # (type, name)
-        self.round_start_time: Optional[datetime] = None
-        self.game_type = "charades"
-
-    def add_player(self, player_name: str) -> bool:
-        """Add a new player to the game.
-        
-        Args:
-            player_name (str): Name of the player to add
-            
-        Returns:
-            bool: True if player was added, False if player already exists
-        """
-        if not any(p.name == player_name for p in self.players):
-            self.players.append(PlayerScore(name=player_name, score=0))
-            return True
-        return False
-
-    def remove_player(self, player_name: str) -> bool:
-        """Remove a player from the game.
-        
-        Args:
-            player_name (str): Name of the player to remove
-            
-        Returns:
-            bool: True if player was removed, False if player not found
-        """
-        player = next((p for p in self.players if p.name == player_name), None)
-        if player:
-            self.players.remove(player)
-            if player_name == self.host and self.players:
-                self.host = self.players[0].name
-                self.players[0].is_host = True
-            return True
-        return False
-
-    def get_player_score(self, player_name: str) -> int:
-        """Get the score for a specific player.
-        
-        Args:
-            player_name (str): Name of the player
-            
-        Returns:
-            int: Player's score or 0 if player not found
-        """
-        player = next((p for p in self.players if p.name == player_name), None)
-        return player.score if player else 0
-
-    def update_score(self, player_name: str, points: int) -> bool:
-        """Update a player's score.
-        
-        Args:
-            player_name (str): Name of the player
-            points (int): Points to add to the player's score
-            
-        Returns:
-            bool: True if score was updated, False if player not found
-        """
-        player = next((p for p in self.players if p.name == player_name), None)
-        if player:
-            player.score += points
-            return True
-        return False
-
-    def get_scores(self) -> Dict[str, int]:
-        """Get all player scores.
-        
-        Returns:
-            Dict[str, int]: Dictionary mapping player names to their scores
-        """
-        return {p.name: p.score for p in self.players}
-
-    def start_round(self) -> bool:
-        """Start a new round with a random item.
-        
-        Returns:
-            bool: True if round was started successfully
-        """
-        if not self.players:
-            return False
-        
-        self.current_item = self.get_random_item()
-        self.round_start_time = datetime.now()
-        
-        if not self.current_player:
-            self.current_player = self.players[0].name
-        else:
-            # Move to next player
-            current_idx = next((i for i, p in enumerate(self.players) if p.name == self.current_player), 0)
-            next_idx = (current_idx + 1) % len(self.players)
-            self.current_player = self.players[next_idx].name
-        
-        return True
-
-    @staticmethod
-    def get_random_item() -> Tuple[str, str]:
-        """Get a random item from the charades items list.
-        
-        Returns:
-            Tuple[str, str]: A tuple containing (type, name) of the item
-        """
-        with open('static/data/charades_items.json', 'r', encoding='utf-8') as f:
-            items = json.load(f)['items']
-            item = random.choice(items)
-            return (item['type'], item['name'])
-
-    def end_round(self, correct_guess: bool = False, guesser: Optional[str] = None) -> None:
-        """End the current round and update scores if necessary.
-        
-        Args:
-            correct_guess (bool): Whether the round ended with a correct guess
-            guesser (Optional[str]): Name of the player who guessed correctly
-        """
-        if correct_guess and guesser and self.round_start_time:
-            elapsed_seconds = (datetime.now() - self.round_start_time).total_seconds()
-            points = 10 if elapsed_seconds <= 60 else (5 if elapsed_seconds <= 120 else 0)
-            
-            # Award points to both guesser and current player
-            if points > 0:
-                self.update_score(guesser, points)
-                if self.current_player:
-                    self.update_score(self.current_player, points)
-
+        self.players = [{'name': host, 'isHost': True, 'team': 1}]
+        self.game_type = 'charades'
+        self.status = 'waiting'
+        self.scores = {} # {player_name: score}
+        self.team_scores = {'1': 0, '2': 0}
+        self.current_player = ''
         self.current_item = None
         self.round_start_time = None
-
-    def to_dict(self) -> dict:
-        """Convert the game state to a dictionary for template rendering.
         
-        Returns:
-            dict: Game state as a dictionary
-        """
+        # Settings: {teams: bool, difficulty: str, custom_words: str, time_limit: int}
+        self.settings = settings or {
+            'teams': False,
+            'difficulty': 'all',
+            'custom_words': '',
+            'time_limit': 120
+        }
+        
+        self.custom_items = []
+        if self.settings.get('custom_words'):
+            words = [w.strip() for w in self.settings['custom_words'].split(',') if w.strip()]
+            for w in words:
+                self.custom_items.append({'item': w, 'category': 'كلمات مخصصة', 'difficulty': 'custom'})
+
+        # Load and shuffle items for this room
+        self.room_items = self.load_and_shuffle_items()
+        self.item_index = 0
+
+    def load_and_shuffle_items(self):
+        try:
+            with open('static/data/charades_items.json', 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                items = data.get('items', [])
+                random.shuffle(items)
+                return items
+        except Exception as e:
+            print(f"Error loading items: {e}")
+            return []
+
+    def add_player(self, player_name):
+        if len(self.players) >= 8:
+            raise ValueError("غرفة اللعب ممتلئة")
+        if any(p['name'] == player_name for p in self.players):
+            raise ValueError("اللاعب موجود بالفعل")
+        
+        # Assign to team with fewer players if teams mode is on
+        team = 1
+        if self.settings.get('teams'):
+            team1_count = len([p for p in self.players if p.get('team') == 1])
+            team2_count = len([p for p in self.players if p.get('team') == 2])
+            team = 2 if team2_count < team1_count else 1
+            
+        self.players.append({'name': player_name, 'isHost': False, 'team': team})
+
+    def remove_player(self, player_name):
+        was_host = any(p['name'] == player_name and p.get('isHost', True) for p in self.players)
+        was_current_player = self.current_player == player_name
+        self.players = [p for p in self.players if p['name'] != player_name]
+        if player_name in self.scores:
+            del self.scores[player_name]
+        
+        # If the host left and there are other players, transfer host to the next player
+        if was_host and self.players:
+            new_host = self.players[0]['name']
+            self.transfer_host(new_host)
+
+            # If the host was also the current player, transfer the turn to the new host
+            if was_current_player and self.status == 'playing':
+                self.current_player = new_host
+            
+            return True
+        # If the current player left but wasn't the host, move to the next player
+        elif was_current_player and self.status == 'playing' and self.players:
+            # Find the next player in the list
+            self.current_player = self.players[0]['name']
+            return False
+        return False
+
+    def transfer_host(self, new_host):
+        """Transfer host privileges to another player"""
+        # Remove host flag from all players
+        for player in self.players:
+            player['isHost'] = False
+        
+        # Set the new host
+        for player in self.players:
+            if player['name'] == new_host:
+                player['isHost'] = True
+                self.host = new_host
+                break
+
+    def start_game(self):
+        if len(self.players) < 2:
+            raise ValueError("عدد اللاعبين غير كافي")
+        self.status = 'playing'
+        self.current_player = self.players[0]['name']
+        self.current_item = None
+        self.round_start_time = None
+        
+    def set_current_item(self, item):
+        """Set the current item for the player's turn"""
+        self.current_item = item
+        
+    def start_round_timer(self):
+        """Start the timer for the current round"""
+        self.round_start_time = datetime.now()
+        
+    def next_round(self, item):
+        if not self.players:
+            raise ValueError("لا يوجد لاعبين")
+        
+        # Find next player
+        current_idx = next((i for i, p in enumerate(self.players) if p['name'] == self.current_player), 0)
+        next_idx = (current_idx + 1) % len(self.players)
+        self.current_player = self.players[next_idx]['name']
+        
+        self.current_item = item
+        self.round_start_time = None
+
+    def add_score(self, player_name, points):
+        if player_name not in self.scores:
+            self.scores[player_name] = 0
+        self.scores[player_name] += points
+
+    @staticmethod
+    def calculate_score(start_time):
+        """Calculate score based on elapsed time since round start"""
+        if start_time is None:
+            return 0
+
+        elapsed_seconds = (datetime.now() - start_time).total_seconds()
+        if elapsed_seconds <= 60:  # First minute
+            return 10
+        elif elapsed_seconds <= 120:  # Second minute
+            return 5
+        return 0
+
+    def to_dict(self, include_item=False, **kwargs):
+        # Compatibility with include_answer if called from generic code
+        show = include_item or kwargs.get('include_answer', False)
         return {
-            'game_id': self.room_id,
+            'game_id': self.game_id,
             'host': self.host,
-            'players': [asdict(p) for p in self.players],
+            'players': self.players,
+            'game_type': self.game_type,
             'status': self.status,
+            'scores': self.scores,
+            'team_scores': self.team_scores,
+            'settings': self.settings,
             'current_player': self.current_player,
-            'current_item': self.current_item,
-            'game_type': self.game_type
+            'current_item': self.current_item if show else None,
+            'round_start_time': self.round_start_time.isoformat() if self.round_start_time else None
         }
 
-# Game rooms storage
-game_rooms = {}  # {room_id: CharadesGame}
-game_state_transfer = {}  # Temporary storage for game state during transitions
+    def get_item(self):
+        """Get an item based on game settings"""
+        if self.custom_items and (self.settings.get('difficulty') == 'custom' or random.random() < 0.5):
+            return random.choice(self.custom_items)
+
+        if not self.room_items:
+            self.room_items = self.load_and_shuffle_items()
+
+        if not self.room_items:
+            return None
+
+        item_data = self.room_items[self.item_index]
+        self.item_index = (self.item_index + 1) % len(self.room_items)
+
+        # Re-shuffle if we cycled through all items
+        if self.item_index == 0:
+            random.shuffle(self.room_items)
+
+        return {
+            'item': item_data['name'],
+            'category': item_data['category'],
+            'year': item_data.get('year', ''),
+            'starring': item_data.get('starring', ''),
+            'type': item_data.get('type', '')
+        }
+
+    @staticmethod
+    def get_random_item(difficulty='all'):
+        """Get a random item from the charades items list"""
+        try:
+            if difficulty == 'custom': return None # Should be handled by get_item
+            with open('static/data/charades_items.json', 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                items = data.get('items', [])
+
+                if difficulty != 'all':
+                    items = [i for i in items if i.get('difficulty') == difficulty]
+
+                if not items:
+                    # Fallback if no items match difficulty
+                    items = data.get('items', [])
+
+                if not items:
+                    return None
+
+                random_item = random.choice(items)
+                return {
+                    'item': random_item['name'],
+                    'category': random_item['category'],
+                    'difficulty': random_item.get('difficulty', 'medium')
+                }
+        except Exception as e:
+            print(f"Error loading charades items: {e}")
+            return None
+
+    @classmethod
+    def from_dict(cls, game_id, data):
+        game = cls(game_id, data['host'])
+        game.players = data['players']
+        game.game_type = data['game_type']
+        game.status = data['status']
+        game.scores = data['scores']
+        game.current_player = data['current_player']
+        game.current_item = data['current_item']
+        game.round_start_time = datetime.fromisoformat(data['round_start_time']) if data['round_start_time'] else None
+        return game
