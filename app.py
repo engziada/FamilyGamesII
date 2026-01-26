@@ -315,9 +315,9 @@ def handle_verify_game(data):
             join_room(gid)
             player_sids[pname] = request.sid
             emit_game_state(gid)
-            if game_obj.game_type == 'trivia':
-                # Questions are shared in state, but we might want to start timer for late joiners?
-                pass
+            if game_obj.game_type == 'trivia' and game_obj.status == 'round_active':
+                # Start timer for the person who just joined/refreshed
+                emit('timer_start', {'duration': game_obj.settings.get('time_limit', 30)})
             elif game_obj.current_player == pname:
                 if game_obj.game_type in ['charades', 'pictionary'] and game_obj.current_item: emit('new_item', game_obj.current_item)
             
