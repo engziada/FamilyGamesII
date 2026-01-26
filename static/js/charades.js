@@ -437,7 +437,7 @@ class GameEngine {
         const currentPlayer = document.getElementById('current-turn').textContent;
 
         if (waitingArea) {
-            waitingArea.style.display = (this.gameStatus === 'playing' || this.gameStatus === 'waiting') ? 'block' : 'none';
+            waitingArea.style.display = (this.gameStatus === 'playing' || (this.gameStatus === 'waiting' && this.gameType !== 'trivia')) ? 'block' : 'none';
         }
 
         switch (this.gameStatus) {
@@ -445,12 +445,16 @@ class GameEngine {
                 if (btns.start && this.isHost) btns.start.style.display = 'block';
                 break;
             case 'playing':
-                if (btns.ready && currentPlayer === this.playerName) btns.ready.style.display = 'block';
+                if (this.gameType !== 'trivia') {
+                    if (btns.ready && currentPlayer === this.playerName) btns.ready.style.display = 'block';
+                }
                 if (btns.next && this.isHost) btns.next.style.display = 'block';
                 break;
             case 'round_active':
-                if (btns.guess && currentPlayer !== this.playerName) btns.guess.style.display = 'block';
-                if (btns.pass && currentPlayer === this.playerName) btns.pass.style.display = 'block';
+                if (this.gameType === 'charades' || this.gameType === 'pictionary') {
+                    if (btns.guess && currentPlayer !== this.playerName) btns.guess.style.display = 'block';
+                    if (btns.pass && currentPlayer === this.playerName) btns.pass.style.display = 'block';
+                }
                 if (btns.next && this.isHost) btns.next.style.display = 'block';
                 break;
         }
@@ -458,14 +462,14 @@ class GameEngine {
 
     updateCurrentPlayer(player) {
         const el = document.getElementById('current-turn');
-        if (el) el.textContent = player;
+        if (el) el.textContent = this.gameType === 'trivia' ? 'الكل!' : player;
 
         const isMe = (player === this.playerName);
         const itemDisplay = document.getElementById('item-display');
         const pictionaryArea = document.getElementById('pictionary-area');
 
         if (itemDisplay) {
-            if (isMe) {
+            if (isMe || this.gameType === 'trivia') {
                 itemDisplay.style.display = 'block';
                 itemDisplay.classList.add('visible');
             } else {
@@ -475,7 +479,7 @@ class GameEngine {
         }
 
         if (pictionaryArea) {
-            if (this.gameType === 'pictionary' && this.gameStatus !== 'waiting') {
+            if (this.gameType === 'pictionary' && this.gameStatus === 'round_active') {
                 pictionaryArea.style.display = 'block';
                 this.initCanvas();
                 // Show controls only to the drawer
@@ -514,11 +518,9 @@ class GameEngine {
             let html = `<div class="item-category">${data.category}</div>`;
             html += `<div class="item-name" style="font-size: 2rem; margin-bottom: 1.5rem;">${data.question}</div>`;
             
-            const isMyTurn = document.getElementById('current-turn').textContent === this.playerName;
-            
             html += `<div class="options-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; width: 100%;">`;
             data.options.forEach((opt, i) => {
-                html += `<button class="btn btn-outline" ${isMyTurn ? `onclick="window.gameInstance.submitAnswer(${i})"` : 'disabled'} style="font-size: 1.1rem; padding: 1rem;">${opt}</button>`;
+                html += `<button class="btn btn-outline" onclick="window.gameInstance.submitAnswer(${i})" style="font-size: 1.1rem; padding: 1rem;">${opt}</button>`;
             });
             html += `</div>`;
             

@@ -11,8 +11,9 @@ class TriviaGame:
         self.status = 'waiting'
         self.scores = {}
         self.team_scores = {'1': 0, '2': 0}
-        self.current_player = ''
+        self.current_player = '' # Trivia won't use this as much now
         self.current_question = None
+        self.question_active = False
         self.round_start_time = None
         self.settings = settings or {
             'teams': False,
@@ -54,15 +55,16 @@ class TriviaGame:
             self.players[0]['isHost'] = True
 
     def start_game(self):
-        self.status = 'playing'
-        self.current_player = self.players[0]['name']
+        self.status = 'round_active' # Automatically start the round
+        self.current_question = self.get_question()
+        self.question_active = True
+        self.round_start_time = datetime.now()
 
     def next_round(self):
-        current_idx = next((i for i, p in enumerate(self.players) if p['name'] == self.current_player), 0)
-        next_idx = (current_idx + 1) % len(self.players)
-        self.current_player = self.players[next_idx]['name']
         self.current_question = self.get_question()
-        self.round_start_time = None
+        self.status = 'round_active'
+        self.question_active = True
+        self.round_start_time = datetime.now()
 
     def get_question(self):
         if not self.questions:
