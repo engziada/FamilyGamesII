@@ -23,6 +23,19 @@ const Lobby = {
 
         this.socket.on('join_success', (data) => {
             console.log('Join success:', data);
+
+            const playerName = document.getElementById('player-name')?.value || document.getElementById('host-name')?.value;
+
+            if (data.redirect_url) {
+                sessionStorage.setItem('gameData', JSON.stringify({
+                    gameId: data.game_id,
+                    playerName: playerName,
+                    transferId: data.transfer_id
+                }));
+                window.location.href = `${data.redirect_url}?transfer_id=${data.transfer_id}&player_name=${encodeURIComponent(playerName)}`;
+                return;
+            }
+
             document.getElementById('join-form').style.display = 'none';
             document.getElementById('join-lobby').style.display = 'block';
             document.getElementById('join-room-id').textContent = document.getElementById('room-code').value;
@@ -45,6 +58,17 @@ const Lobby = {
             }));
 
             window.location.href = `${data.redirect_url}?transfer_id=${data.transfer_id}&player_name=${encodeURIComponent(playerName)}`;
+        });
+
+        this.socket.on('join_pending', () => {
+            document.getElementById('join-form').style.display = 'none';
+            document.getElementById('join-lobby').style.display = 'none';
+            document.getElementById('waiting-approval').style.display = 'block';
+        });
+
+        this.socket.on('join_rejected', (data) => {
+            alert(data.message);
+            window.location.href = '/';
         });
 
         this.socket.on('error', (data) => {
@@ -395,6 +419,10 @@ class GameEngine {
             setTimeout(() => window.location.href = '/', 2000);
         });
 
+        this.socket.on('join_request', (data) => {
+            if (this.isHost) this.showJoinRequest(data);
+        });
+
         this.socket.on('error', (data) => Utils.showError(data.message));
         this.socket.on('game_error', (data) => Utils.showError(data.message));
     }
@@ -531,13 +559,13 @@ class GameEngine {
             el.style.display = 'block';
             let html = `<div class="item-category">${data.category}</div>`;
             html += `<div class="item-name" style="font-size: 2rem; margin-bottom: 1.5rem;">${data.question}</div>`;
-            
+
             html += `<div class="options-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; width: 100%;">`;
             data.options.forEach((opt, i) => {
                 html += `<button class="btn btn-outline" onclick="window.gameInstance.submitAnswer(${i})" style="font-size: 1.1rem; padding: 1rem;">${opt}</button>`;
             });
             html += `</div>`;
-            
+
             el.innerHTML = html;
             setTimeout(() => el.classList.add('visible'), 100);
         }
@@ -632,7 +660,7 @@ class GameEngine {
         listEl.innerHTML = '';
         const ul = document.createElement('ul');
         ul.style.listStyle = 'none';
-        
+
         players.forEach(p => {
             const name = typeof p === 'object' ? p.name : p;
             const isHost = typeof p === 'object' ? p.isHost : false;
@@ -657,7 +685,7 @@ class GameEngine {
         if (!el) return;
         
         let html = '';
-        
+
         // Show team scores if they exist and are non-zero
         if (data.team_scores && (data.team_scores['1'] > 0 || data.team_scores['2'] > 0)) {
             html += '<div style="margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #eee;">';
@@ -665,7 +693,7 @@ class GameEngine {
             html += `<div class="score-item">فريق 2: <span class="score-val">${data.team_scores['2']}</span></div>`;
             html += '</div>';
         }
-        
+
         // Show individual scores
         const scores = data.scores || data;
         html += Object.entries(scores)
@@ -744,13 +772,44 @@ class GameEngine {
         msg.style.display = 'block';
         setTimeout(() => msg.style.display = 'none', 5000);
     }
+
+    showJoinRequest(data) {
+        const container = document.getElementById('notification-container') || document.body;
+        const div = document.createElement('div');
+        div.className = 'join-request-card animate__animated animate__fadeInRight';
+        div.innerHTML = `
+            <div style="margin-bottom: 0.8rem; font-weight: 700;">
+                <i class="fas fa-user-plus" style="color: var(--primary);"></i>
+                ${data.player_name} عايز ينضم للعبة
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-primary btn-sm" onclick="window.gameInstance.respondToJoin('${data.sid}', true, this)">قبول</button>
+                <button class="btn btn-outline btn-sm" onclick="window.gameInstance.respondToJoin('${data.sid}', false, this)">رفض</button>
+            </div>
+        `;
+        container.appendChild(div);
+        // Auto-remove after 20 seconds if no action
+        setTimeout(() => {
+            if (div.parentElement) {
+                div.classList.replace('animate__fadeInRight', 'animate__fadeOutRight');
+                setTimeout(() => div.remove(), 1000);
+            }
+        }, 20000);
+    }
+
+    respondToJoin(sid, accepted, btn) {
+        this.socket.emit('join_response', { sid: sid, accepted: accepted });
+        const card = btn.closest('.join-request-card');
+        card.classList.replace('animate__fadeInRight', 'animate__fadeOutRight');
+        setTimeout(() => card.remove(), 1000);
+    }
 }
 
 // --- Initialization ---
 
 document.addEventListener('DOMContentLoaded', () => {
     const isGamePage = window.location.pathname.includes('/game/');
-    
+
     if (isGamePage) {
         const gameData = JSON.parse(sessionStorage.getItem('gameData') || '{}');
         const urlParams = new URLSearchParams(window.location.search);

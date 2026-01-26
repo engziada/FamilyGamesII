@@ -144,6 +144,18 @@
                 <button class="btn btn-outline" onclick="Lobby.leaveGame()">خروج</button>
             </div>
         </div>
+        <div id="waiting-approval" style="display: none;">
+            <div class="waiting-approval-content">
+                <div class="spinner"></div>
+                <h2 style="margin-bottom: 1rem;">في انتظار موافقة المضيف</h2>
+                <p style="color: var(--text-light); margin-bottom: 1.5rem;">
+                    اللعبة بدأت بالفعل، طلبنا من المضيف يدخلك... خليك مكثف!
+                </p>
+                <div class="buttons">
+                    <button class="btn btn-outline" onclick="Lobby.leaveGame()">إلغاء الطلب</button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

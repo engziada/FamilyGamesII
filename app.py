@@ -50,6 +50,7 @@ socketio = SocketIO(
 # Game rooms storage
 game_rooms = {}
 player_sids = {}
+pending_approvals = {} # requester_sid -> {player_name, game_id}
 
 def get_player_sid(player_name):
     return player_sids.get(player_name)
@@ -97,6 +98,17 @@ def handle_connect():
     if player_name:
         player_sids[player_name] = request.sid
 
+@socketio.on('disconnect')
+def handle_disconnect():
+    if request.sid in pending_approvals:
+        del pending_approvals[request.sid]
+
+    # Cleanup player_sids if needed
+    for name, sid in list(player_sids.items()):
+        if sid == request.sid:
+            del player_sids[name]
+            break
+
 @socketio.on('create_game')
 def handle_create_game(data):
     try:
@@ -132,6 +144,19 @@ def handle_join_game(data):
         player_name = data['player_name']
         if game_id not in game_rooms: raise ValueError("الغرفة غير موجودة")
         game_obj = game_rooms[game_id]
+
+        # Check if already in game
+        is_reconnecting = any(p['name'] == player_name for p in game_obj.players)
+
+        # Approval needed if game started and not reconnecting
+        if game_obj.status != 'waiting' and not is_reconnecting:
+            host_sid = get_player_sid(game_obj.host)
+            if host_sid:
+                pending_approvals[request.sid] = {'name': player_name, 'game_id': game_id}
+                emit('join_pending')
+                emit('join_request', {'player_name': player_name, 'sid': request.sid}, room=host_sid)
+                return
+
         game_obj.add_player(player_name)
         session['game_id'] = game_id
         session['player_name'] = player_name
@@ -141,6 +166,38 @@ def handle_join_game(data):
         emit('player_joined', {'players': game_obj.players}, room=game_id)
     except Exception as e:
         emit('error', {'message': str(e)})
+
+@socketio.on('join_response')
+def handle_join_response(data):
+    try:
+        requester_sid = data.get('sid')
+        accepted = data.get('accepted')
+
+        if requester_sid not in pending_approvals: return
+        req = pending_approvals.pop(requester_sid)
+
+        game_id = req['game_id']
+        player_name = req['name']
+        game_obj = game_rooms.get(game_id)
+
+        if not game_obj or game_obj.host != session.get('player_name'): return
+
+        if accepted:
+            game_obj.add_player(player_name)
+            join_room(game_id, sid=requester_sid)
+
+            resp = {'game_id': game_id, 'players': game_obj.players, 'host': game_obj.host}
+            if game_obj.status != 'waiting':
+                resp['redirect_url'] = f'/game/{game_id}'
+                resp['transfer_id'] = str(uuid.uuid4())
+
+            emit('join_success', resp, room=requester_sid)
+            emit('player_joined', {'players': game_obj.players}, room=game_id)
+            emit_game_state(game_id)
+        else:
+            emit('join_rejected', {'message': 'تم رفض طلب الانضمام من قبل المضيف'}, room=requester_sid)
+    except Exception as e:
+        logger.error(f"Error in join_response: {str(e)}")
 
 @socketio.on('start_game')
 def handle_start_game(data):
@@ -188,9 +245,10 @@ def handle_guess_correct(data):
                 if p1: game_obj.team_scores[str(p1['team'])] += points
                 if p2: game_obj.team_scores[str(p2['team'])] += points
 
+        current_performer = game_obj.current_player
         game_obj.next_round(game_obj.get_item())
         game_obj.status = 'playing'
-        emit('correct_guess', {'guesser': guesser, 'performer': game_obj.current_player}, room=game_obj.game_id)
+        emit('correct_guess', {'guesser': guesser, 'performer': current_performer}, room=game_obj.game_id)
         emit('force_reset_timer', {'next_player': game_obj.current_player, 'game_status': game_obj.status}, room=game_obj.game_id)
         
         if game_obj.game_type == 'pictionary':
