@@ -25,12 +25,14 @@ const Lobby = {
             console.log('Join success:', data);
 
             const playerName = document.getElementById('player-name')?.value || document.getElementById('host-name')?.value;
+            const gameType = document.getElementById('join-game-type')?.value || document.getElementById('modal-game-type')?.value || 'charades';
 
             if (data.redirect_url) {
                 sessionStorage.setItem('gameData', JSON.stringify({
                     gameId: data.game_id,
                     playerName: playerName,
-                    transferId: data.transfer_id
+                    transferId: data.transfer_id,
+                    gameType: gameType
                 }));
                 window.location.href = `${data.redirect_url}?transfer_id=${data.transfer_id}&player_name=${encodeURIComponent(playerName)}`;
                 return;
@@ -50,11 +52,13 @@ const Lobby = {
         this.socket.on('game_started', (data) => {
             console.log('Game started:', data);
             const playerName = document.getElementById('player-name')?.value || document.getElementById('host-name')?.value;
+            const gameType = document.getElementById('join-game-type')?.value || document.getElementById('modal-game-type')?.value || 'charades';
 
             sessionStorage.setItem('gameData', JSON.stringify({
                 gameId: data.game_id,
                 playerName: playerName,
-                transferId: data.transfer_id
+                transferId: data.transfer_id,
+                gameType: gameType
             }));
 
             window.location.href = `${data.redirect_url}?transfer_id=${data.transfer_id}&player_name=${encodeURIComponent(playerName)}`;
@@ -86,6 +90,7 @@ const Lobby = {
 
         const teams = document.getElementById('game-teams').value === 'true';
         const difficulty = document.getElementById('game-difficulty').value;
+        const customWords = document.getElementById('custom-words').value;
         const gameType = document.getElementById('modal-game-type').value;
 
         const timeLimitMap = {
@@ -104,6 +109,7 @@ const Lobby = {
             settings: {
                 teams: teams,
                 difficulty: 'all', // Item difficulty now defaults to all
+                custom_words: customWords,
                 time_limit: timeLimitMap[difficulty] || 90
             }
         });
@@ -132,6 +138,7 @@ const Lobby = {
     joinGame() {
         const playerName = document.getElementById('player-name').value.trim();
         const roomCode = document.getElementById('room-code').value.trim();
+        const gameType = document.getElementById('join-game-type').value || 'charades';
 
         if (!playerName || !roomCode) {
             alert('من فضلك اكتب اسمك ورقم الأوضة');
@@ -142,7 +149,7 @@ const Lobby = {
         this.socket.emit('join_game', {
             game_id: roomCode,
             player_name: playerName,
-            game_type: 'charades'
+            game_type: gameType
         });
     },
 
@@ -215,6 +222,15 @@ const Utils = {
         if (action === 'create') {
             document.getElementById('modal-game-type').value = gameType;
             document.getElementById('modal-title').textContent = gameType === 'charades' ? 'إنشاء غرفة بدون كلام' : 'إنشاء غرفة بنك المعلومات';
+            // Hide custom words for trivia
+            document.getElementById('custom-words').parentElement.style.display = gameType === 'charades' ? 'block' : 'none';
+        } else {
+            const joinGameTypeInput = document.getElementById('join-game-type');
+            if (joinGameTypeInput) joinGameTypeInput.value = gameType;
+            const joinTitle = document.querySelector('#join-form h2');
+            if (joinTitle) {
+                joinTitle.textContent = gameType === 'pictionary' ? 'انضمام للعبة الرسم' : (gameType === 'trivia' ? 'انضمام لبنك المعلومات' : 'انضمام بدون كلام');
+            }
         }
         document.getElementById(modalId).style.display = 'flex';
     },
@@ -271,12 +287,12 @@ const Utils = {
 // --- Game Logic ---
 
 class GameEngine {
-    constructor(gameId, playerName, transferId, isHost) {
+    constructor(gameId, playerName, transferId, isHost, gameType = 'charades') {
         this.gameId = gameId;
         this.playerName = playerName;
         this.transferId = transferId;
         this.isHost = isHost;
-        this.gameType = 'charades';
+        this.gameType = gameType;
         this.socket = null;
         this.gameStatus = 'waiting';
         this.timerInterval = null;
@@ -441,6 +457,9 @@ class GameEngine {
         if (!data) return;
         console.log("Game state update:", data);
         
+        if (data.game_type && data.game_type !== this.gameType) {
+            this.gameType = data.game_type;
+        }
         if (data.status) this.setGameStatus(data.status);
         if (data.message) Utils.showMessage(data.message);
         if (data.players) this.updatePlayersList(data.players);
@@ -828,9 +847,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const playerName = urlParams.get('player_name') || gameData.playerName;
         const transferId = urlParams.get('transfer_id') || gameData.transferId;
         const isHost = document.getElementById('is-host')?.value === 'true';
+        const serverGameType = document.getElementById('game-type')?.value;
+        const storedGameType = gameData.gameType;
+        const initialGameType = serverGameType || storedGameType || 'charades';
 
         if (gameId && playerName && transferId) {
-            window.gameInstance = new GameEngine(gameId, playerName, transferId, isHost);
+            window.gameInstance = new GameEngine(gameId, playerName, transferId, isHost, initialGameType);
         } else {
             Utils.showError('معلومات اللعبة غير كاملة');
         }

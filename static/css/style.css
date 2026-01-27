@@ -276,56 +276,6 @@ header h1 {
     justify-items: center;
 }
 
-.game-hero {
-    width: 100%;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1.5rem;
-    align-items: center;
-}
-
-.hero-label {
-    font-size: 0.9rem;
-    color: var(--text-light);
-}
-
-.hero-room {
-    font-size: 2.5rem;
-    color: var(--primary);
-}
-
-.hero-player {
-    color: var(--text-light);
-    font-weight: 600;
-}
-
-.hero-timer, .hero-turn {
-    background: var(--surface);
-    border: 3px solid var(--text);
-    border-radius: 25px 60px 25px 60px;
-    padding: 1rem 1.5rem;
-    box-shadow: var(--shadow-pop);
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    align-items: flex-start;
-}
-
-.hero-time, .hero-turn-value {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    font-size: 1.5rem;
-    font-weight: 700;
-}
-
-.game-layout {
-    display: grid;
-    grid-template-columns: 2fr 320px;
-    gap: 2.5rem;
-    width: 100%;
-}
-
 .game-board {
     width: 100%;
     max-width: 860px;
@@ -336,188 +286,6 @@ header h1 {
     width: 100%;
     max-width: 320px;
     justify-self: center;
-}
-
-.display-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-}
-
-.display-status {
-    background: var(--secondary);
-    color: white;
-    padding: 0.4rem 1.2rem;
-    border-radius: 20px;
-    font-weight: 700;
-    font-size: 0.9rem;
-}
-
-.pictionary-panel {
-    display: none;
-    width: 100%;
-    position: relative;
-    margin-top: 1.5rem;
-}
-
-.canvas-controls {
-    display: flex;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-.canvas-chip {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    background: #fffef4;
-    border: 2px dashed var(--text-light);
-    border-radius: 999px;
-    padding: 0.4rem 0.9rem;
-    font-size: 0.9rem;
-}
-
-.pictionary-panel input[type="color"] {
-    width: 42px;
-    height: 42px;
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-}
-
-.pictionary-panel input[type="range"] {
-    width: 120px;
-}
-
-.pictionary-panel canvas {
-    border: 3px solid var(--text);
-    border-radius: 30px;
-    background: white;
-    width: 100%;
-    height: auto;
-    cursor: crosshair;
-    touch-action: none;
-}
-
-.waiting-area {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    background: #fff9eb;
-    border: 2px dashed var(--accent);
-    border-radius: 20px;
-    padding: 1rem 1.5rem;
-    margin-top: 1rem;
-}
-
-.waiting-area i {
-    font-size: 2rem;
-    color: var(--accent);
-}
-
-.waiting-title {
-    font-size: 1.2rem;
-    font-weight: 700;
-}
-
-.waiting-sub {
-    color: var(--text-light);
-    font-size: 0.9rem;
-}
-
-.game-actions {
-    margin-top: 2rem;
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
-
-.game-actions .btn {
-    flex: 1;
-    min-width: 150px;
-}
-
-.control-panels {
-    margin-top: 1.5rem;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 1.5rem;
-}
-
-.control-card h4,
-.info-card h4 {
-    margin-bottom: 1rem;
-}
-
-.control-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 0.8rem;
-}
-
-.control-buttons .danger {
-    color: var(--danger);
-    border-color: var(--danger);
-}
-
-.info-card.compact {
-    font-size: 0.95rem;
-}
-
-.round-info {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.round-info li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.6rem 0.8rem;
-    border: 1px dashed rgba(0,0,0,0.1);
-    border-radius: 15px;
-    background: #fffefc;
-}
-
-.round-info span {
-    color: var(--text-light);
-}
-
-.card-heading {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.8rem;
-}
-
-.badge {
-    background: var(--primary);
-    color: #fff;
-    border-radius: 999px;
-    padding: 0.2rem 0.8rem;
-    font-weight: 700;
-}
-
-.callout-card ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.callout-card li::before {
-    content: '•';
-    color: var(--secondary);
-    margin-left: 0.4rem;
 }
 
 .status-bar {
@@ -542,7 +310,6 @@ header h1 {
     border-radius: 100px 30px 120px 40px / 40px 120px 30px 100px;
     min-height: 420px;
     padding: clamp(1.5rem, 3vw, 3rem);
-    width: 100%;
 }
 
 .item-card {
@@ -669,9 +436,6 @@ header h1 {
     .modal-content .buttons .btn { flex: 1 1 100%; }
     .game-card .buttons { flex-direction: column; }
     .status-bar { flex-direction: column; gap: 1rem; align-items: flex-start; }
-    .game-layout { grid-template-columns: 1fr; }
-    .game-actions .btn { flex: 1 1 100%; }
-    .hero-room { font-size: 2rem; }
 }
 
 @media (max-width: 520px) {
