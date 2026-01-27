@@ -177,8 +177,15 @@ header h1 {
 /* --- Irregular Modals --- */
 
 .modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
     background: rgba(78, 205, 196, 0.4);
     backdrop-filter: blur(8px);
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
 }
 
 .modal-content {
@@ -186,14 +193,55 @@ header h1 {
     border-radius: 60px 20px 70px 30px / 30px 70px 20px 60px;
     padding: 3rem;
     background: var(--surface);
+    width: min(90vw, 640px);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.5rem;
+}
+
+.modal-content .input-group,
+.modal-content .buttons,
+.modal-content .players-list,
+.modal-content #waiting-approval,
+.modal-content #join-form,
+.modal-content #join-lobby {
+    width: 100%;
+    text-align: inherit;
+}
+
+.modal-content .buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.modal-content .buttons .btn {
+    flex: 1;
+}
+
+.input-group {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
 }
 
 .input-control, .input-group input, .input-group select, .input-group textarea {
     border: 3px solid var(--text);
     border-radius: 15px 30px 10px 25px;
-    padding: 1rem;
+    width: 100%;
+    min-height: 3.4rem;
+    padding-inline: 1.5rem;
+    padding-block: 1.25rem;
     font-family: 'Changa', sans-serif;
+    font-size: 1rem;
+    line-height: 1.4;
     background: #fdfdfd;
+
+    display: block;
 }
 
 /* --- Game Board Revamp --- */
@@ -202,6 +250,24 @@ header h1 {
     display: grid;
     grid-template-columns: 1fr 320px;
     gap: 2.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+    align-items: flex-start;
+    justify-content: center;
+    justify-items: center;
+}
+
+.game-board {
+    width: 100%;
+    max-width: 860px;
+    justify-self: center;
+}
+
+.sidebar {
+    width: 100%;
+    max-width: 320px;
+    justify-self: center;
 }
 
 .status-bar {
