@@ -86,7 +86,6 @@ const Lobby = {
 
         const teams = document.getElementById('game-teams').value === 'true';
         const difficulty = document.getElementById('game-difficulty').value;
-        const customWords = document.getElementById('custom-words').value;
         const gameType = document.getElementById('modal-game-type').value;
 
         const timeLimitMap = {
@@ -105,7 +104,6 @@ const Lobby = {
             settings: {
                 teams: teams,
                 difficulty: 'all', // Item difficulty now defaults to all
-                custom_words: customWords,
                 time_limit: timeLimitMap[difficulty] || 90
             }
         });
@@ -217,8 +215,6 @@ const Utils = {
         if (action === 'create') {
             document.getElementById('modal-game-type').value = gameType;
             document.getElementById('modal-title').textContent = gameType === 'charades' ? 'إنشاء غرفة بدون كلام' : 'إنشاء غرفة بنك المعلومات';
-            // Hide custom words for trivia
-            document.getElementById('custom-words').parentElement.style.display = gameType === 'charades' ? 'block' : 'none';
         }
         document.getElementById(modalId).style.display = 'flex';
     },
