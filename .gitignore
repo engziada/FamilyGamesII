@@ -139,3 +139,7 @@ venv.bak/
 # VS Code
 .vscode/
 .vsocde/
+
+# Logs
+logs/
+*.log
