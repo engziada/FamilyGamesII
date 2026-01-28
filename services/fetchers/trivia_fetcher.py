@@ -66,8 +66,9 @@ class TriviaFetcher(BaseFetcher):
         """
         questions = []
         
-        # Static Egyptian cinema questions (to be replaced with actual scraping)
+        # Expanded Egyptian cinema questions covering different eras and topics
         static_questions = [
+            # Classic Cinema Era
             {
                 'question': 'من بطل فيلم "الناصر صلاح الدين"؟',
                 'correct_answer': 'أحمد مظهر',
@@ -97,9 +98,203 @@ class TriviaFetcher(BaseFetcher):
                 'difficulty': 'easy'
             },
             {
+                'question': 'من مخرج فيلم "القاهرة 30"؟',
+                'correct_answer': 'صلاح أبو سيف',
+                'wrong_answers': ['يوسف شاهين', 'حسن الإمام', 'كمال الشيخ'],
+                'category': 'سينما مصرية',
+                'difficulty': 'hard'
+            },
+            {
+                'question': 'من بطلة فيلم "الحرام"؟',
+                'correct_answer': 'فاتن حمامة',
+                'wrong_answers': ['سعاد حسني', 'نادية لطفي', 'مريم فخر الدين'],
+                'category': 'سينما مصرية',
+                'difficulty': 'easy'
+            },
+            
+            # Golden Era
+            {
                 'question': 'ما اسم الشخصية التي لعبها عادل إمام في فيلم "الإرهاب والكباب"؟',
                 'correct_answer': 'أحمد',
                 'wrong_answers': ['محمود', 'حسن', 'علي'],
+                'category': 'سينما مصرية',
+                'difficulty': 'medium'
+            },
+            {
+                'question': 'من مخرج فيلم "الكيت كات"؟',
+                'correct_answer': 'داود عبد السيد',
+                'wrong_answers': ['محمد خان', 'عاطف الطيب', 'خيري بشارة'],
+                'category': 'سينما مصرية',
+                'difficulty': 'hard'
+            },
+            {
+                'question': 'من بطل فيلم "المصير"؟',
+                'correct_answer': 'نور الشريف',
+                'wrong_answers': ['محمود عبد العزيز', 'أحمد زكي', 'عادل إمام'],
+                'category': 'سينما مصرية',
+                'difficulty': 'easy'
+            },
+            {
+                'question': 'في أي فيلم قال محمد هنيدي "أنا مش عارف حاجة"؟',
+                'correct_answer': 'إسماعيلية رايح جاي',
+                'wrong_answers': ['صعيدي في الجامعة الأمريكية', 'سعيد كلاكيت', 'تيمور وشفيقة'],
+                'category': 'سينما مصرية',
+                'difficulty': 'easy'
+            },
+            {
+                'question': 'من بطلة فيلم "خللي بالك من زوزو"؟',
+                'correct_answer': 'سعاد حسني',
+                'wrong_answers': ['نادية لطفي', 'شادية', 'ماجدة'],
+                'category': 'سينما مصرية',
+                'difficulty': 'easy'
+            },
+            {
+                'question': 'من مخرج فيلم "الأفوكاتو"؟',
+                'correct_answer': 'رأفت الميهي',
+                'wrong_answers': ['محمد خان', 'داود عبد السيد', 'عاطف الطيب'],
+                'category': 'سينما مصرية',
+                'difficulty': 'hard'
+            },
+            
+            # Modern Cinema
+            {
+                'question': 'من بطل فيلم "عمارة يعقوبيان"؟',
+                'correct_answer': 'عادل إمام',
+                'wrong_answers': ['أحمد السقا', 'كريم عبد العزيز', 'محمد رمضان'],
+                'category': 'سينما مصرية',
+                'difficulty': 'easy'
+            },
+            {
+                'question': 'من مخرج فيلم "هي فوضى"؟',
+                'correct_answer': 'يوسف شاهين',
+                'wrong_answers': ['خالد يوسف', 'مروان حامد', 'عمرو سلامة'],
+                'category': 'سينما مصرية',
+                'difficulty': 'medium'
+            },
+            {
+                'question': 'من بطل فيلم "الفيل الأزرق"؟',
+                'correct_answer': 'كريم عبد العزيز',
+                'wrong_answers': ['أحمد السقا', 'أحمد عز', 'محمد رمضان'],
+                'category': 'سينما مصرية',
+                'difficulty': 'easy'
+            },
+            {
+                'question': 'في أي عام تم إنتاج فيلم "الفيل الأزرق"؟',
+                'correct_answer': '2014',
+                'wrong_answers': ['2012', '2016', '2018'],
+                'category': 'سينما مصرية',
+                'difficulty': 'medium'
+            },
+            {
+                'question': 'من مخرج فيلم "الخلية"؟',
+                'correct_answer': 'طارق العريان',
+                'wrong_answers': ['مروان حامد', 'أحمد خالد موسى', 'عمرو سلامة'],
+                'category': 'سينما مصرية',
+                'difficulty': 'hard'
+            },
+            
+            # Actors & Actresses
+            {
+                'question': 'من لقبت بـ "سندريلا الشاشة العربية"؟',
+                'correct_answer': 'سعاد حسني',
+                'wrong_answers': ['فاتن حمامة', 'شادية', 'نادية لطفي'],
+                'category': 'سينما مصرية',
+                'difficulty': 'easy'
+            },
+            {
+                'question': 'من لقب بـ "الزعيم"؟',
+                'correct_answer': 'عادل إمام',
+                'wrong_answers': ['نور الشريف', 'محمود عبد العزيز', 'أحمد زكي'],
+                'category': 'سينما مصرية',
+                'difficulty': 'easy'
+            },
+            {
+                'question': 'من لقب بـ "الملك"؟',
+                'correct_answer': 'أحمد زكي',
+                'wrong_answers': ['نور الشريف', 'محمود عبد العزيز', 'عادل إمام'],
+                'category': 'سينما مصرية',
+                'difficulty': 'medium'
+            },
+            {
+                'question': 'من لقبت بـ "سيدة الشاشة العربية"؟',
+                'correct_answer': 'فاتن حمامة',
+                'wrong_answers': ['سعاد حسني', 'شادية', 'ماجدة'],
+                'category': 'سينما مصرية',
+                'difficulty': 'easy'
+            },
+            
+            # Comedy Films
+            {
+                'question': 'من بطل فيلم "اللمبي"؟',
+                'correct_answer': 'محمد سعد',
+                'wrong_answers': ['محمد هنيدي', 'أحمد حلمي', 'علاء ولي الدين'],
+                'category': 'سينما مصرية',
+                'difficulty': 'easy'
+            },
+            {
+                'question': 'من بطل فيلم "صعيدي في الجامعة الأمريكية"؟',
+                'correct_answer': 'محمد هنيدي',
+                'wrong_answers': ['محمد سعد', 'أحمد حلمي', 'أحمد مكي'],
+                'category': 'سينما مصرية',
+                'difficulty': 'easy'
+            },
+            {
+                'question': 'من بطل فيلم "الأيدي الناعمة"؟',
+                'correct_answer': 'فؤاد المهندس',
+                'wrong_answers': ['عبد المنعم مدبولي', 'سمير غانم', 'جورج سيدهم'],
+                'category': 'سينما مصرية',
+                'difficulty': 'medium'
+            },
+            
+            # Series
+            {
+                'question': 'من بطل مسلسل "رأفت الهجان"؟',
+                'correct_answer': 'محمود عبد العزيز',
+                'wrong_answers': ['نور الشريف', 'يحيى الفخراني', 'أحمد زكي'],
+                'category': 'سينما مصرية',
+                'difficulty': 'easy'
+            },
+            {
+                'question': 'من بطل مسلسل "ليالي الحلمية"؟',
+                'correct_answer': 'يحيى الفخراني',
+                'wrong_answers': ['نور الشريف', 'محمود عبد العزيز', 'عادل إمام'],
+                'category': 'سينما مصرية',
+                'difficulty': 'easy'
+            },
+            {
+                'question': 'من بطل مسلسل "الكبير أوي"؟',
+                'correct_answer': 'أحمد مكي',
+                'wrong_answers': ['محمد رمضان', 'أحمد السقا', 'كريم عبد العزيز'],
+                'category': 'سينما مصرية',
+                'difficulty': 'easy'
+            },
+            {
+                'question': 'من بطل مسلسل "الاختيار"؟',
+                'correct_answer': 'أحمد عز',
+                'wrong_answers': ['محمد رمضان', 'أحمد السقا', 'أمير كرارة'],
+                'category': 'سينما مصرية',
+                'difficulty': 'easy'
+            },
+            
+            # Directors
+            {
+                'question': 'من مخرج فيلم "المومياء"؟',
+                'correct_answer': 'شادي عبد السلام',
+                'wrong_answers': ['يوسف شاهين', 'صلاح أبو سيف', 'حسن الإمام'],
+                'category': 'سينما مصرية',
+                'difficulty': 'hard'
+            },
+            {
+                'question': 'من مخرج فيلم "الكرنك"؟',
+                'correct_answer': 'علي بدرخان',
+                'wrong_answers': ['يوسف شاهين', 'صلاح أبو سيف', 'عاطف الطيب'],
+                'category': 'سينما مصرية',
+                'difficulty': 'hard'
+            },
+            {
+                'question': 'من مخرج فيلم "ساعة ونص"؟',
+                'correct_answer': 'وائل إحسان',
+                'wrong_answers': ['عمرو سلامة', 'مروان حامد', 'أحمد خالد موسى'],
                 'category': 'سينما مصرية',
                 'difficulty': 'medium'
             }

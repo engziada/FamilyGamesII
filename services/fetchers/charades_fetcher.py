@@ -18,36 +18,99 @@ class CharadesFetcher(BaseFetcher):
         self.elcinema_base = "https://elcinema.com"
         
         # Static fallback data (used when web scraping fails)
+        # Expanded collection of Egyptian cinema classics and modern hits
         self.static_movies = [
+            # Classic Cinema (1950s-1970s)
             {'item': 'الناصر صلاح الدين', 'category': 'أفلام', 'year': '1963', 'starring': 'أحمد مظهر، صلاح ذو الفقار', 'type': 'فيلم'},
             {'item': 'الأرض', 'category': 'أفلام', 'year': '1969', 'starring': 'محمود المليجي، عزت العلايلي', 'type': 'فيلم'},
             {'item': 'باب الحديد', 'category': 'أفلام', 'year': '1958', 'starring': 'يوسف شاهين، هند رستم', 'type': 'فيلم'},
             {'item': 'دعاء الكروان', 'category': 'أفلام', 'year': '1959', 'starring': 'فاتن حمامة، أحمد مظهر', 'type': 'فيلم'},
+            {'item': 'القاهرة 30', 'category': 'أفلام', 'year': '1966', 'starring': 'سعاد حسني، حسن يوسف', 'type': 'فيلم'},
+            {'item': 'الحرام', 'category': 'أفلام', 'year': '1965', 'starring': 'فاتن حمامة، عبد الله غيث', 'type': 'فيلم'},
+            {'item': 'شيء من الخوف', 'category': 'أفلام', 'year': '1969', 'starring': 'نادية لطفي، محمود مرسي', 'type': 'فيلم'},
+            {'item': 'الزوجة الثانية', 'category': 'أفلام', 'year': '1967', 'starring': 'سعاد حسني، صلاح ذو الفقار', 'type': 'فيلم'},
+            {'item': 'خللي بالك من زوزو', 'category': 'أفلام', 'year': '1972', 'starring': 'سعاد حسني، حسين فهمي', 'type': 'فيلم'},
+            {'item': 'الكرنك', 'category': 'أفلام', 'year': '1975', 'starring': 'سعاد حسني، نور الشريف', 'type': 'فيلم'},
+            
+            # Golden Era (1980s-1990s)
             {'item': 'الإرهاب والكباب', 'category': 'أفلام', 'year': '1992', 'starring': 'عادل إمام، كمال الشناوي', 'type': 'فيلم'},
-            {'item': 'إسماعيلية رايح جاي', 'category': 'أفلام', 'year': '1997', 'starring': 'محمد هنيدي، علاء ولي الدين', 'type': 'فيلم'},
             {'item': 'الكيت كات', 'category': 'أفلام', 'year': '1991', 'starring': 'محمود عبد العزيز، شريف منير', 'type': 'فيلم'},
             {'item': 'المصير', 'category': 'أفلام', 'year': '1997', 'starring': 'نور الشريف، ليلى علوي', 'type': 'فيلم'},
+            {'item': 'إسماعيلية رايح جاي', 'category': 'أفلام', 'year': '1997', 'starring': 'محمد هنيدي، علاء ولي الدين', 'type': 'فيلم'},
+            {'item': 'سعيد كلاكيت', 'category': 'أفلام', 'year': '1994', 'starring': 'محمد هنيدي، حنان ترك', 'type': 'فيلم'},
+            {'item': 'الإنس والجن', 'category': 'أفلام', 'year': '1985', 'starring': 'عادل إمام، يونس شلبي', 'type': 'فيلم'},
+            {'item': 'عفاريت الأسفلت', 'category': 'أفلام', 'year': '1996', 'starring': 'محمود عبد العزيز، ليلى علوي', 'type': 'فيلم'},
+            {'item': 'الأفوكاتو', 'category': 'أفلام', 'year': '1984', 'starring': 'عادل إمام، يسرا', 'type': 'فيلم'},
+            {'item': 'كتيبة الإعدام', 'category': 'أفلام', 'year': '1989', 'starring': 'نور الشريف، ليلى علوي', 'type': 'فيلم'},
+            {'item': 'الراعي والنساء', 'category': 'أفلام', 'year': '1991', 'starring': 'سعيد صالح، يونس شلبي', 'type': 'فيلم'},
+            
+            # Modern Cinema (2000s-2010s)
             {'item': 'عمارة يعقوبيان', 'category': 'أفلام', 'year': '2006', 'starring': 'عادل إمام، نور الشريف', 'type': 'فيلم'},
             {'item': 'هي فوضى', 'category': 'أفلام', 'year': '2007', 'starring': 'خالد صالح، يسرا اللوزي', 'type': 'فيلم'},
+            {'item': 'حين ميسرة', 'category': 'أفلام', 'year': '2007', 'starring': 'عادل إمام، يسرا', 'type': 'فيلم'},
+            {'item': 'الفيل الأزرق', 'category': 'أفلام', 'year': '2014', 'starring': 'كريم عبد العزيز، خالد الصاوي', 'type': 'فيلم'},
+            {'item': 'هيبتا', 'category': 'أفلام', 'year': '2016', 'starring': 'ماجد الكدواني، ياسمين رئيس', 'type': 'فيلم'},
+            {'item': 'الخلية', 'category': 'أفلام', 'year': '2017', 'starring': 'أحمد عز، أحمد السقا', 'type': 'فيلم'},
+            {'item': 'الجزيرة', 'category': 'أفلام', 'year': '2007', 'starring': 'أحمد السقا، هند صبري', 'type': 'فيلم'},
+            {'item': 'ساعة ونص', 'category': 'أفلام', 'year': '2012', 'starring': 'أحمد حلمي، منة شلبي', 'type': 'فيلم'},
+            {'item': 'الحرب العالمية الثالثة', 'category': 'أفلام', 'year': '2014', 'starring': 'أحمد السقا، هنا الزاهد', 'type': 'فيلم'},
+            {'item': 'كابتن مصر', 'category': 'أفلام', 'year': '2015', 'starring': 'محمد إمام، ياسمين صبري', 'type': 'فيلم'},
+            
+            # Comedy Classics
+            {'item': 'الأيدي الناعمة', 'category': 'أفلام', 'year': '1963', 'starring': 'فؤاد المهندس، شويكار', 'type': 'فيلم'},
+            {'item': 'غبي منه فيه', 'category': 'أفلام', 'year': '2004', 'starring': 'علاء ولي الدين، حسن حسني', 'type': 'فيلم'},
+            {'item': 'صعيدي في الجامعة الأمريكية', 'category': 'أفلام', 'year': '1998', 'starring': 'محمد هنيدي، إدوارد', 'type': 'فيلم'},
+            {'item': 'اللمبي', 'category': 'أفلام', 'year': '2002', 'starring': 'محمد سعد، حسن حسني', 'type': 'فيلم'},
+            {'item': 'تيمور وشفيقة', 'category': 'أفلام', 'year': '2007', 'starring': 'محمد هنيدي، حنان ترك', 'type': 'فيلم'},
         ]
         
         self.static_series = [
+            # Classic Series
             {'item': 'رأفت الهجان', 'category': 'مسلسلات', 'year': '1987', 'starring': 'محمود عبد العزيز', 'type': 'مسلسل'},
             {'item': 'ليالي الحلمية', 'category': 'مسلسلات', 'year': '1987', 'starring': 'يحيى الفخراني، صفية العمري', 'type': 'مسلسل'},
-            {'item': 'زيزينيا', 'category': 'مسلسلات', 'year': '1997', 'starring': 'سمير غانم، دلال عبد العزيز', 'type': 'مسلسل'},
             {'item': 'الحاج متولي', 'category': 'مسلسلات', 'year': '1994', 'starring': 'نور الشريف', 'type': 'مسلسل'},
+            {'item': 'لن أعيش في جلباب أبي', 'category': 'مسلسلات', 'year': '1996', 'starring': 'يحيى الفخراني', 'type': 'مسلسل'},
+            {'item': 'زيزينيا', 'category': 'مسلسلات', 'year': '1997', 'starring': 'سمير غانم، دلال عبد العزيز', 'type': 'مسلسل'},
             {'item': 'الشهد والدموع', 'category': 'مسلسلات', 'year': '2006', 'starring': 'نور الشريف، بوسي', 'type': 'مسلسل'},
+            {'item': 'أرابيسك', 'category': 'مسلسلات', 'year': '2003', 'starring': 'صلاح السعدني، يسرا', 'type': 'مسلسل'},
+            {'item': 'الدالي', 'category': 'مسلسلات', 'year': '2007', 'starring': 'يحيى الفخراني', 'type': 'مسلسل'},
+            
+            # Modern Series
             {'item': 'الجماعة', 'category': 'مسلسلات', 'year': '2010', 'starring': 'عمرو واكد، هند صبري', 'type': 'مسلسل'},
             {'item': 'الكبير أوي', 'category': 'مسلسلات', 'year': '2010', 'starring': 'أحمد مكي، محمد سعد', 'type': 'مسلسل'},
-            {'item': 'لن أعيش في جلباب أبي', 'category': 'مسلسلات', 'year': '1996', 'starring': 'يحيى الفخراني', 'type': 'مسلسل'},
+            {'item': 'فرقة ناجي عطا الله', 'category': 'مسلسلات', 'year': '2012', 'starring': 'عادل إمام', 'type': 'مسلسل'},
+            {'item': 'الأب الروحي', 'category': 'مسلسلات', 'year': '2017', 'starring': 'يحيى الفخراني', 'type': 'مسلسل'},
+            {'item': 'كلبش', 'category': 'مسلسلات', 'year': '2017', 'starring': 'أمير كرارة', 'type': 'مسلسل'},
+            {'item': 'الاختيار', 'category': 'مسلسلات', 'year': '2020', 'starring': 'أحمد عز، كريم عبد العزيز', 'type': 'مسلسل'},
+            {'item': 'لعبة نيوتن', 'category': 'مسلسلات', 'year': '2021', 'starring': 'محمد ممدوح، منة شلبي', 'type': 'مسلسل'},
+            {'item': 'ملوك الجدعنة', 'category': 'مسلسلات', 'year': '2021', 'starring': 'محمد رمضان', 'type': 'مسلسل'},
+            {'item': 'جعفر العمدة', 'category': 'مسلسلات', 'year': '2023', 'starring': 'محمد رمضان', 'type': 'مسلسل'},
+            {'item': 'الهرشة السابعة', 'category': 'مسلسلات', 'year': '2023', 'starring': 'ياسر جلال', 'type': 'مسلسل'},
+            {'item': 'الطاووس', 'category': 'مسلسلات', 'year': '2024', 'starring': 'يسرا اللوزي', 'type': 'مسلسل'},
+            {'item': 'حرب أهلية', 'category': 'مسلسلات', 'year': '2024', 'starring': 'يسرا، باسم سمرة', 'type': 'مسلسل'},
         ]
         
         self.static_plays = [
+            # Adel Imam Plays
             {'item': 'مدرسة المشاغبين', 'category': 'مسرحيات', 'year': '1973', 'starring': 'عادل إمام، سعيد صالح', 'type': 'مسرحية'},
             {'item': 'الواد سيد الشغال', 'category': 'مسرحيات', 'year': '1985', 'starring': 'عادل إمام', 'type': 'مسرحية'},
             {'item': 'شاهد ماشفش حاجة', 'category': 'مسرحيات', 'year': '1976', 'starring': 'عادل إمام، عمر الحريري', 'type': 'مسرحية'},
+            {'item': 'الزعيم', 'category': 'مسرحيات', 'year': '1993', 'starring': 'عادل إمام', 'type': 'مسرحية'},
+            {'item': 'بودي جارد', 'category': 'مسرحيات', 'year': '2000', 'starring': 'عادل إمام', 'type': 'مسرحية'},
+            
+            # Samir Ghanem Plays
             {'item': 'المتزوجون', 'category': 'مسرحيات', 'year': '1970', 'starring': 'سمير غانم، الضيف أحمد', 'type': 'مسرحية'},
             {'item': 'العيال كبرت', 'category': 'مسرحيات', 'year': '1979', 'starring': 'سمير غانم، جورج سيدهم', 'type': 'مسرحية'},
+            {'item': 'مسرح مصر', 'category': 'مسرحيات', 'year': '1970', 'starring': 'سمير غانم، جورج سيدهم', 'type': 'مسرحية'},
+            {'item': 'الواد محروس بتاع الوزير', 'category': 'مسرحيات', 'year': '1999', 'starring': 'سمير غانم', 'type': 'مسرحية'},
+            
+            # Other Classic Plays
+            {'item': 'مدرسة المشاغبات', 'category': 'مسرحيات', 'year': '1985', 'starring': 'سهير البابلي، يونس شلبي', 'type': 'مسرحية'},
+            {'item': 'هالة حبيبتي', 'category': 'مسرحيات', 'year': '1970', 'starring': 'عبد المنعم مدبولي', 'type': 'مسرحية'},
+            {'item': 'أهلا يا دكتور', 'category': 'مسرحيات', 'year': '1980', 'starring': 'محمد صبحي', 'type': 'مسرحية'},
+            {'item': 'الهمجي', 'category': 'مسرحيات', 'year': '1985', 'starring': 'محمد صبحي', 'type': 'مسرحية'},
+            {'item': 'وجهة نظر', 'category': 'مسرحيات', 'year': '1989', 'starring': 'محمد صبحي', 'type': 'مسرحية'},
+            {'item': 'الملك لير', 'category': 'مسرحيات', 'year': '2012', 'starring': 'يحيى الفخراني', 'type': 'مسرحية'},
         ]
     
     def get_source_name(self) -> str:
