@@ -20,7 +20,7 @@ class TriviaFetcher(BaseFetcher):
         
         # API endpoints
         self.opentdb_url = "https://opentdb.com/api.php"
-        self.islamic_quiz_url = "https://raw.githubusercontent.com/rn0x/IslamicQuizAPI/main/data"
+        self.islamic_quiz_url = "https://raw.githubusercontent.com/rn0x/IslamicQuizAPI/main"
         self.groq_url = "https://api.groq.com/openai/v1/chat/completions"
     
     def get_source_name(self) -> str:
@@ -349,7 +349,8 @@ class TriviaFetcher(BaseFetcher):
         
         try:
             # Fetch from Islamic Quiz API repository
-            url = f"{self.islamic_quiz_url}/ar/questions.json"
+            # Try multiple possible endpoints
+            url = f"{self.islamic_quiz_url}/questions_ar.json"
             response = self._get(url)
             data = response.json()
             

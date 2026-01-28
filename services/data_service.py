@@ -4,10 +4,14 @@ Manages all data fetchers and coordinates with DataManager for caching.
 """
 from typing import List, Dict, Optional
 import os
+from dotenv import load_dotenv
 from .data_manager import DataManager
 from .fetchers.charades_fetcher import CharadesFetcher
 from .fetchers.pictionary_fetcher import PictionaryFetcher
 from .fetchers.trivia_fetcher import TriviaFetcher
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 class DataService:
