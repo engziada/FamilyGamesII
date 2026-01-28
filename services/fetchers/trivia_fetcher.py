@@ -6,6 +6,7 @@ from typing import List, Dict, Optional
 import requests
 import random
 from .base_fetcher import BaseFetcher
+from .trivia_categories import TriviaCategories
 
 
 class TriviaFetcher(BaseFetcher):
@@ -27,7 +28,7 @@ class TriviaFetcher(BaseFetcher):
     
     def fetch_batch(self, count: int = 30) -> List[Dict]:
         """
-        Fetch a batch of trivia questions from multiple sources.
+        Fetch a batch of trivia questions from multiple diverse sources and categories.
         
         Returns:
             List of dicts with: question, correct_answer, wrong_answers, category, difficulty
@@ -35,22 +36,41 @@ class TriviaFetcher(BaseFetcher):
         items = []
         
         try:
-            # Distribute across sources
-            egyptian_count = count // 3
-            islamic_count = count // 3
-            general_count = count - egyptian_count - islamic_count
+            # Distribute across diverse categories
+            items_per_category = max(1, count // 7)  # 7 categories
             
-            # Fetch from Egyptian cinema
-            egyptian_items = self._fetch_egyptian_cinema(egyptian_count)
-            items.extend(egyptian_items)
-            
-            # Fetch from Islamic Quiz API
-            islamic_items = self._fetch_islamic_quiz(islamic_count)
+            # Fetch from Islamic questions
+            islamic_items = self._fetch_islamic_quiz(items_per_category)
             items.extend(islamic_items)
             
-            # Fetch from OpenTDB with translation
-            general_items = self._fetch_opentdb(general_count)
+            # Fetch general knowledge
+            general_items = self._fetch_general_knowledge(items_per_category)
             items.extend(general_items)
+            
+            # Fetch science questions
+            science_items = self._fetch_science(items_per_category)
+            items.extend(science_items)
+            
+            # Fetch history questions
+            history_items = self._fetch_history(items_per_category)
+            items.extend(history_items)
+            
+            # Fetch geography questions
+            geography_items = self._fetch_geography(items_per_category)
+            items.extend(geography_items)
+            
+            # Fetch sports questions
+            sports_items = self._fetch_sports(items_per_category)
+            items.extend(sports_items)
+            
+            # Fetch Egyptian cinema (as one category among many)
+            cinema_items = self._fetch_egyptian_cinema(items_per_category)
+            items.extend(cinema_items)
+            
+            # If we need more items, fetch from OpenTDB
+            if len(items) < count:
+                opentdb_items = self._fetch_opentdb(count - len(items))
+                items.extend(opentdb_items)
             
         except Exception as e:
             print(f"Error fetching trivia data: {e}")
@@ -302,6 +322,26 @@ class TriviaFetcher(BaseFetcher):
         
         questions = random.sample(static_questions, min(count, len(static_questions)))
         return questions
+    
+    def _fetch_general_knowledge(self, count: int) -> List[Dict]:
+        """Fetch general knowledge questions from static database"""
+        return TriviaCategories.get_general_knowledge(count)
+    
+    def _fetch_science(self, count: int) -> List[Dict]:
+        """Fetch science questions from static database"""
+        return TriviaCategories.get_science(count)
+    
+    def _fetch_history(self, count: int) -> List[Dict]:
+        """Fetch history questions from static database"""
+        return TriviaCategories.get_history(count)
+    
+    def _fetch_geography(self, count: int) -> List[Dict]:
+        """Fetch geography questions from static database"""
+        return TriviaCategories.get_geography(count)
+    
+    def _fetch_sports(self, count: int) -> List[Dict]:
+        """Fetch sports questions from static database"""
+        return TriviaCategories.get_sports(count)
     
     def _fetch_islamic_quiz(self, count: int) -> List[Dict]:
         """Fetch Islamic quiz questions from GitHub API"""
