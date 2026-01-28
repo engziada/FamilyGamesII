@@ -1,0 +1,65 @@
+2026-01-28 11:44:45,048 INFO:  * Restarting with stat
+2026-01-28 11:44:46,590 WARNING:  * Debugger is active!
+2026-01-28 11:44:46,637 INFO:  * Debugger PIN: 531-980-121
+2026-01-28 11:50:04,992 INFO:  * Restarting with stat
+2026-01-28 11:50:06,741 WARNING:  * Debugger is active!
+2026-01-28 11:50:06,769 INFO:  * Debugger PIN: 531-980-121
+2026-01-28 11:53:36,413 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\games\\trivia\\models.py', reloading
+2026-01-28 11:53:36,815 INFO:  * Restarting with stat
+2026-01-28 11:53:40,883 WARNING:  * Debugger is active!
+2026-01-28 11:53:40,915 INFO:  * Debugger PIN: 531-980-121
+2026-01-28 11:54:07,198 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
+2026-01-28 11:54:07,519 INFO:  * Restarting with stat
+2026-01-28 11:54:12,051 WARNING:  * Debugger is active!
+2026-01-28 11:54:12,106 INFO:  * Debugger PIN: 531-980-121
+2026-01-28 11:54:55,219 INFO:  * Restarting with stat
+2026-01-28 11:54:56,995 WARNING:  * Debugger is active!
+2026-01-28 11:54:57,033 INFO:  * Debugger PIN: 531-980-121
+2026-01-28 11:57:44,412 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
+2026-01-28 11:57:44,763 INFO:  * Restarting with stat
+2026-01-28 11:57:46,850 WARNING:  * Debugger is active!
+2026-01-28 11:57:46,881 INFO:  * Debugger PIN: 531-980-121
+2026-01-28 11:58:03,924 INFO:  * Restarting with stat
+2026-01-28 11:58:05,463 WARNING:  * Debugger is active!
+2026-01-28 11:58:05,489 INFO:  * Debugger PIN: 531-980-121
+2026-01-28 11:59:43,897 INFO: Only 1 player left in room 5332, force closing room
+2026-01-28 12:00:34,080 INFO: Closing room 2355
+2026-01-28 12:12:36,718 INFO:  * Restarting with stat
+2026-01-28 12:12:38,376 WARNING:  * Debugger is active!
+2026-01-28 12:12:38,413 INFO:  * Debugger PIN: 531-980-121
+2026-01-28 12:20:10,040 INFO:  * Restarting with stat
+2026-01-28 12:20:12,014 WARNING:  * Debugger is active!
+2026-01-28 12:20:12,057 INFO:  * Debugger PIN: 531-980-121
+2026-01-28 12:26:24,926 INFO:  * Restarting with stat
+2026-01-28 12:26:28,276 WARNING:  * Debugger is active!
+2026-01-28 12:26:28,307 INFO:  * Debugger PIN: 531-980-121
+2026-01-28 12:28:52,013 INFO: Only 1 player left in room 8528, force closing room
+2026-01-28 12:32:31,506 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
+2026-01-28 12:32:31,886 INFO:  * Restarting with stat
+2026-01-28 12:32:35,404 WARNING:  * Debugger is active!
+2026-01-28 12:32:35,439 INFO:  * Debugger PIN: 531-980-121
+2026-01-28 12:33:28,815 INFO:  * Restarting with stat
+2026-01-28 12:33:30,442 WARNING:  * Debugger is active!
+2026-01-28 12:33:30,469 INFO:  * Debugger PIN: 531-980-121
+2026-01-28 12:44:35,286 INFO:  * Restarting with stat
+2026-01-28 12:44:36,898 WARNING:  * Debugger is active!
+2026-01-28 12:44:36,921 INFO:  * Debugger PIN: 531-980-121
+2026-01-28 12:48:51,802 INFO:  * Restarting with stat
+2026-01-28 12:48:53,341 WARNING:  * Debugger is active!
+2026-01-28 12:48:53,367 INFO:  * Debugger PIN: 531-980-121
+2026-01-28 12:51:29,289 INFO:  * Restarting with stat
+2026-01-28 12:51:30,651 WARNING:  * Debugger is active!
+2026-01-28 12:51:30,678 INFO:  * Debugger PIN: 531-980-121
+2026-01-28 12:52:16,479 INFO:  * Restarting with stat
+2026-01-28 12:52:18,069 WARNING:  * Debugger is active!
+2026-01-28 12:52:18,096 INFO:  * Debugger PIN: 531-980-121
+2026-01-28 13:02:49,637 INFO:  * Restarting with stat
+2026-01-28 13:02:51,063 WARNING:  * Debugger is active!
+2026-01-28 13:02:51,088 INFO:  * Debugger PIN: 531-980-121
+2026-01-28 13:06:47,779 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\games\\charades\\models.py', reloading
+2026-01-28 13:06:48,053 INFO:  * Restarting with stat
+2026-01-28 13:06:51,228 WARNING:  * Debugger is active!
+2026-01-28 13:06:51,270 INFO:  * Debugger PIN: 531-980-121
+2026-01-28 13:07:11,063 INFO:  * Restarting with stat
+2026-01-28 13:07:12,557 WARNING:  * Debugger is active!
+2026-01-28 13:07:12,596 INFO:  * Debugger PIN: 531-980-121

@@ -208,6 +208,9 @@ def handle_submit_answer(data):
     player_name = session.get('player_name')
 
     if game_obj and game_obj.game_type == 'trivia' and game_obj.question_active:
+        # Track that this player has answered
+        game_obj.players_answered.add(player_name)
+        
         correct = (ans_idx == game_obj.current_question['answer'])
 
         if correct:
@@ -226,12 +229,26 @@ def handle_submit_answer(data):
             emit('timer_start', {'duration': game_obj.settings.get('time_limit', 30)}, room=game_obj.game_id)
             emit_game_state(game_obj.game_id)
         else:
+            # Track wrong answer
+            game_obj.players_answered_wrong.add(player_name)
+            
             # Individual feedback for wrong answer
             emit('answer_result', {
                 'player': player_name,
                 'is_correct': False,
                 'correct_answer': None # Don't reveal yet
             })
+            
+            # Check if all players have answered wrong
+            total_players = len(game_obj.players)
+            if len(game_obj.players_answered_wrong) == total_players:
+                # All players answered wrong, move to next question without revealing answer
+                game_obj.question_active = False
+                eventlet.sleep(2)
+                game_obj.next_round()
+                emit('all_wrong', {'message': 'كل اللاعبين جاوبوا غلط! السؤال التالي...'}, room=game_obj.game_id)
+                emit('timer_start', {'duration': game_obj.settings.get('time_limit', 30)}, room=game_obj.game_id)
+                emit_game_state(game_obj.game_id)
 
 @socketio.on('round_timeout')
 def handle_round_timeout(data):
@@ -332,7 +349,15 @@ def handle_leave(data):
     if rid in game_rooms:
         game_obj = game_rooms[rid]
         game_obj.remove_player(pname)
-        if not game_obj.players: del game_rooms[rid]
+        
+        # If no players left, delete the room
+        if not game_obj.players:
+            del game_rooms[rid]
+        # If only 1 player left, force close the room
+        elif len(game_obj.players) == 1:
+            logger.info(f"Only 1 player left in room {rid}, force closing room")
+            emit('room_closed', {'message': 'اللاعب الآخر غادر، تم إغلاق الغرفة'}, room=rid)
+            del game_rooms[rid]
         else:
             emit('player_left', {'message': f'{pname} غادر', 'players': game_obj.players}, room=rid)
             emit_game_state(rid)

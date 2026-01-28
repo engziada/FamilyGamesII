@@ -145,6 +145,17 @@ class CharadesGame:
     def to_dict(self, include_item=False, **kwargs):
         # Compatibility with include_answer if called from generic code
         show = include_item or kwargs.get('include_answer', False)
+        
+        # For Pictionary in easy/medium difficulty, include category for non-drawer players
+        current_item_data = None
+        if show:
+            current_item_data = self.current_item
+        elif self.game_type == 'pictionary' and self.current_item:
+            difficulty = self.settings.get('difficulty', 'medium')
+            if difficulty in ['easy', 'medium']:
+                # Send only category for non-drawer players
+                current_item_data = {'category': self.current_item.get('category', '')}
+        
         return {
             'game_id': self.game_id,
             'host': self.host,
@@ -155,7 +166,7 @@ class CharadesGame:
             'team_scores': self.team_scores,
             'settings': self.settings,
             'current_player': self.current_player,
-            'current_item': self.current_item if show else None,
+            'current_item': current_item_data,
             'round_start_time': self.round_start_time.isoformat() if self.round_start_time else None
         }
 

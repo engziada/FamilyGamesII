@@ -15,6 +15,8 @@ class TriviaGame:
         self.current_question = None
         self.question_active = False
         self.round_start_time = None
+        self.players_answered = set()  # Track who answered current question
+        self.players_answered_wrong = set()  # Track who answered wrong
         self.settings = settings or {
             'teams': False,
             'difficulty': 'all',
@@ -59,12 +61,16 @@ class TriviaGame:
         self.current_question = self.get_question()
         self.question_active = True
         self.round_start_time = datetime.now()
+        self.players_answered = set()
+        self.players_answered_wrong = set()
 
     def next_round(self):
         self.current_question = self.get_question()
         self.status = 'round_active'
         self.question_active = True
         self.round_start_time = datetime.now()
+        self.players_answered = set()
+        self.players_answered_wrong = set()
 
     def get_question(self):
         if not self.questions:

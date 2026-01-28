@@ -62,7 +62,6 @@ const Lobby = {
 
         const teams = document.getElementById('game-teams').value === 'true';
         const difficulty = document.getElementById('game-difficulty').value;
-        const customWords = document.getElementById('custom-words').value;
         const gameType = document.getElementById('modal-game-type').value;
 
         const timeLimitMap = {
@@ -80,8 +79,8 @@ const Lobby = {
             game_type: gameType,
             settings: {
                 teams: teams,
-                difficulty: 'all', // Item difficulty now defaults to all
-                custom_words: customWords,
+                difficulty: difficulty, // Send actual difficulty for Pictionary category hints
+                custom_words: '',
                 time_limit: timeLimitMap[difficulty] || 90
             }
         });
@@ -193,8 +192,6 @@ const Utils = {
         if (action === 'create') {
             document.getElementById('modal-game-type').value = gameType;
             document.getElementById('modal-title').textContent = gameType === 'charades' ? 'إنشاء غرفة بدون كلام' : 'إنشاء غرفة بنك المعلومات';
-            // Hide custom words for trivia
-            document.getElementById('custom-words').parentElement.style.display = gameType === 'charades' ? 'block' : 'none';
         }
         document.getElementById(modalId).style.display = 'flex';
     },
@@ -220,6 +217,31 @@ const Utils = {
     },
 
     showError(message) {
+        // Check if join modal is active
+        const joinModal = document.getElementById('join-game-modal');
+        const createModal = document.getElementById('create-game-modal');
+        
+        if (joinModal && joinModal.style.display === 'flex') {
+            const joinErrorDiv = document.getElementById('join-error-message');
+            if (joinErrorDiv) {
+                joinErrorDiv.textContent = message;
+                joinErrorDiv.style.display = 'block';
+                setTimeout(() => joinErrorDiv.style.display = 'none', 5000);
+                return;
+            }
+        }
+        
+        if (createModal && createModal.style.display === 'flex') {
+            const createErrorDiv = document.getElementById('create-error-message');
+            if (createErrorDiv) {
+                createErrorDiv.textContent = message;
+                createErrorDiv.style.display = 'block';
+                setTimeout(() => createErrorDiv.style.display = 'none', 5000);
+                return;
+            }
+        }
+        
+        // Fallback to game error message or alert
         const errorDiv = document.getElementById('error-message');
         if (errorDiv) {
             errorDiv.textContent = message;
@@ -260,6 +282,8 @@ class GameEngine {
         this.socket = null;
         this.gameStatus = 'waiting';
         this.timerInterval = null;
+        this.gameSettings = {};
+        this.currentItemCategory = null;
 
         this.guessedSound = new Audio('/static/sounds/guessed.mp3');
         this.timeoutSound = new Audio('/static/sounds/timeout.mp3');
@@ -355,7 +379,10 @@ class GameEngine {
         });
 
         this.socket.on('new_item', (data) => {
-            if (data && data.item) this.displayItem(data.category, data.item);
+            if (data && data.item) {
+                this.currentItemCategory = data.category;
+                this.displayItem(data.category, data.item);
+            }
         });
 
         this.socket.on('new_question', (data) => {
@@ -364,7 +391,15 @@ class GameEngine {
 
         this.socket.on('answer_result', (data) => {
             this.guessedSound.play().catch(e => {});
-            Utils.showMessage(`${data.player} جاوب ${data.is_correct ? 'صح ✅' : 'غلط ❌'}. الإجابة كانت: ${data.correct_answer}`);
+            if (data.is_correct) {
+                Utils.showMessage(`${data.player} جاوب صح ✅. الإجابة كانت: ${data.correct_answer}`);
+            } else {
+                Utils.showMessage(`${data.player} جاوب غلط ❌`);
+            }
+        });
+
+        this.socket.on('all_wrong', (data) => {
+            Utils.showMessage(data.message);
         });
 
         this.socket.on('draw', (stroke) => {
@@ -403,6 +438,7 @@ class GameEngine {
         if (!data) return;
         console.log("Game state update:", data);
         
+        if (data.settings) this.gameSettings = data.settings;
         if (data.status) this.setGameStatus(data.status);
         if (data.message) Utils.showMessage(data.message);
         if (data.players) this.updatePlayersList(data.players);
@@ -412,7 +448,12 @@ class GameEngine {
         if (data.current_question) {
             this.displayQuestion(data.current_question);
         } else if (data.current_item) {
-            this.displayItem(data.current_item.category, data.current_item);
+            this.currentItemCategory = data.current_item.category;
+            // Only call displayItem if we have the full item (drawer player)
+            // For non-drawer players in Pictionary, we only get {category: "..."}
+            if (data.current_item.item) {
+                this.displayItem(data.current_item.category, data.current_item);
+            }
         }
         
         this.updateButtonVisibility();
@@ -486,6 +527,26 @@ class GameEngine {
             if (this.gameType === 'trivia' || isMe) {
                 itemDisplay.style.display = 'block';
                 // Don't add .visible here if we're about to call displayQuestion/displayItem
+            } else if (this.gameType === 'pictionary' && !isMe && this.currentItemCategory) {
+                // Show category hint for non-drawing players in easy/medium difficulty
+                const difficulty = this.gameSettings.difficulty || 'medium';
+                console.log('Pictionary category check:', {
+                    gameType: this.gameType,
+                    isMe: isMe,
+                    currentItemCategory: this.currentItemCategory,
+                    difficulty: difficulty,
+                    gameSettings: this.gameSettings
+                });
+                if (difficulty === 'easy' || difficulty === 'medium') {
+                    itemDisplay.style.display = 'block';
+                    itemDisplay.innerHTML = `<div class="item-category" style="font-size: 1.5rem;">${this.currentItemCategory}</div>`;
+                    itemDisplay.classList.add('visible');
+                    console.log('Category displayed for non-drawer:', this.currentItemCategory);
+                } else {
+                    itemDisplay.style.display = 'none';
+                    itemDisplay.classList.remove('visible');
+                    console.log('Hard difficulty - no category hint');
+                }
             } else {
                 itemDisplay.style.display = 'none';
                 itemDisplay.classList.remove('visible');
@@ -544,6 +605,14 @@ class GameEngine {
     }
 
     submitAnswer(idx) {
+        // Disable all option buttons immediately to prevent changing answer
+        const optionButtons = document.querySelectorAll('.options-grid button');
+        optionButtons.forEach(btn => {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+        });
+
         this.socket.emit('submit_answer', {
             game_id: this.gameId,
             answer_idx: idx
