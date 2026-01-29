@@ -87,11 +87,19 @@ class TriviaGame:
         question = self.data_service.get_item_for_room(self.game_id, 'trivia')
         
         if question:
-            # Transform to match expected format
+            # Transform to match expected frontend format (options array + answer index)
+            correct_answer = question.get('correct_answer')
+            wrong_answers = question.get('wrong_answers', [])
+            
+            # Create options array with correct answer at random position
+            options = wrong_answers.copy()
+            answer_index = random.randint(0, len(options))
+            options.insert(answer_index, correct_answer)
+            
             return {
                 'question': question.get('question'),
-                'answer': question.get('correct_answer'),
-                'wrong_answers': question.get('wrong_answers', []),
+                'options': options,
+                'answer': answer_index,
                 'category': question.get('category'),
                 'difficulty': question.get('difficulty')
             }
