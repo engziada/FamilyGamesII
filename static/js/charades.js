@@ -2,6 +2,27 @@
  * Family Games - Charades Game & Lobby Logic
  */
 
+const AudioManager = {
+    sounds: {},
+    enabled: true,
+
+    init() {
+        this.sounds.guessed = new Audio('/static/sounds/guessed.mp3');
+        this.sounds.timeout = new Audio('/static/sounds/timeout.mp3');
+        // Pre-load sounds
+        Object.values(this.sounds).forEach(s => s.load());
+    },
+
+    play(name) {
+        if (!this.enabled) return;
+        const sound = this.sounds[name];
+        if (sound) {
+            sound.currentTime = 0;
+            sound.play().catch(e => {});
+        }
+    }
+};
+
 // --- Lobby Logic ---
 
 const Lobby = {
@@ -32,9 +53,18 @@ const Lobby = {
         this.socket.on('player_joined', (data) => {
             console.log('Player joined:', data);
             this.updatePlayerList(data.players);
+            AudioManager.play('guessed');
+        });
+
+        this.socket.on('player_left', (data) => {
+            console.log('Player left:', data);
+            this.updatePlayerList(data.players);
+            AudioManager.play('timeout');
+            Utils.showMessage(`${data.player_name} انسحب من اللعبة`, 'error');
         });
 
         this.socket.on('game_started', (data) => {
+            AudioManager.play('guessed');
             console.log('Game started:', data);
             const playerName = document.getElementById('player-name')?.value || document.getElementById('host-name')?.value;
 
@@ -255,20 +285,19 @@ const Utils = {
         }
     },
 
-    showMessage(message) {
+    showMessage(message, type = 'info') {
         const statusElement = document.getElementById('game-status');
         if (statusElement) {
             statusElement.textContent = message;
+            statusElement.className = `animate-bounce-down ${type}`;
             statusElement.style.display = 'flex';
-            statusElement.classList.add('animate__animated', 'animate__fadeInUp');
-            setTimeout(() => {
-                statusElement.classList.remove('animate__fadeInUp');
-                statusElement.classList.add('animate__fadeOutDown');
-                setTimeout(() => {
-                    statusElement.style.display = 'none';
-                    statusElement.classList.remove('animate__fadeOutDown');
-                }, 1000);
-            }, 3000);
+
+            if (this.hideTimeout) clearTimeout(this.hideTimeout);
+
+            this.hideTimeout = setTimeout(() => {
+                statusElement.style.display = 'none';
+                statusElement.classList.remove('animate-bounce-down');
+            }, 4000);
         }
     }
 };
@@ -287,9 +316,6 @@ class GameEngine {
         this.timerInterval = null;
         this.gameSettings = {};
         this.currentItemCategory = null;
-
-        this.guessedSound = new Audio('/static/sounds/guessed.mp3');
-        this.timeoutSound = new Audio('/static/sounds/timeout.mp3');
         
         this.isDrawing = false;
         this.lastPos = { x: 0, y: 0 };
@@ -356,7 +382,7 @@ class GameEngine {
         });
         this.socket.on('timer_start', (data) => this.startTimer(data.duration));
         this.socket.on('correct_guess', (data) => {
-            this.guessedSound.play().catch(e => console.log(e));
+            AudioManager.play('guessed');
             Utils.showMessage(`${data.guesser} عرف الإجابة!`);
         });
         
@@ -372,13 +398,16 @@ class GameEngine {
             if (data.game_status) this.setGameStatus(data.game_status);
             if (data.next_player) this.updateCurrentPlayer(data.next_player);
             if (data.current_player) this.updateCurrentPlayer(data.current_player);
+            // Play sound for new turn
+            AudioManager.play('guessed');
         });
 
         this.socket.on('pass_turn', (data) => {
             this.stopTimer();
             if (data.game_status) this.setGameStatus(data.game_status);
             if (data.next_player) this.updateCurrentPlayer(data.next_player);
-            Utils.showMessage(`${data.player} تخطى دوره! دور ${data.next_player}`);
+            AudioManager.play('timeout');
+            Utils.showMessage(`${data.player} تخطى دوره! دور ${data.next_player}`, 'info');
         });
 
         this.socket.on('new_item', (data) => {
@@ -393,10 +422,11 @@ class GameEngine {
         });
 
         this.socket.on('answer_result', (data) => {
-            this.guessedSound.play().catch(e => {});
             if (data.is_correct) {
+                AudioManager.play('guessed');
                 Utils.showMessage(`${data.player} جاوب صح ✅. الإجابة كانت: ${data.correct_answer}`);
             } else {
+                AudioManager.play('timeout');
                 Utils.showMessage(`${data.player} جاوب غلط ❌`);
             }
         });
@@ -757,7 +787,14 @@ class GameEngine {
             timeLeft--;
             timerText.textContent = format(timeLeft);
             if (timeLeft <= 30) timerEl.classList.add('warning');
-            if (timeLeft <= 10) { timerEl.classList.remove('warning'); timerEl.classList.add('danger'); }
+            if (timeLeft <= 10) {
+                timerEl.classList.remove('warning');
+                timerEl.classList.add('danger');
+                // Play ticking sound for last 5 seconds
+                if (timeLeft <= 5 && timeLeft > 0) {
+                    AudioManager.play('timeout');
+                }
+            }
 
             if (timeLeft <= 0) {
                 this.stopTimer();
@@ -780,8 +817,8 @@ class GameEngine {
     }
 
     playTimeoutTwice() {
-        this.timeoutSound.play().catch(e => console.log(e));
-        setTimeout(() => this.timeoutSound.play().catch(e => console.log(e)), 1000);
+        AudioManager.play('timeout');
+        setTimeout(() => AudioManager.play('timeout'), 1000);
     }
 
     showRevealMessage(data) {
@@ -813,6 +850,7 @@ class GameEngine {
 // --- Initialization ---
 
 document.addEventListener('DOMContentLoaded', () => {
+    AudioManager.init();
     const isGamePage = window.location.pathname.includes('/game/');
     
     if (isGamePage) {

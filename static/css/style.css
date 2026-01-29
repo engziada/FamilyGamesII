@@ -29,6 +29,7 @@ body {
     direction: rtl;
     min-height: 100vh;
     overflow-x: hidden;
+    overflow-y: auto; /* Ensure vertical scrolling is enabled */
     background-image:
         radial-gradient(var(--accent) 1px, transparent 1px),
         radial-gradient(var(--secondary) 1px, transparent 1px);
@@ -169,6 +170,7 @@ header h1 {
     align-items: center;
     justify-content: center;
     padding: clamp(1rem, 3vw, 2.5rem);
+    overflow-y: auto; /* Allow modal container to scroll */
 }
 
 .modal-content {
@@ -177,7 +179,7 @@ header h1 {
     padding: clamp(2rem, 4vw, 3.2rem);
     background: var(--surface);
     width: min(90vw, 640px);
-    margin: 0 auto;
+    margin: auto; /* Centering with scroll support */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -185,6 +187,8 @@ header h1 {
     text-align: center;
     position: relative;
     animation: zoomIn 0.3s ease-out;
+    max-height: 90vh; /* Prevent modal from exceeding viewport */
+    overflow-y: auto; /* Allow content inside modal to scroll */
 }
 
 .input-group {
@@ -230,6 +234,7 @@ header h1 {
     max-width: 1200px;
     margin: 0 auto;
     padding: 2.5rem 1.5rem 4rem;
+    min-height: calc(100vh - 5rem);
 }
 
 .game-board {
@@ -239,6 +244,30 @@ header h1 {
     flex-direction: column;
     gap: 2rem;
 }
+
+#game-status {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3000;
+    background: var(--surface);
+    border: 3px solid var(--text);
+    padding: 1rem 2.5rem;
+    border-radius: 20px 50px;
+    box-shadow: var(--shadow-heavy);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    font-weight: 800;
+    min-width: min(400px, 90vw);
+    text-align: center;
+}
+
+#game-status.success { border-color: var(--success); color: var(--success); }
+#game-status.error { border-color: var(--danger); color: var(--danger); }
+#game-status.info { border-color: var(--secondary); color: var(--secondary); }
 
 .status-bar {
     display: flex;
@@ -473,6 +502,13 @@ header h1 {
     to { transform: translate3d(0, 0, 0); }
 }
 
+/* --- Utilities --- */
+.u-flex-center { display: flex; justify-content: center; align-items: center; gap: 1rem; }
+.u-full-width { width: 100%; }
+.u-margin-top { margin-top: 1.5rem; }
+.u-margin-bottom { margin-bottom: 1.5rem; }
+.u-text-center { text-align: center; }
+
 .animate-jelly { animation: jelly 0.8s both; }
 .animate-heartbeat { animation: heartbeat 1.5s ease-in-out infinite both; }
 .animate-bounce-down { animation: bounceInDown 1s both; }
@@ -482,14 +518,29 @@ header h1 {
 @media (max-width: 768px) {
     .game-container {
         grid-template-columns: 1fr;
+        padding: 1rem;
+        gap: 1.5rem;
     }
     .sidebar {
         order: 2;
     }
+    .display-area {
+        padding: 1.5rem;
+        min-height: 300px;
+    }
     .item-name {
-        font-size: 2.5rem;
+        font-size: 2.2rem;
     }
     header h1 {
         font-size: 2.2rem;
+    }
+    .status-bar {
+        padding: 0.8rem 1.2rem;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .btn {
+        padding: 0.8rem 1.5rem;
+        font-size: 1rem;
     }
 }
