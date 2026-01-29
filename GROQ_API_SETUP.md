@@ -1,10 +1,12 @@
 # Groq API Setup Guide
 
-## Your Groq API Key
+## Get Your Groq API Key
 
-```
-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
-```
+1. Visit https://console.groq.com/
+2. Sign up or log in
+3. Navigate to API Keys section
+4. Create a new API key
+5. Copy the key (it will look like: `gsk_...`)
 
 ## Setup Instructions
 
@@ -24,7 +26,7 @@ New-Item -Path .env -ItemType File
 Open the `.env` file and add:
 
 ```env
-GROQ_API_KEY=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
+GROQ_API_KEY=your_actual_api_key_here
 ```
 
 ### 3. Verify Setup
