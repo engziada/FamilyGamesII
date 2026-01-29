@@ -74,6 +74,7 @@
     <input type="hidden" id="modal-game-type" value="charades">
     <div class="modal-content">
         <h2 id="modal-title" style="margin-bottom: 1.5rem;">إنشاء غرفة جديدة</h2>
+        <div id="create-error-message" class="error-message" style="display: none; background: #ff6b6b; color: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; font-weight: 600;"></div>
         <div class="input-group">
             <label for="host-name">اسمك</label>
             <input type="text" id="host-name" placeholder="اكتب اسمك هنا...">
@@ -92,10 +93,6 @@
                 <option value="medium">متوسط (90 ثانية)</option>
                 <option value="hard">صعب (60 ثانية)</option>
             </select>
-        </div>
-        <div class="input-group">
-            <label>كلمات خاصة (اختياري)</label>
-            <textarea id="custom-words" placeholder="اكتب الكلمات هنا، افصل بين كل كلمة بفاصلة (,)" style="width: 100%; padding: 0.8rem; border-radius: 12px; border: 2px solid #dfe6e9; font-family: inherit; height: 80px;"></textarea>
         </div>
         <div id="room-info" style="margin: 1.5rem 0; display: none; padding: 1rem; background: #f8f9fa; border-radius: 12px;">
             <p>رقم الغرفة: <span id="room-id" style="font-weight: 800; color: var(--primary); font-size: 1.2rem;"></span></p>
@@ -117,6 +114,7 @@
     <div class="modal-content">
         <div id="join-form">
             <h2 style="margin-bottom: 1.5rem;">انضمام للعبة</h2>
+            <div id="join-error-message" class="error-message" style="display: none; background: #ff6b6b; color: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; font-weight: 600;"></div>
             <div class="input-group">
                 <label for="player-name">اسمك</label>
                 <input type="text" id="player-name" placeholder="اكتب اسمك...">

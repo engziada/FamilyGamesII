@@ -153,8 +153,6 @@ def handle_start_game(data):
                 game_obj.set_current_item(game_obj.get_item())
                 if game_obj.game_type == 'pictionary':
                     game_obj.clear_canvas()
-            elif game_obj.game_type == 'trivia':
-                game_obj.current_question = game_obj.get_random_question()
             
             emit('game_started', {
                 'game_id': game_id,
@@ -210,6 +208,9 @@ def handle_submit_answer(data):
     player_name = session.get('player_name')
 
     if game_obj and game_obj.game_type == 'trivia' and game_obj.question_active:
+        # Track that this player has answered
+        game_obj.players_answered.add(player_name)
+        
         correct = (ans_idx == game_obj.current_question['answer'])
 
         if correct:
@@ -228,12 +229,26 @@ def handle_submit_answer(data):
             emit('timer_start', {'duration': game_obj.settings.get('time_limit', 30)}, room=game_obj.game_id)
             emit_game_state(game_obj.game_id)
         else:
+            # Track wrong answer
+            game_obj.players_answered_wrong.add(player_name)
+            
             # Individual feedback for wrong answer
             emit('answer_result', {
                 'player': player_name,
                 'is_correct': False,
                 'correct_answer': None # Don't reveal yet
             })
+            
+            # Check if all players have answered wrong
+            total_players = len(game_obj.players)
+            if len(game_obj.players_answered_wrong) == total_players:
+                # All players answered wrong, move to next question without revealing answer
+                game_obj.question_active = False
+                eventlet.sleep(2)
+                game_obj.next_round()
+                emit('all_wrong', {'message': 'كل اللاعبين جاوبوا غلط! السؤال التالي...'}, room=game_obj.game_id)
+                emit('timer_start', {'duration': game_obj.settings.get('time_limit', 30)}, room=game_obj.game_id)
+                emit_game_state(game_obj.game_id)
 
 @socketio.on('round_timeout')
 def handle_round_timeout(data):
@@ -315,9 +330,11 @@ def handle_verify_game(data):
             join_room(gid)
             player_sids[pname] = request.sid
             emit_game_state(gid)
-            if game_obj.game_type == 'trivia':
-                # Questions are shared in state, but we might want to start timer for late joiners?
-                pass
+            if game_obj.game_type == 'trivia' and game_obj.status == 'round_active':
+                # Start timer for the person who just joined/refreshed
+                emit('timer_start', {'duration': game_obj.settings.get('time_limit', 30)})
+                # Also ensure they have the latest question
+                emit('new_question', game_obj.to_dict(include_answer=False).get('current_question'))
             elif game_obj.current_player == pname:
                 if game_obj.game_type in ['charades', 'pictionary'] and game_obj.current_item: emit('new_item', game_obj.current_item)
             
@@ -332,7 +349,21 @@ def handle_leave(data):
     if rid in game_rooms:
         game_obj = game_rooms[rid]
         game_obj.remove_player(pname)
-        if not game_obj.players: del game_rooms[rid]
+        
+        # If no players left, delete the room
+        if not game_obj.players:
+            # Cleanup data service cache for this room
+            if hasattr(game_obj, 'data_service'):
+                game_obj.data_service.cleanup_room(rid)
+            del game_rooms[rid]
+        # If only 1 player left, force close the room
+        elif len(game_obj.players) == 1:
+            logger.info(f"Only 1 player left in room {rid}, force closing room")
+            emit('room_closed', {'message': 'اللاعب الآخر غادر، تم إغلاق الغرفة'}, room=rid)
+            # Cleanup data service cache for this room
+            if hasattr(game_obj, 'data_service'):
+                game_obj.data_service.cleanup_room(rid)
+            del game_rooms[rid]
         else:
             emit('player_left', {'message': f'{pname} غادر', 'players': game_obj.players}, room=rid)
             emit_game_state(rid)
@@ -343,6 +374,9 @@ def handle_close(data):
     room_id = str(data.get('roomId'))
     if room_id in game_rooms and game_rooms[room_id].host == session.get('player_name'):
         logger.info(f"Closing room {room_id}")
+        # Cleanup data service cache for this room
+        if hasattr(game_rooms[room_id], 'data_service'):
+            game_rooms[room_id].data_service.cleanup_room(room_id)
         del game_rooms[room_id]
         socketio.emit('room_closed', {'message': 'تم إغلاق الغرفة من قبل المضيف'}, room=room_id)
 
