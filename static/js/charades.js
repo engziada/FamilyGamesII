@@ -99,8 +99,9 @@ const Lobby = {
         if (!document.getElementById('min-players-msg')) {
             const minPlayersMsg = document.createElement('p');
             minPlayersMsg.id = 'min-players-msg';
-            minPlayersMsg.className = 'waiting-message';
-            minPlayersMsg.style.color = 'var(--accent-color)';
+            minPlayersMsg.className = 'waiting-message badge badge-team-1';
+            minPlayersMsg.style.width = '100%';
+            minPlayersMsg.style.marginTop = '1rem';
             minPlayersMsg.textContent = 'في انتظار انضمام لاعب آخر على الأقل...';
             playersListDiv.appendChild(minPlayersMsg);
         }
@@ -165,11 +166,13 @@ const Lobby = {
             if (players.length >= 2) {
                 startButton.disabled = false;
                 minPlayersMsg.textContent = 'يمكنك بدء اللعبة الآن!';
-                minPlayersMsg.style.color = 'var(--primary-color)';
+                minPlayersMsg.classList.remove('badge-team-1');
+                minPlayersMsg.classList.add('badge-team-2');
             } else {
                 startButton.disabled = true;
                 minPlayersMsg.textContent = 'في انتظار انضمام لاعب آخر على الأقل...';
-                minPlayersMsg.style.color = 'var(--accent-color)';
+                minPlayersMsg.classList.remove('badge-team-2');
+                minPlayersMsg.classList.add('badge-team-1');
             }
         }
     },
@@ -530,18 +533,10 @@ class GameEngine {
             } else if (this.gameType === 'pictionary' && !isMe && this.currentItemCategory) {
                 // Show category hint for non-drawing players in easy/medium difficulty
                 const difficulty = this.gameSettings.difficulty || 'medium';
-                console.log('Pictionary category check:', {
-                    gameType: this.gameType,
-                    isMe: isMe,
-                    currentItemCategory: this.currentItemCategory,
-                    difficulty: difficulty,
-                    gameSettings: this.gameSettings
-                });
                 if (difficulty === 'easy' || difficulty === 'medium') {
                     itemDisplay.style.display = 'block';
-                    itemDisplay.innerHTML = `<div class="item-category" style="font-size: 1.5rem;">${this.currentItemCategory}</div>`;
+                    itemDisplay.innerHTML = `<div class="item-category" style="font-size: 1.8rem;">${this.currentItemCategory}</div>`;
                     itemDisplay.classList.add('visible');
-                    console.log('Category displayed for non-drawer:', this.currentItemCategory);
                 } else {
                     itemDisplay.style.display = 'none';
                     itemDisplay.classList.remove('visible');
@@ -572,9 +567,9 @@ class GameEngine {
         if (el) {
             el.style.display = 'block';
             const item = typeof itemData === 'object' ? itemData.item : itemData;
-            const year = itemData.year ? `<div style="font-size: 1rem; color: var(--text-light); margin-bottom: 0.5rem;">سنة الإنتاج: ${itemData.year}</div>` : '';
-            const starring = itemData.starring ? `<div style="font-size: 1rem; color: var(--text-light); margin-bottom: 1rem;">بطولة: ${itemData.starring}</div>` : '';
-            const type = itemData.type ? `<span class="badge" style="background: var(--secondary); color: white; font-size: 0.8rem; padding: 4px 10px; border-radius: 20px;">${itemData.type}</span>` : '';
+            const year = itemData.year ? `<div class="item-meta">سنة الإنتاج: ${itemData.year}</div>` : '';
+            const starring = itemData.starring ? `<div class="item-meta">بطولة: ${itemData.starring}</div>` : '';
+            const type = itemData.type ? `<span class="badge badge-team-2">${itemData.type}</span>` : '';
 
             el.innerHTML = `
                 <div class="item-category">${category} ${type}</div>
@@ -591,11 +586,11 @@ class GameEngine {
         if (el) {
             el.style.display = 'block';
             let html = `<div class="item-category">${data.category}</div>`;
-            html += `<div class="item-name" style="font-size: 2rem; margin-bottom: 1.5rem;">${data.question}</div>`;
+            html += `<div class="item-name" style="font-size: 1.8rem;">${data.question}</div>`;
             
-            html += `<div class="options-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; width: 100%;">`;
+            html += `<div class="options-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; width: 100%; margin-top: 1.5rem;">`;
             data.options.forEach((opt, i) => {
-                html += `<button class="btn btn-outline" onclick="window.gameInstance.submitAnswer(${i})" style="font-size: 1.1rem; padding: 1rem;">${opt}</button>`;
+                html += `<button class="btn btn-outline" onclick="window.gameInstance.submitAnswer(${i})">${opt}</button>`;
             });
             html += `</div>`;
             
@@ -700,7 +695,7 @@ class GameEngine {
         
         listEl.innerHTML = '';
         const ul = document.createElement('ul');
-        ul.style.listStyle = 'none';
+        ul.classList.add('players-ul');
         
         players.forEach(p => {
             const name = typeof p === 'object' ? p.name : p;
@@ -712,7 +707,7 @@ class GameEngine {
 
             let html = `<span>${name} ${isHost ? '👑' : ''} ${name === this.playerName ? '(أنت)' : ''}</span>`;
             if (team) {
-                html += `<span class="badge" style="background: ${team === 1 ? '#6c5ce7' : '#00cec9'}; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem;">فريق ${team}</span>`;
+                html += `<span class="badge badge-team-${team}">فريق ${team}</span>`;
             }
 
             li.innerHTML = html;
@@ -729,7 +724,7 @@ class GameEngine {
         
         // Show team scores if they exist and are non-zero
         if (data.team_scores && (data.team_scores['1'] > 0 || data.team_scores['2'] > 0)) {
-            html += '<div style="margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #eee;">';
+            html += '<div class="team-scores-container">';
             html += `<div class="score-item">فريق 1: <span class="score-val">${data.team_scores['1']}</span></div>`;
             html += `<div class="score-item">فريق 2: <span class="score-val">${data.team_scores['2']}</span></div>`;
             html += '</div>';
@@ -738,7 +733,7 @@ class GameEngine {
         // Show individual scores
         const scores = data.scores || data;
         html += Object.entries(scores)
-            .map(([p, s]) => `<div class="score-item ${p === this.playerName ? 'current-player' : ''}">${p}: <span class="score-val">${s}</span></div>`)
+            .map(([p, s]) => `<div class="score-item ${p === this.playerName ? 'current-player' : ''}"><span>${p}</span><span class="score-val">${s}</span></div>`)
             .join('');
 
         el.innerHTML = html;
@@ -794,18 +789,18 @@ class GameEngine {
         if (!msg) {
             msg = document.createElement('div');
             msg.id = 'reveal-message';
-            msg.className = 'reveal-message';
+            msg.className = 'reveal-message card animate-bounce-down';
             document.body.appendChild(msg);
         }
 
-        const year = data.year ? `<p style="font-size: 0.9rem; color: var(--text-light);">سنة الإنتاج: ${data.year}</p>` : '';
-        const starring = data.starring ? `<p style="font-size: 0.9rem; color: var(--text-light);">بطولة: ${data.starring}</p>` : '';
+        const year = data.year ? `<div class="item-meta">سنة الإنتاج: ${data.year}</div>` : '';
+        const starring = data.starring ? `<div class="item-meta">بطولة: ${data.starring}</div>` : '';
 
         msg.innerHTML = `
             <div class="reveal-content">
                 <h3>انتهى الدور!</h3>
-                <p>الكلمة كانت: <strong style="font-size: 1.5rem; color: var(--primary);">${data.item}</strong></p>
-                <p>التصنيف: ${data.category}</p>
+                <div class="item-name" style="font-size: 2rem; color: var(--primary); margin-block: 1rem;">${data.item}</div>
+                <div class="badge badge-team-2" style="margin-bottom: 1rem;">${data.category}</div>
                 ${year}
                 ${starring}
             </div>
