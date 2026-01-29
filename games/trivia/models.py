@@ -1,6 +1,7 @@
 from datetime import datetime
 import json
 import random
+from services.data_service import get_data_service
 
 class TriviaGame:
     def __init__(self, game_id, host, settings=None):
@@ -22,7 +23,15 @@ class TriviaGame:
             'difficulty': 'all',
             'time_limit': 30
         }
-        self.questions = self.load_and_shuffle_questions()
+        
+        # Get data service instance
+        self.data_service = get_data_service()
+        
+        # Pre-fetch questions for this room (30 questions as per requirements)
+        self.data_service.prefetch_for_room(self.game_id, 'trivia', count=30)
+        
+        # Legacy support - keep for backward compatibility
+        self.questions = []
         self.question_index = 0
 
     def load_and_shuffle_questions(self):
@@ -73,13 +82,30 @@ class TriviaGame:
         self.players_answered_wrong = set()
 
     def get_question(self):
+        """Get a question using data service (prevents repetition)"""
+        # Get question from data service
+        question = self.data_service.get_item_for_room(self.game_id, 'trivia')
+        
+        if question:
+            # Transform to match expected format
+            return {
+                'question': question.get('question'),
+                'answer': question.get('correct_answer'),
+                'wrong_answers': question.get('wrong_answers', []),
+                'category': question.get('category'),
+                'difficulty': question.get('difficulty')
+            }
+        
+        # Fallback to legacy method if data service fails
         if not self.questions:
             self.questions = self.load_and_shuffle_questions()
-        if not self.questions: return None
+        if not self.questions:
+            return None
 
         q = self.questions[self.question_index]
         self.question_index = (self.question_index + 1) % len(self.questions)
-        if self.question_index == 0: random.shuffle(self.questions)
+        if self.question_index == 0:
+            random.shuffle(self.questions)
         return q
 
     def get_random_question(self):

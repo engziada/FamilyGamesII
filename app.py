@@ -352,11 +352,17 @@ def handle_leave(data):
         
         # If no players left, delete the room
         if not game_obj.players:
+            # Cleanup data service cache for this room
+            if hasattr(game_obj, 'data_service'):
+                game_obj.data_service.cleanup_room(rid)
             del game_rooms[rid]
         # If only 1 player left, force close the room
         elif len(game_obj.players) == 1:
             logger.info(f"Only 1 player left in room {rid}, force closing room")
             emit('room_closed', {'message': 'اللاعب الآخر غادر، تم إغلاق الغرفة'}, room=rid)
+            # Cleanup data service cache for this room
+            if hasattr(game_obj, 'data_service'):
+                game_obj.data_service.cleanup_room(rid)
             del game_rooms[rid]
         else:
             emit('player_left', {'message': f'{pname} غادر', 'players': game_obj.players}, room=rid)
@@ -368,6 +374,9 @@ def handle_close(data):
     room_id = str(data.get('roomId'))
     if room_id in game_rooms and game_rooms[room_id].host == session.get('player_name'):
         logger.info(f"Closing room {room_id}")
+        # Cleanup data service cache for this room
+        if hasattr(game_rooms[room_id], 'data_service'):
+            game_rooms[room_id].data_service.cleanup_room(room_id)
         del game_rooms[room_id]
         socketio.emit('room_closed', {'message': 'تم إغلاق الغرفة من قبل المضيف'}, room=room_id)
 

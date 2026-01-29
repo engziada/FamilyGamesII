@@ -1,6 +1,7 @@
 from datetime import datetime
 import json
 import random
+from services.data_service import get_data_service
 
 class CharadesGame:
     def __init__(self, game_id, host, settings=None):
@@ -29,8 +30,14 @@ class CharadesGame:
             for w in words:
                 self.custom_items.append({'item': w, 'category': 'كلمات مخصصة', 'difficulty': 'custom'})
 
-        # Load and shuffle items for this room
-        self.room_items = self.load_and_shuffle_items()
+        # Get data service instance
+        self.data_service = get_data_service()
+        
+        # Pre-fetch items for this room (30 items as per requirements)
+        self.data_service.prefetch_for_room(self.game_id, 'charades', count=30)
+        
+        # Legacy support - keep for backward compatibility
+        self.room_items = []
         self.item_index = 0
 
     def load_and_shuffle_items(self):
@@ -171,10 +178,18 @@ class CharadesGame:
         }
 
     def get_item(self):
-        """Get an item based on game settings"""
+        """Get an item based on game settings using data service"""
+        # Custom items take priority if available
         if self.custom_items and (self.settings.get('difficulty') == 'custom' or random.random() < 0.5):
             return random.choice(self.custom_items)
 
+        # Get item from data service (uses caching and prevents repetition)
+        item = self.data_service.get_item_for_room(self.game_id, self.game_type)
+        
+        if item:
+            return item
+        
+        # Fallback to legacy method if data service fails
         if not self.room_items:
             self.room_items = self.load_and_shuffle_items()
 
@@ -184,7 +199,6 @@ class CharadesGame:
         item_data = self.room_items[self.item_index]
         self.item_index = (self.item_index + 1) % len(self.room_items)
 
-        # Re-shuffle if we cycled through all items
         if self.item_index == 0:
             random.shuffle(self.room_items)
 
