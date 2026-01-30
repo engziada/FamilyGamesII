@@ -13,6 +13,10 @@ from games.trivia.models import TriviaGame
 from games.pictionary.models import PictionaryGame
 import time
 import uuid
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Configure logging
 if not os.path.exists('Log'):
@@ -30,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-123'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-key-change-in-production')
 app.config['SESSION_COOKIE_NAME'] = 'game_session'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=5)
 

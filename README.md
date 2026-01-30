@@ -1,66 +1,103 @@
 # Family Games II
 
-A modern web-based platform for family-friendly multiplayer games, starting with the classic Charades game.
+A modern web-based platform for family-friendly multiplayer games with real-time gameplay.
 
 ## Project Description
-A Flask-based web application that allows families and friends to play games together in real-time. The first game implemented is Charades (بدون كلام), where players take turns acting out words while others try to guess them.
+A Flask-based web application that allows families and friends to play games together in real-time. Features three game modes:
+- **Charades (بدون كلام)**: Players act out items while others guess
+- **Pictionary (تعاضل)**: Players draw items while others guess
+- **Trivia (بنك المعلومات)**: Multiple-choice trivia questions with AI translation
 
 ## Requirements
-- Python 3.8+
-- Flask
-- Flask-SocketIO
-- eventlet
+- Python 3.11+
+- Flask + Flask-SocketIO
+- eventlet (async I/O)
+- SQLAlchemy (data management)
+- Groq API key (for trivia translation)
 - Additional requirements in `requirements.txt`
 
 ## Project Structure
 ```
 FamilyGamesII/
 ├── app.py                 # Main Flask application entry point
+├── config.py              # Production configuration
 ├── requirements.txt       # Python package dependencies
+├── .env.example          # Environment variables template
+├── DEPLOYMENT.md         # Production deployment guide
 ├── games/                 # Game modules directory
-│   └── charades/         # Charades game module
-│       ├── __init__.py
-│       ├── models.py     # Game data models and logic
-│       └── routes.py     # Game-specific routes and socket events
+│   ├── charades/         # Charades game module
+│   │   ├── models.py     # Game logic
+│   │   └── routes.py     # Socket events
+│   ├── pictionary/       # Pictionary game module
+│   │   └── models.py     # Game logic
+│   └── trivia/           # Trivia game module
+│       ├── models.py     # Game logic
+│       └── questions.json # Question bank
+├── services/             # Data management services
+│   ├── data_service.py   # Main data service
+│   ├── data_manager.py   # Database operations
+│   └── fetchers/         # Content fetchers
+│       ├── charades_fetcher.py
+│       ├── pictionary_fetcher.py
+│       └── trivia_fetcher.py
+├── models/               # Data models
+│   └── game_items.py     # SQLAlchemy models
 ├── static/
 │   ├── css/
-│   │   └── style.css    # Main stylesheet
+│   │   └── style.css     # Main stylesheet
 │   ├── js/
-│   │   ├── game.js      # Game-specific JavaScript
-│   │   └── game-lobby.js # Lobby and game creation logic
-│   └── data/
-│       └── charades_items.json # Game items database
+│   │   └── charades.js   # Game logic & UI
+│   ├── sounds/           # Audio files
+│   └── data/             # Static game data
 ├── templates/
-│   ├── base.html        # Base template
-│   ├── index.html       # Landing page
-│   ├── lobby.html       # Game lobby
-│   └── game.html        # Game interface
-└── Log/                  # Application logs (gitignored)
+│   ├── base.html         # Base template
+│   ├── index.html        # Landing page
+│   └── game.html         # Game interface
+├── Log/                  # Application logs (gitignored)
+└── game_data.db          # SQLite database (gitignored)
 ```
 
 ## Features
-1. Real-time Multiplayer
+
+### 1. Three Game Modes
+   - **Charades**: 70+ items across multiple categories
+   - **Pictionary**: 400+ items with drawing canvas and category hints
+   - **Trivia**: 150+ questions with AI-powered Arabic translation
+
+### 2. Real-time Multiplayer
    - Socket.IO for real-time communication
    - Multiple players in the same game room
    - Host/Guest player roles
+   - Team mode support
 
-2. Game Management
-   - Create/Join game rooms
-   - Unique room IDs
-   - Player score tracking
-   - Round-based gameplay
+### 3. Smart Data Management
+   - SQLite database with 620+ total items
+   - Automatic caching and pre-fetching
+   - No item repetition within rooms
+   - Usage tracking and analytics
+   - Automatic cleanup on game end
 
-3. User Interface
-   - Modern, responsive design
-   - Arabic language support
+### 4. Game Management
+   - Create/Join game rooms with unique IDs
+   - Player score tracking (individual + team)
+   - Round-based gameplay with timer
+   - Difficulty levels (easy/medium/hard)
+   - Host controls (force next, close room)
+
+### 5. User Interface
+   - Modern, playful design with animations
+   - Full Arabic language support (RTL)
    - Real-time score updates
-   - Timer-based rounds
+   - Timer with visual warnings
+   - Sound effects for game events
+   - Responsive design for mobile/desktop
 
-4. Game Flow
-   - Lobby system for game setup
-   - Turn-based gameplay
-   - Score calculation based on time
-   - Round management by host
+### 6. Pictionary Features
+   - HTML5 canvas for drawing
+   - Color picker and brush size controls
+   - Real-time stroke synchronization
+   - Category hints (difficulty-based)
+   - Clear canvas functionality
 
 ## Checkpoints
 

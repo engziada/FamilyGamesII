@@ -139,3 +139,23 @@ venv.bak/
 # VS Code
 .vscode/
 .vsocde/
+
+# Application logs
+Log/
+*.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+game_data.db
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
