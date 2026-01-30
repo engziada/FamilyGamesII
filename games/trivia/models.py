@@ -7,7 +7,7 @@ class TriviaGame:
     def __init__(self, game_id, host, settings=None):
         self.game_id = game_id
         self.host = host
-        self.players = [{'name': host, 'isHost': True, 'team': 1}]
+        self.players = [{'name': host, 'isHost': True, 'team': 1, 'ready': False}]
         self.game_type = 'trivia'
         self.status = 'waiting'
         self.scores = {}
@@ -56,7 +56,17 @@ class TriviaGame:
             t2 = len([p for p in self.players if p.get('team') == 2])
             team = 2 if t2 < t1 else 1
 
-        self.players.append({'name': player_name, 'isHost': False, 'team': team})
+        self.players.append({'name': player_name, 'isHost': False, 'team': team, 'ready': False})
+
+    def set_player_ready(self, player_name, ready_status=True):
+        for player in self.players:
+            if player['name'] == player_name:
+                player['ready'] = ready_status
+                break
+
+    def reset_ready_status(self):
+        for player in self.players:
+            player['ready'] = False
 
     def remove_player(self, player_name):
         self.players = [p for p in self.players if p['name'] != player_name]
@@ -74,6 +84,7 @@ class TriviaGame:
         self.players_answered_wrong = set()
 
     def next_round(self):
+        self.reset_ready_status()
         self.current_question = self.get_question()
         self.status = 'round_active'
         self.question_active = True

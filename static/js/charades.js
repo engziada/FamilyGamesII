@@ -44,8 +44,8 @@ const Lobby = {
 
         this.socket.on('join_success', (data) => {
             console.log('Join success:', data);
-            document.getElementById('join-form').style.display = 'none';
-            document.getElementById('join-lobby').style.display = 'block';
+            document.getElementById('join-form').classList.add('u-hidden');
+            document.getElementById('join-lobby').classList.remove('u-hidden');
             document.getElementById('join-room-id').textContent = document.getElementById('room-code').value;
             this.updatePlayerList(data.players, data.host);
         });
@@ -116,8 +116,8 @@ const Lobby = {
         });
 
         document.getElementById('room-id').textContent = gameId;
-        document.getElementById('room-info').style.display = 'block';
-        document.querySelector('.players-list').style.display = 'block';
+        document.getElementById('room-info').classList.remove('u-hidden');
+        document.querySelector('.players-list').classList.remove('u-hidden');
 
         const buttonsDiv = document.querySelector('#create-game-modal .buttons');
         buttonsDiv.innerHTML = `
@@ -233,7 +233,7 @@ const Utils = {
         document.getElementById(modalId).style.display = 'none';
         if (modalId === 'create-game-modal') {
             document.getElementById('host-name').value = '';
-            document.getElementById('room-info').style.display = 'none';
+            document.getElementById('room-info').classList.add('u-hidden');
             document.getElementById('host-players-list').innerHTML = '';
             const buttonsDiv = document.querySelector('#create-game-modal .buttons');
             buttonsDiv.innerHTML = `
@@ -258,8 +258,8 @@ const Utils = {
             const joinErrorDiv = document.getElementById('join-error-message');
             if (joinErrorDiv) {
                 joinErrorDiv.textContent = message;
-                joinErrorDiv.style.display = 'block';
-                setTimeout(() => joinErrorDiv.style.display = 'none', 5000);
+                joinErrorDiv.classList.remove('u-hidden');
+                setTimeout(() => joinErrorDiv.classList.add('u-hidden'), 5000);
                 return;
             }
         }
@@ -268,8 +268,8 @@ const Utils = {
             const createErrorDiv = document.getElementById('create-error-message');
             if (createErrorDiv) {
                 createErrorDiv.textContent = message;
-                createErrorDiv.style.display = 'block';
-                setTimeout(() => createErrorDiv.style.display = 'none', 5000);
+                createErrorDiv.classList.remove('u-hidden');
+                setTimeout(() => createErrorDiv.classList.add('u-hidden'), 5000);
                 return;
             }
         }
@@ -278,10 +278,69 @@ const Utils = {
         const errorDiv = document.getElementById('error-message');
         if (errorDiv) {
             errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            setTimeout(() => errorDiv.style.display = 'none', 5000);
+            errorDiv.classList.remove('u-hidden');
+            setTimeout(() => errorDiv.classList.add('u-hidden'), 5000);
         } else {
             alert(message);
+        }
+    },
+
+    copyToClipboard(text) {
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(() => {
+            this.showMessage('تم النسخ!', 'success');
+        }).catch(err => {
+            console.error('Could not copy text: ', err);
+            // Fallback for older browsers
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                this.showMessage('تم النسخ!', 'success');
+            } catch (err) {
+                console.error('Fallback copy failed', err);
+            }
+            document.body.removeChild(textArea);
+        });
+    },
+
+    triggerConfetti(type = 'burst') {
+        const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#6BCB77'];
+
+        if (type === 'burst') {
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: colors
+            });
+        } else if (type === 'full') {
+            const duration = 5 * 1000;
+            const animationEnd = Date.now() + duration;
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0, colors: colors };
+
+            const randomInRange = (min, max) => Math.random() * (max - min) + min;
+
+            const interval = setInterval(function() {
+                const timeLeft = animationEnd - Date.now();
+
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
+                }
+
+                const particleCount = 50 * (timeLeft / duration);
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
+        } else if (type === 'gold') {
+            confetti({
+                particleCount: 150,
+                spread: 100,
+                origin: { y: 0.6 },
+                colors: ['#FFE66D', '#FFD700']
+            });
         }
     },
 
@@ -384,6 +443,7 @@ class GameEngine {
         this.socket.on('correct_guess', (data) => {
             AudioManager.play('guessed');
             Utils.showMessage(`${data.guesser} عرف الإجابة!`);
+            Utils.triggerConfetti('burst');
         });
         
         this.socket.on('round_timeout', (data) => {
@@ -425,6 +485,7 @@ class GameEngine {
             if (data.is_correct) {
                 AudioManager.play('guessed');
                 Utils.showMessage(`${data.player} جاوب صح ✅. الإجابة كانت: ${data.correct_answer}`);
+                Utils.triggerConfetti('burst');
             } else {
                 AudioManager.play('timeout');
                 Utils.showMessage(`${data.player} جاوب غلط ❌`);
@@ -448,6 +509,19 @@ class GameEngine {
         });
 
         this.socket.on('reveal_item', (data) => this.showRevealMessage(data));
+
+        this.socket.on('player_ready_status', (data) => {
+            // Find player in this.players list and update ready status
+            if (this.lastPlayersList) {
+                this.lastPlayersList.forEach(p => {
+                    const name = typeof p === 'object' ? p.name : p;
+                    if (name === data.player_name) {
+                        p.ready = data.ready;
+                    }
+                });
+                this.updatePlayersList(this.lastPlayersList);
+            }
+        });
 
         this.socket.on('host_transferred', (data) => {
             if (data.gameState) this.updateGameState(data.gameState);
@@ -474,7 +548,10 @@ class GameEngine {
         if (data.settings) this.gameSettings = data.settings;
         if (data.status) this.setGameStatus(data.status);
         if (data.message) Utils.showMessage(data.message);
-        if (data.players) this.updatePlayersList(data.players);
+        if (data.players) {
+            this.lastPlayersList = data.players;
+            this.updatePlayersList(data.players);
+        }
         if (data.current_player !== undefined) this.updateCurrentPlayer(data.current_player);
         if (data.scores || data.team_scores) this.updateScores(data);
         
@@ -736,6 +813,7 @@ class GameEngine {
         const listEl = document.getElementById('players-list');
         if (!listEl) return;
         
+        this.lastPlayersList = players;
         listEl.innerHTML = '';
         const ul = document.createElement('ul');
         ul.classList.add('players-ul');
@@ -744,11 +822,24 @@ class GameEngine {
             const name = typeof p === 'object' ? p.name : p;
             const isHost = typeof p === 'object' ? p.isHost : false;
             const team = typeof p === 'object' ? p.team : null;
+            const isReady = typeof p === 'object' ? p.ready : false;
 
             const li = document.createElement('li');
             li.className = `player-item ${name === this.playerName ? 'current-player' : ''}`;
 
-            let html = `<span>${name} ${isHost ? '👑' : ''} ${name === this.playerName ? '(أنت)' : ''}</span>`;
+            let statusIcon = isReady ?
+                '<span class="ready-status animate-fade-in"><i class="fas fa-check-circle" style="color: var(--success);"></i></span>' :
+                '<span class="ready-status">⏳</span>';
+
+            // Don't show status icon for trivia since it's "all players" or if game hasn't started
+            if (this.gameStatus === 'waiting') statusIcon = '';
+
+            let html = `
+                <div class="player-info">
+                    ${statusIcon}
+                    <span>${name} ${isHost ? '👑' : ''} ${name === this.playerName ? '(أنت)' : ''}</span>
+                </div>
+            `;
             if (team) {
                 html += `<span class="badge badge-team-${team}">فريق ${team}</span>`;
             }
@@ -763,23 +854,70 @@ class GameEngine {
         const el = document.getElementById('scores');
         if (!el) return;
         
+        const newScores = data.scores || (data.team_scores ? {} : data);
+        const previousScores = this.previousScores || {};
+
         let html = '';
         
         // Show team scores if they exist and are non-zero
         if (data.team_scores && (data.team_scores['1'] > 0 || data.team_scores['2'] > 0)) {
             html += '<div class="team-scores-container">';
-            html += `<div class="score-item">فريق 1: <span class="score-val">${data.team_scores['1']}</span></div>`;
-            html += `<div class="score-item">فريق 2: <span class="score-val">${data.team_scores['2']}</span></div>`;
+            Object.entries(data.team_scores).forEach(([team, score]) => {
+                const prevScore = (this.previousTeamScores || {})[team] || 0;
+                const diff = score - prevScore;
+                const animClass = diff > 0 ? 'score-highlight' : '';
+                html += `
+                    <div class="score-item ${animClass}" style="position: relative;">
+                        فريق ${team}: <span class="score-val" id="team-score-${team}">${score}</span>
+                        ${diff > 0 ? `<span class="flying-score">+${diff}</span>` : ''}
+                    </div>`;
+            });
             html += '</div>';
+            this.previousTeamScores = Object.assign({}, data.team_scores);
         }
         
         // Show individual scores
-        const scores = data.scores || data;
-        html += Object.entries(scores)
-            .map(([p, s]) => `<div class="score-item ${p === this.playerName ? 'current-player' : ''}"><span>${p}</span><span class="score-val">${s}</span></div>`)
+        html += Object.entries(newScores)
+            .map(([p, s]) => {
+                const prevScore = previousScores[p] || 0;
+                const diff = s - prevScore;
+                const animClass = diff > 0 ? 'score-highlight' : '';
+                return `
+                    <div class="score-item ${p === this.playerName ? 'current-player' : ''} ${animClass}" style="position: relative;">
+                        <span>${p}</span>
+                        <span class="score-val" id="player-score-${p}">${s}</span>
+                        ${diff > 0 ? `<span class="flying-score">+${diff}</span>` : ''}
+                    </div>`;
+            })
             .join('');
 
         el.innerHTML = html;
+
+        // Animate count-up for changed scores
+        Object.entries(newScores).forEach(([p, s]) => {
+            const prevScore = previousScores[p] || 0;
+            if (s > prevScore) {
+                this.animateValue(`player-score-${p}`, prevScore, s, 800);
+            }
+        });
+
+        this.previousScores = Object.assign({}, newScores);
+    }
+
+    animateValue(id, start, end, duration) {
+        const obj = document.getElementById(id);
+        if (!obj) return;
+        const range = end - start;
+        let current = start;
+        const increment = end > start ? 1 : -1;
+        const stepTime = Math.abs(Math.floor(duration / range));
+        const timer = setInterval(() => {
+            current += increment;
+            obj.innerText = current;
+            if (current == end) {
+                clearInterval(timer);
+            }
+        }, stepTime || 10);
     }
 
     startTimer(duration) {
@@ -860,9 +998,43 @@ class GameEngine {
     }
 }
 
+// --- Theme Manager ---
+
+const ThemeManager = {
+    init() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        this.setTheme(savedTheme);
+
+        const toggleBtn = document.getElementById('theme-toggle');
+        if (toggleBtn) {
+            toggleBtn.onclick = () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                this.setTheme(newTheme);
+            };
+        }
+    },
+
+    setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+
+        const toggleBtn = document.getElementById('theme-toggle');
+        if (toggleBtn) {
+            const icon = toggleBtn.querySelector('i');
+            if (theme === 'dark') {
+                icon.className = 'fas fa-sun';
+            } else {
+                icon.className = 'fas fa-moon';
+            }
+        }
+    }
+};
+
 // --- Initialization ---
 
 document.addEventListener('DOMContentLoaded', () => {
+    ThemeManager.init();
     AudioManager.init();
     const isGamePage = window.location.pathname.includes('/game/');
     

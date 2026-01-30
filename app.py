@@ -168,8 +168,16 @@ def handle_start_game(data):
 
 @socketio.on('player_ready')
 def handle_player_ready(data):
-    game_obj = game_rooms.get(str(data.get('game_id')))
-    if game_obj and game_obj.game_type != 'trivia' and game_obj.current_player == session.get('player_name'):
+    game_id = str(data.get('game_id'))
+    game_obj = game_rooms.get(game_id)
+    player_name = session.get('player_name')
+
+    if game_obj:
+        if hasattr(game_obj, 'set_player_ready'):
+            game_obj.set_player_ready(player_name, True)
+            emit('player_ready_status', {'player_name': player_name, 'ready': True}, room=game_id)
+
+    if game_obj and game_obj.game_type != 'trivia' and game_obj.current_player == player_name:
         game_obj.status = 'round_active'
         if hasattr(game_obj, 'start_round_timer'): game_obj.start_round_timer()
         emit('force_reset_timer', {'current_player': game_obj.current_player, 'game_status': game_obj.status}, room=game_obj.game_id)

@@ -88,14 +88,15 @@
         </div>
 
         <div class="card info-card" style="padding: 1.2rem; font-size: 0.9rem; color: var(--text-light); text-align: center;">
-            <p>رقم الغرفة: <strong style="color: var(--primary);">{{ game_id }}</strong></p>
+            <p>رقم الغرفة:
+                <strong id="game-room-id" style="color: var(--primary);">{{ game_id }}</strong>
+                <button class="btn-copy" onclick="Utils.copyToClipboard('{{ game_id }}')" title="نسخ رقم الغرفة">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </p>
             <p>أنت تلعب بصفتك: <strong style="color: var(--secondary);">{{ player_name }}</strong></p>
         </div>
     </div>
-</div>
-
-<div id="game-status" class="u-hidden">
-    <!-- Used for snackbar style notifications -->
 </div>
 
 <div id="error-message"></div>
