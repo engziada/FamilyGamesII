@@ -23,16 +23,161 @@ const AudioManager = {
     }
 };
 
+// --- Managers ---
+
+const HapticManager = {
+    vibrate(pattern) {
+        if (!("vibrate" in navigator)) return;
+
+        const patterns = {
+            correct: 50,
+            wrong: [100, 50, 100],
+            timeout: 200,
+            win: [50, 50, 50, 200]
+        };
+
+        navigator.vibrate(patterns[pattern] || pattern);
+    }
+};
+
+const KeyboardShortcuts = {
+    shortcuts: {
+        ' ': 'readyButton',
+        'Enter': 'guessButton',
+        'Escape': 'close-room',
+        'p': 'pauseButton', // Host only
+        't': 'theme-toggle',
+        'h': 'show-rules-btn',
+        'm': 'mute-toggle'
+    },
+
+    init() {
+        document.addEventListener('keydown', (e) => {
+            // Don't trigger if user is typing in an input
+            if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+
+            const actionId = this.shortcuts[e.key];
+            if (actionId) {
+                const el = document.getElementById(actionId);
+                if (el && el.style.display !== 'none' && !el.disabled) {
+                    e.preventDefault();
+                    el.click();
+                }
+            }
+        });
+    }
+};
+
+const ToastManager = {
+    show(message, type = 'info', duration = 4000) {
+        let container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.style.cssText = 'position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem; align-items: center; width: min(90vw, 400px);';
+            document.body.appendChild(container);
+        }
+
+        const toast = document.createElement('div');
+        const icons = {
+            success: 'fa-check-circle',
+            error: 'fa-exclamation-circle',
+            info: 'fa-info-circle',
+            warning: 'fa-exclamation-triangle'
+        };
+
+        toast.className = `card animate-bounce-down ${type}`;
+        toast.style.cssText = 'padding: 1rem 2rem; border-radius: 20px 50px; min-width: 300px; display: flex; align-items: center; gap: 1rem; cursor: pointer;';
+        if (type === 'success') toast.style.borderColor = 'var(--success)';
+        if (type === 'error') toast.style.borderColor = 'var(--danger)';
+
+        toast.innerHTML = `
+            <i class="fas ${icons[type] || icons.info}" style="font-size: 1.2rem;"></i>
+            <span style="font-weight: 700;">${message}</span>
+        `;
+
+        toast.onclick = () => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        };
+
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => toast.remove(), 500);
+            }
+        }, duration);
+    }
+};
+
+// --- Socket Management ---
+const SocketManager = {
+    socket: null,
+    getSocket() {
+        if (!this.socket) {
+            this.socket = io({
+                reconnection: true,
+                reconnectionAttempts: 5,
+                timeout: 10000
+            });
+        }
+        return this.socket;
+    }
+};
+
 // --- Lobby Logic ---
 
 const Lobby = {
     socket: null,
     gameType: 'charades',
+    avatars: ['🐶','🐱','🐼','🦁','🐸','🦊','🐻','🐨','🐯','🦄','🐷','🐮','🐵','🦉','🐙','🦀','🐢','🦋','🐝','🐛'],
     
     init() {
-        if (!this.socket) {
-            this.socket = io();
-            this.setupListeners();
+        this.initAvatarPicker('host-avatar-picker', 'host-avatar');
+        this.initAvatarPicker('player-avatar-picker', 'player-avatar');
+
+        // Only init socket if we are on the index page (not game page)
+        // because GameEngine will handle it on game page.
+        if (window.location.pathname === '/') {
+            if (!this.socket) {
+                this.socket = SocketManager.getSocket();
+                this.setupListeners();
+            }
+        }
+    },
+
+    initAvatarPicker(containerId, inputId) {
+        const container = document.getElementById(containerId);
+        const input = document.getElementById(inputId);
+        if (!container || !input) return;
+
+        container.innerHTML = '';
+        this.avatars.forEach(avatar => {
+            const span = document.createElement('span');
+            span.className = 'avatar-option';
+            if (avatar === input.value) span.classList.add('selected');
+            span.textContent = avatar;
+            span.onclick = () => {
+                container.querySelectorAll('.avatar-option').forEach(opt => opt.classList.remove('selected'));
+                span.classList.add('selected');
+                input.value = avatar;
+                const btnId = inputId === 'host-avatar' ? 'host-avatar-btn' : 'player-avatar-btn';
+                document.getElementById(btnId).textContent = avatar;
+                this.toggleAvatarPicker(containerId + '-container');
+                HapticManager.vibrate(50);
+            };
+            container.appendChild(span);
+        });
+    },
+
+    toggleAvatarPicker(containerId) {
+        const el = document.getElementById(containerId);
+        if (el) {
+            const isHidden = el.classList.contains('u-hidden');
+            Utils.toggleVisibility(el, isHidden);
         }
     },
 
@@ -85,8 +230,9 @@ const Lobby = {
 
     createGame() {
         const hostName = document.getElementById('host-name').value.trim();
+        const avatar = document.getElementById('host-avatar').value;
         if (!hostName) {
-            alert('من فضلك اكتب اسمك');
+            ToastManager.show('من فضلك اكتب اسمك', 'warning');
             return;
         }
 
@@ -106,6 +252,7 @@ const Lobby = {
         this.socket.emit('create_game', {
             game_id: gameId,
             player_name: hostName,
+            avatar: avatar,
             game_type: gameType,
             settings: {
                 teams: teams,
@@ -118,6 +265,20 @@ const Lobby = {
         document.getElementById('room-id').textContent = gameId;
         document.getElementById('room-info').classList.remove('u-hidden');
         document.querySelector('.players-list').classList.remove('u-hidden');
+
+        // Generate QR Code
+        const qrContainer = document.getElementById('qrcode');
+        if (qrContainer && typeof QRCode !== 'undefined') {
+            qrContainer.innerHTML = '';
+            new QRCode(qrContainer, {
+                text: window.location.origin + "/?room=" + gameId,
+                width: 128,
+                height: 128,
+                colorDark : "#2F2F2F",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+        }
 
         const buttonsDiv = document.querySelector('#create-game-modal .buttons');
         buttonsDiv.innerHTML = `
@@ -140,9 +301,10 @@ const Lobby = {
     joinGame() {
         const playerName = document.getElementById('player-name').value.trim();
         const roomCode = document.getElementById('room-code').value.trim();
+        const avatar = document.getElementById('player-avatar').value;
 
         if (!playerName || !roomCode) {
-            alert('من فضلك اكتب اسمك ورقم الأوضة');
+            ToastManager.show('من فضلك اكتب اسمك ورقم الأوضة', 'warning');
             return;
         }
 
@@ -150,6 +312,7 @@ const Lobby = {
         this.socket.emit('join_game', {
             game_id: roomCode,
             player_name: playerName,
+            avatar: avatar,
             game_type: 'charades'
         });
     },
@@ -178,13 +341,19 @@ const Lobby = {
             list.innerHTML = '';
             players.forEach(player => {
                 const li = document.createElement('li');
+                li.style.display = 'flex';
+                li.style.alignItems = 'center';
+                li.style.gap = '0.5rem';
+
                 const name = typeof player === 'object' ? player.name : player;
                 const isHost = typeof player === 'object' ? player.isHost : (name === host);
-                li.textContent = name;
-                if (isHost) {
-                    li.classList.add('host');
-                    li.textContent += ' 👑';
-                }
+                const avatar = typeof player === 'object' ? player.avatar || '🐶' : '🐶';
+
+                li.innerHTML = `
+                    <span class="player-avatar">${avatar}</span>
+                    <span class="player-name">${name} ${isHost ? '👑' : ''}</span>
+                `;
+                if (isHost) li.classList.add('host');
                 list.appendChild(li);
             });
         });
@@ -219,14 +388,86 @@ const Lobby = {
 
 // --- Utilities ---
 
+const GameRules = {
+    charades: {
+        title: "بدون كلام",
+        objective: "مثل الكلمة أو الفيلم لأصحابك من غير ما تنطق ولا حرف!",
+        rules: [
+            "ممنوع الكلام تماماً أو إصدار أي صوت.",
+            "ممنوع تشاور على حاجات موجودة في الأوضة.",
+            "ممنوع ترسم في الهوا حروف أو أرقام.",
+            "التمثيل بالوش والجسم بس."
+        ],
+        tips: "اتفقوا على إشارات معينة للحاجات المتكررة (زي فيلم، مسلسل، قديم، جديد)."
+    },
+    pictionary: {
+        title: "ارسم وخمن",
+        objective: "ارسم الكلمة المطلوبة وصحابك لازم يعرفوها قبل الوقت ما يخلص.",
+        rules: [
+            "ممنوع كتابة أي حروف أو أرقام على اللوحة.",
+            "ممنوع الكلام أو إعطاء تلميحات بالصوت.",
+            "أول واحد يكتب الإجابة الصح بياخد نقط."
+        ],
+        tips: "استخدم الألوان المختلفة عشان توضح التفاصيل أكتر."
+    },
+    trivia: {
+        title: "بنك المعلومات",
+        objective: "جاوب على الأسئلة الثقافية المتنوعة واجمع أكبر عدد من النقط.",
+        rules: [
+            "السؤال بيظهر لكل اللاعبين في نفس الوقت.",
+            "أسرع واحد بيجاوب صح هو اللي بياخد النقط.",
+            "لو جاوبت غلط، مش هتقدر تجاوب تاني على نفس السؤال."
+        ],
+        tips: "السرعة هي مفتاح الفوز في بنك المعلومات!"
+    }
+};
+
 const Utils = {
     showGameModal(gameType, action) {
         const modalId = action === 'create' ? 'create-game-modal' : 'join-game-modal';
         if (action === 'create') {
             document.getElementById('modal-game-type').value = gameType;
-            document.getElementById('modal-title').textContent = gameType === 'charades' ? 'إنشاء غرفة بدون كلام' : 'إنشاء غرفة بنك المعلومات';
+            let title = 'إنشاء غرفة جديدة';
+            if (gameType === 'charades') title = 'إنشاء غرفة بدون كلام';
+            else if (gameType === 'pictionary') title = 'إنشاء غرفة ارسم وخمن';
+            else if (gameType === 'trivia') title = 'إنشاء غرفة بنك المعلومات';
+            document.getElementById('modal-title').textContent = title;
         }
         document.getElementById(modalId).style.display = 'flex';
+    },
+
+    showRulesModal(gameType) {
+        const rules = GameRules[gameType];
+        if (!rules) return;
+
+        let modal = document.getElementById('rules-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'rules-modal';
+            modal.className = 'modal';
+            document.body.appendChild(modal);
+        }
+
+        modal.innerHTML = `
+            <div class="modal-content animate-jelly">
+                <i class="fas fa-book-open fa-3x" style="color: var(--secondary); margin-bottom: 1rem;"></i>
+                <h2>كيف تلعب: ${rules.title}</h2>
+                <div class="rules-body u-text-right" style="width: 100%; text-align: right; margin-block: 1.5rem;">
+                    <h4 style="color: var(--primary); margin-bottom: 0.5rem;"><i class="fas fa-bullseye"></i> الهدف:</h4>
+                    <p style="margin-bottom: 1.5rem;">${rules.objective}</p>
+
+                    <h4 style="color: var(--primary); margin-bottom: 0.5rem;"><i class="fas fa-list-ol"></i> القوانين:</h4>
+                    <ul style="margin-bottom: 1.5rem; padding-right: 1.5rem;">
+                        ${rules.rules.map(r => `<li style="margin-bottom: 0.5rem;">${r}</li>`).join('')}
+                    </ul>
+
+                    <h4 style="color: var(--primary); margin-bottom: 0.5rem;"><i class="fas fa-lightbulb"></i> نصيحة:</h4>
+                    <p>${rules.tips}</p>
+                </div>
+                <button class="btn btn-primary u-full-width" onclick="Utils.hideModal('rules-modal')">فهمت!</button>
+            </div>
+        `;
+        modal.style.display = 'flex';
     },
 
     hideModal(modalId) {
@@ -250,39 +491,7 @@ const Utils = {
     },
 
     showError(message) {
-        // Check if join modal is active
-        const joinModal = document.getElementById('join-game-modal');
-        const createModal = document.getElementById('create-game-modal');
-        
-        if (joinModal && joinModal.style.display === 'flex') {
-            const joinErrorDiv = document.getElementById('join-error-message');
-            if (joinErrorDiv) {
-                joinErrorDiv.textContent = message;
-                joinErrorDiv.classList.remove('u-hidden');
-                setTimeout(() => joinErrorDiv.classList.add('u-hidden'), 5000);
-                return;
-            }
-        }
-        
-        if (createModal && createModal.style.display === 'flex') {
-            const createErrorDiv = document.getElementById('create-error-message');
-            if (createErrorDiv) {
-                createErrorDiv.textContent = message;
-                createErrorDiv.classList.remove('u-hidden');
-                setTimeout(() => createErrorDiv.classList.add('u-hidden'), 5000);
-                return;
-            }
-        }
-        
-        // Fallback to game error message or alert
-        const errorDiv = document.getElementById('error-message');
-        if (errorDiv) {
-            errorDiv.textContent = message;
-            errorDiv.classList.remove('u-hidden');
-            setTimeout(() => errorDiv.classList.add('u-hidden'), 5000);
-        } else {
-            alert(message);
-        }
+        ToastManager.show(message, 'error');
     },
 
     copyToClipboard(text) {
@@ -307,6 +516,7 @@ const Utils = {
     },
 
     triggerConfetti(type = 'burst') {
+        if (!AudioManager.enabled) return; // Optional: separate confetti toggle?
         const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#6BCB77'];
 
         if (type === 'burst') {
@@ -345,18 +555,17 @@ const Utils = {
     },
 
     showMessage(message, type = 'info') {
-        const statusElement = document.getElementById('game-status');
-        if (statusElement) {
-            statusElement.textContent = message;
-            statusElement.className = `animate-bounce-down ${type}`;
-            statusElement.style.display = 'flex';
+        ToastManager.show(message, type);
+    },
 
-            if (this.hideTimeout) clearTimeout(this.hideTimeout);
-
-            this.hideTimeout = setTimeout(() => {
-                statusElement.style.display = 'none';
-                statusElement.classList.remove('animate-bounce-down');
-            }, 4000);
+    toggleVisibility(el, visible, displayType = 'block') {
+        if (!el) return;
+        if (visible) {
+            el.classList.remove('u-hidden');
+            el.style.display = displayType;
+        } else {
+            el.classList.add('u-hidden');
+            el.style.display = 'none';
         }
     }
 };
@@ -373,6 +582,7 @@ class GameEngine {
         this.socket = null;
         this.gameStatus = 'waiting';
         this.timerInterval = null;
+        this.paused = false;
         this.gameSettings = {};
         this.currentItemCategory = null;
         
@@ -384,7 +594,7 @@ class GameEngine {
     }
 
     init() {
-        this.socket = io();
+        this.socket = SocketManager.getSocket();
         this.socket.on('connect', () => {
             console.log('Game Socket connected');
             this.setupUIListeners();
@@ -405,8 +615,9 @@ class GameEngine {
 
         bindClick('startButton', () => this.socket.emit('start_game', { game_id: this.gameId }));
         bindClick('nextButton', () => this.socket.emit('force_next_turn', { game_id: this.gameId }));
+        bindClick('pauseButton', () => this.socket.emit('toggle_pause', { game_id: this.gameId }));
         bindClick('readyButton', () => {
-            document.getElementById('readyButton').style.display = 'none';
+            Utils.toggleVisibility(document.getElementById('readyButton'), false);
             this.socket.emit('player_ready', { game_id: this.gameId });
         });
         bindClick('guessButton', () => this.socket.emit('guess_correct', { game_id: this.gameId, player_name: this.playerName }));
@@ -437,18 +648,24 @@ class GameEngine {
     setupSocketListeners() {
         this.socket.on('game_state', (data) => {
             this.gameType = data.game_type || 'charades';
+            if (data.paused !== undefined) {
+                this.paused = data.paused;
+                this.updatePauseUI();
+            }
             this.updateGameState(data);
         });
         this.socket.on('timer_start', (data) => this.startTimer(data.duration));
         this.socket.on('correct_guess', (data) => {
             AudioManager.play('guessed');
-            Utils.showMessage(`${data.guesser} عرف الإجابة!`);
+            HapticManager.vibrate('correct');
+            ToastManager.show(`${data.guesser} عرف الإجابة!`, 'success');
             Utils.triggerConfetti('burst');
         });
         
         this.socket.on('round_timeout', (data) => {
             this.stopTimer();
             this.playTimeoutTwice();
+            HapticManager.vibrate('timeout');
             if (data.game_status) this.setGameStatus(data.game_status);
             if (data.next_player) this.updateCurrentPlayer(data.next_player);
         });
@@ -484,11 +701,13 @@ class GameEngine {
         this.socket.on('answer_result', (data) => {
             if (data.is_correct) {
                 AudioManager.play('guessed');
-                Utils.showMessage(`${data.player} جاوب صح ✅. الإجابة كانت: ${data.correct_answer}`);
+                HapticManager.vibrate('correct');
+                ToastManager.show(`${data.player} جاوب صح ✅. الإجابة كانت: ${data.correct_answer}`, 'success');
                 Utils.triggerConfetti('burst');
             } else {
                 AudioManager.play('timeout');
-                Utils.showMessage(`${data.player} جاوب غلط ❌`);
+                HapticManager.vibrate('wrong');
+                ToastManager.show(`${data.player} جاوب غلط ❌`, 'error');
             }
         });
 
@@ -509,6 +728,13 @@ class GameEngine {
         });
 
         this.socket.on('reveal_item', (data) => this.showRevealMessage(data));
+
+        this.socket.on('game_paused', (data) => {
+            this.paused = data.paused;
+            this.updatePauseUI();
+            const action = this.paused ? 'توقف' : 'استئناف';
+            ToastManager.show(`تم ${action} اللعبة بواسطة ${data.paused_by}`, 'info');
+        });
 
         this.socket.on('player_ready_status', (data) => {
             // Find player in this.players list and update ready status
@@ -538,6 +764,10 @@ class GameEngine {
         });
 
         this.socket.on('error', (data) => Utils.showError(data.message));
+        this.socket.on('new_reaction', (data) => this.showReaction(data));
+        this.socket.on('game_ended', (data) => this.showGameSummary(data));
+        this.socket.on('item_hint', (data) => this.showHint(data));
+
         this.socket.on('game_error', (data) => Utils.showError(data.message));
     }
 
@@ -545,6 +775,11 @@ class GameEngine {
         if (!data) return;
         console.log("Game state update:", data);
         
+        if (data.paused !== undefined) {
+            this.paused = data.paused;
+            this.updatePauseUI();
+        }
+
         if (data.settings) this.gameSettings = data.settings;
         if (data.status) this.setGameStatus(data.status);
         if (data.message) Utils.showMessage(data.message);
@@ -579,7 +814,7 @@ class GameEngine {
                 if (itemDisplay) {
                     itemDisplay.innerHTML = '';
                     itemDisplay.classList.remove('visible');
-                    itemDisplay.style.display = 'none';
+                    Utils.toggleVisibility(itemDisplay, false);
                 }
                 // Clear the stored category
                 this.currentItemCategory = null;
@@ -596,37 +831,65 @@ class GameEngine {
             start: document.getElementById('startButton'),
             next: document.getElementById('nextButton'),
             reveal: document.getElementById('revealButton'),
-            pass: document.getElementById('passButton')
+            pass: document.getElementById('passButton'),
+            pause: document.getElementById('pauseButton')
         };
 
         const waitingArea = document.getElementById('waiting-area');
 
-        Object.values(btns).forEach(b => { if(b) b.style.display = 'none'; });
+        Object.values(btns).forEach(b => { if(b) Utils.toggleVisibility(b, false); });
 
         const currentPlayer = document.getElementById('current-turn').textContent;
 
         if (waitingArea) {
-            waitingArea.style.display = (this.gameStatus === 'playing' || (this.gameStatus === 'waiting' && this.gameType !== 'trivia')) ? 'block' : 'none';
+            const shouldShowWaiting = (this.gameStatus === 'playing' || (this.gameStatus === 'waiting' && this.gameType !== 'trivia'));
+            Utils.toggleVisibility(waitingArea, shouldShowWaiting);
         }
 
         switch (this.gameStatus) {
             case 'waiting':
-                if (btns.start && this.isHost) btns.start.style.display = 'block';
+                if (btns.start && this.isHost) Utils.toggleVisibility(btns.start, true);
                 break;
             case 'playing':
                 if (this.gameType !== 'trivia') {
-                    if (btns.ready && currentPlayer === this.playerName) btns.ready.style.display = 'block';
+                    if (btns.ready && currentPlayer === this.playerName) Utils.toggleVisibility(btns.ready, true);
                 }
-                if (btns.next && this.isHost) btns.next.style.display = 'block';
+                if (btns.next && this.isHost) Utils.toggleVisibility(btns.next, true);
+                if (btns.pause && this.isHost) Utils.toggleVisibility(btns.pause, true);
                 break;
             case 'round_active':
                 if (this.gameType === 'charades' || this.gameType === 'pictionary') {
-                    if (btns.guess && currentPlayer !== this.playerName) btns.guess.style.display = 'block';
-                    if (btns.pass && currentPlayer === this.playerName) btns.pass.style.display = 'block';
+                    if (btns.guess && currentPlayer !== this.playerName) Utils.toggleVisibility(btns.guess, true);
+                    if (btns.pass && currentPlayer === this.playerName) Utils.toggleVisibility(btns.pass, true);
                 }
-                if (btns.next && this.isHost) btns.next.style.display = 'block';
+                if (btns.next && this.isHost) Utils.toggleVisibility(btns.next, true);
+                if (btns.pause && this.isHost) Utils.toggleVisibility(btns.pause, true);
                 break;
         }
+
+        if (this.paused) {
+            if (btns.guess) Utils.toggleVisibility(btns.guess, false);
+            if (btns.pass) Utils.toggleVisibility(btns.pass, false);
+            if (btns.ready) Utils.toggleVisibility(btns.ready, false);
+        }
+    }
+
+    updatePauseUI() {
+        const overlay = document.getElementById('pause-overlay');
+        const pauseBtnText = document.getElementById('pause-btn-text');
+        const pauseBtnIcon = document.querySelector('#pauseButton i');
+
+        if (overlay) Utils.toggleVisibility(overlay, this.paused, 'flex');
+
+        if (pauseBtnText) {
+            pauseBtnText.textContent = this.paused ? 'استئناف اللعبة' : 'إيقاف مؤقت';
+        }
+
+        if (pauseBtnIcon) {
+            pauseBtnIcon.className = this.paused ? 'fas fa-play' : 'fas fa-pause';
+        }
+
+        this.updateButtonVisibility();
     }
 
     updateCurrentPlayer(player) {
@@ -648,34 +911,35 @@ class GameEngine {
         if (itemDisplay) {
             // In Trivia, everyone sees the question. In others, only the performer (isMe) sees it.
             if (this.gameType === 'trivia' || isMe) {
-                itemDisplay.style.display = 'block';
+                Utils.toggleVisibility(itemDisplay, true);
                 // Don't add .visible here if we're about to call displayQuestion/displayItem
             } else if (this.gameType === 'pictionary' && !isMe && this.currentItemCategory) {
                 // Show category hint for non-drawing players in easy/medium difficulty
                 const difficulty = this.gameSettings.difficulty || 'medium';
                 if (difficulty === 'easy' || difficulty === 'medium') {
-                    itemDisplay.style.display = 'block';
+                    Utils.toggleVisibility(itemDisplay, true);
                     itemDisplay.innerHTML = `<div class="item-category" style="font-size: 1.8rem;">${this.currentItemCategory}</div>`;
                     itemDisplay.classList.add('visible');
                 } else {
-                    itemDisplay.style.display = 'none';
+                    Utils.toggleVisibility(itemDisplay, false);
                     itemDisplay.classList.remove('visible');
                     console.log('Hard difficulty - no category hint');
                 }
             } else {
-                itemDisplay.style.display = 'none';
+                Utils.toggleVisibility(itemDisplay, false);
                 itemDisplay.classList.remove('visible');
             }
         }
 
         if (pictionaryArea) {
             if (this.gameType === 'pictionary' && this.gameStatus === 'round_active') {
-                pictionaryArea.style.display = 'block';
+                Utils.toggleVisibility(pictionaryArea, true);
                 this.initCanvas();
                 // Show controls only to the drawer
-                document.querySelector('.canvas-controls').style.display = isMe ? 'flex' : 'none';
+                const controls = document.querySelector('.canvas-controls');
+                if (controls) Utils.toggleVisibility(controls, isMe, 'flex');
             } else {
-                pictionaryArea.style.display = 'none';
+                Utils.toggleVisibility(pictionaryArea, false);
             }
         }
 
@@ -685,15 +949,20 @@ class GameEngine {
     displayItem(category, itemData) {
         const el = document.getElementById('item-display');
         if (el) {
-            el.style.display = 'block';
+            Utils.toggleVisibility(el, true);
             const item = typeof itemData === 'object' ? itemData.item : itemData;
             const year = itemData.year ? `<div class="item-meta">سنة الإنتاج: ${itemData.year}</div>` : '';
             const starring = itemData.starring ? `<div class="item-meta">بطولة: ${itemData.starring}</div>` : '';
             const type = itemData.type ? `<span class="badge badge-team-2">${itemData.type}</span>` : '';
 
+            const categoryIcons = {
+                'أفلام': '🎬', 'مسلسلات': '📺', 'مسرحيات': '🎭', 'أغاني': '🎵', 'شخصيات': '👤', 'أمثال': '🗣️'
+            };
+            const icon = categoryIcons[category] || '🎮';
+
             el.innerHTML = `
-                <div class="item-category">${category} ${type}</div>
-                <div class="item-name">${item}</div>
+                <div class="item-category animate-bounce-down">${icon} ${category} ${type}</div>
+                <div class="item-name animate-jelly">${item}</div>
                 ${year}
                 ${starring}
             `;
@@ -704,7 +973,7 @@ class GameEngine {
     displayQuestion(data) {
         const el = document.getElementById('item-display');
         if (el) {
-            el.style.display = 'block';
+            Utils.toggleVisibility(el, true);
             let html = `<div class="item-category">${data.category}</div>`;
             html += `<div class="item-name" style="font-size: 1.8rem;">${data.question}</div>`;
             
@@ -786,6 +1055,42 @@ class GameEngine {
         canvas.ontouchstart = start;
         canvas.ontouchmove = draw;
         canvas.ontouchend = stop;
+
+        this.initSwipeGestures();
+    }
+
+    initSwipeGestures() {
+        let touchstartX = 0;
+        let touchstartY = 0;
+        let touchendX = 0;
+        let touchendY = 0;
+
+        const handleSwipe = () => {
+            const dx = touchendX - touchstartX;
+            const dy = touchendY - touchstartY;
+            if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 100) {
+                if (dx > 0) { // Swipe Right
+                    const passBtn = document.getElementById('passButton');
+                    if (passBtn && !passBtn.classList.contains('u-hidden')) passBtn.click();
+                } else { // Swipe Left
+                    const readyBtn = document.getElementById('readyButton');
+                    if (readyBtn && !readyBtn.classList.contains('u-hidden')) readyBtn.click();
+                    const guessBtn = document.getElementById('guessButton');
+                    if (guessBtn && !guessBtn.classList.contains('u-hidden')) guessBtn.click();
+                }
+            }
+        };
+
+        document.addEventListener('touchstart', e => {
+            touchstartX = e.changedTouches[0].screenX;
+            touchstartY = e.changedTouches[0].screenY;
+        }, false);
+
+        document.addEventListener('touchend', e => {
+            touchendX = e.changedTouches[0].screenX;
+            touchendY = e.changedTouches[0].screenY;
+            handleSwipe();
+        }, false);
     }
 
     drawStroke(s) {
@@ -820,6 +1125,7 @@ class GameEngine {
         
         players.forEach(p => {
             const name = typeof p === 'object' ? p.name : p;
+            const avatar = typeof p === 'object' ? p.avatar || '🐶' : '🐶';
             const isHost = typeof p === 'object' ? p.isHost : false;
             const team = typeof p === 'object' ? p.team : null;
             const isReady = typeof p === 'object' ? p.ready : false;
@@ -837,6 +1143,7 @@ class GameEngine {
             let html = `
                 <div class="player-info">
                     ${statusIcon}
+                    <span class="player-avatar" style="margin-left: 0.5rem;">${avatar}</span>
                     <span>${name} ${isHost ? '👑' : ''} ${name === this.playerName ? '(أنت)' : ''}</span>
                 </div>
             `;
@@ -856,36 +1163,57 @@ class GameEngine {
         
         const newScores = data.scores || (data.team_scores ? {} : data);
         const previousScores = this.previousScores || {};
+        const players = data.players || [];
 
         let html = '';
         
-        // Show team scores if they exist and are non-zero
+        // Show team scores with bars
         if (data.team_scores && (data.team_scores['1'] > 0 || data.team_scores['2'] > 0)) {
-            html += '<div class="team-scores-container">';
-            Object.entries(data.team_scores).forEach(([team, score]) => {
-                const prevScore = (this.previousTeamScores || {})[team] || 0;
-                const diff = score - prevScore;
-                const animClass = diff > 0 ? 'score-highlight' : '';
+            const t1 = data.team_scores['1'] || 0;
+            const t2 = data.team_scores['2'] || 0;
+            const max = Math.max(t1, t2, 10);
+
+            html += '<div class="team-scores-bars u-margin-bottom">';
+            [1, 2].forEach(teamNum => {
+                const score = data.team_scores[teamNum] || 0;
+                const percent = (score / max) * 100;
                 html += `
-                    <div class="score-item ${animClass}" style="position: relative;">
-                        فريق ${team}: <span class="score-val" id="team-score-${team}">${score}</span>
-                        ${diff > 0 ? `<span class="flying-score">+${diff}</span>` : ''}
-                    </div>`;
+                    <div class="team-bar-container u-margin-bottom">
+                        <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:700;">
+                            <span>فريق ${teamNum}</span>
+                            <span>${score}</span>
+                        </div>
+                        <div class="progress-bar" style="height:10px; background:rgba(0,0,0,0.1); border-radius:5px; overflow:hidden;">
+                            <div style="width:${percent}%; height:100%; background:var(--team-${teamNum}-color, ${teamNum === 1 ? '#FF6B6B' : '#4ECDC4'}); transition:width 1s ease;"></div>
+                        </div>
+                    </div>
+                `;
             });
             html += '</div>';
             this.previousTeamScores = Object.assign({}, data.team_scores);
         }
         
+        // Sort individual scores for leaderboard view
+        const sortedScores = Object.entries(newScores).sort((a, b) => b[1] - a[1]);
+
         // Show individual scores
-        html += Object.entries(newScores)
-            .map(([p, s]) => {
+        html += sortedScores
+            .map(([p, s], index) => {
                 const prevScore = previousScores[p] || 0;
                 const diff = s - prevScore;
                 const animClass = diff > 0 ? 'score-highlight' : '';
+                const playerObj = players.find(pl => pl.name === p);
+                const avatar = playerObj ? playerObj.avatar || '🐶' : '🐶';
+
+                const medals = ['🥇', '🥈', '🥉'];
+                const rank = index < 3 ? medals[index] : (index + 1) + '.';
+
                 return `
-                    <div class="score-item ${p === this.playerName ? 'current-player' : ''} ${animClass}" style="position: relative;">
-                        <span>${p}</span>
-                        <span class="score-val" id="player-score-${p}">${s}</span>
+                    <div class="score-item ${p === this.playerName ? 'current-player' : ''} ${animClass}" style="position: relative; display:flex; align-items:center; gap:0.5rem;">
+                        <span style="font-size:0.8rem; min-width:20px;">${rank}</span>
+                        <span class="player-avatar">${avatar}</span>
+                        <span style="flex:1;">${p}</span>
+                        <span class="score-val" id="player-score-${p}" style="font-weight:800;">${s}</span>
                         ${diff > 0 ? `<span class="flying-score">+${diff}</span>` : ''}
                     </div>`;
             })
@@ -922,29 +1250,41 @@ class GameEngine {
 
     startTimer(duration) {
         this.stopTimer();
+        if (this.paused) return;
         const timerEl = document.getElementById('timer');
-        const timerText = timerEl ? timerEl.querySelector('span') : null;
-        if (!timerEl || !timerText) return;
+        const timerText = timerEl ? timerEl.querySelector('.timer-text') : null;
+        const progressCircle = timerEl ? timerEl.querySelector('.timer-progress') : null;
+
+        if (!timerEl || !timerText || !progressCircle) return;
         
         this.setGameStatus('round_active');
         let timeLeft = duration;
-        timerEl.style.display = 'flex';
-        timerEl.classList.remove('warning', 'danger');
+        Utils.toggleVisibility(timerEl, true, 'flex');
+        timerEl.className = 'timer-container'; // Reset classes
+
+        const totalLength = 2 * Math.PI * 45;
+        progressCircle.style.strokeDasharray = totalLength;
 
         const format = (s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2, '0')}`;
         timerText.textContent = format(timeLeft);
 
         this.timerInterval = setInterval(() => {
+            if (this.paused) return;
             timeLeft--;
             timerText.textContent = format(timeLeft);
-            if (timeLeft <= 30) timerEl.classList.add('warning');
+
+            // Circular progress
+            const offset = totalLength - (timeLeft / duration) * totalLength;
+            progressCircle.style.strokeDashoffset = offset;
+
+            // Colors
+            const percent = (timeLeft / duration) * 100;
+            if (percent < 15) timerEl.classList.add('danger');
+            else if (percent < 40) timerEl.classList.add('warning');
+
             if (timeLeft <= 10) {
-                timerEl.classList.remove('warning');
-                timerEl.classList.add('danger');
-                // Play ticking sound for last 5 seconds
-                if (timeLeft <= 5 && timeLeft > 0) {
-                    AudioManager.play('timeout');
-                }
+                timerEl.classList.add('pulse');
+                if (timeLeft <= 5 && timeLeft > 0) AudioManager.play('timeout');
             }
 
             if (timeLeft <= 0) {
@@ -960,11 +1300,7 @@ class GameEngine {
             this.timerInterval = null;
         }
         const el = document.getElementById('timer');
-        const txt = el ? el.querySelector('span') : null;
-        if (el && txt) {
-            txt.textContent = '0:00';
-            el.style.display = 'none';
-        }
+        if (el) Utils.toggleVisibility(el, false);
     }
 
     playTimeoutTwice() {
@@ -993,8 +1329,142 @@ class GameEngine {
                 ${starring}
             </div>
         `;
-        msg.style.display = 'block';
-        setTimeout(() => msg.style.display = 'none', 5000);
+        Utils.toggleVisibility(msg, true);
+        setTimeout(() => Utils.toggleVisibility(msg, false), 5000);
+    }
+
+    sendReaction(emoji) {
+        if (this.lastReactionTime && Date.now() - this.lastReactionTime < 2000) return;
+        this.lastReactionTime = Date.now();
+        this.socket.emit('player_reaction', { game_id: this.gameId, reaction: emoji });
+        HapticManager.vibrate(50);
+    }
+
+    showReaction(data) {
+        const floating = document.createElement('div');
+        floating.className = 'floating-reaction';
+        floating.innerHTML = `<span class="reaction-name">${data.player}</span><span class="reaction-emoji">${data.reaction}</span>`;
+
+        // Random horizontal position
+        const x = 20 + Math.random() * 60;
+        floating.style.left = x + '%';
+        floating.style.bottom = '20%';
+
+        document.body.appendChild(floating);
+        setTimeout(() => floating.remove(), 2500);
+    }
+
+    showGameSummary(data) {
+        const modal = document.getElementById('summary-modal');
+        if (!modal) return;
+
+        this.stopTimer();
+        Utils.triggerConfetti('full');
+        AudioManager.play('guessed');
+
+        // Leaderboard
+        const lb = document.getElementById('summary-leaderboard');
+        const sorted = Object.entries(data.scores || {}).sort((a,b) => b[1] - a[1]);
+        const medals = ['🥇', '🥈', '🥉'];
+
+        lb.innerHTML = sorted.map(([name, score], i) => `
+            <div class="summary-player card" style="display:flex; align-items:center; gap:1rem; margin-bottom:0.5rem; padding:0.8rem 1.5rem;">
+                <span style="font-size:1.5rem;">${medals[i] || (i+1)+'.'}</span>
+                <span style="flex:1; font-weight:700;">${name}</span>
+                <span class="badge badge-primary">${score} نقطة</span>
+            </div>
+        `).join('');
+
+        // Highlights
+        const highlights = document.getElementById('summary-highlights');
+        const stats = data.player_stats || {};
+        let mvp = sorted[0] ? sorted[0][0] : '-';
+
+        let speedster = '-';
+        let fastestTime = 999;
+        let consistent = '-';
+        let maxCorrect = 0;
+
+        Object.entries(stats).forEach(([name, s]) => {
+            if (s.fastest < fastestTime) {
+                fastestTime = s.fastest;
+                speedster = name;
+            }
+            if (s.correct > maxCorrect) {
+                maxCorrect = s.correct;
+                consistent = name;
+            }
+        });
+
+        highlights.innerHTML = `
+            <div class="highlight-card card animate-bounce-down" style="--delay: 0.1s">
+                <i class="fas fa-crown fa-2x" style="color: gold;"></i>
+                <h4>MVP</h4>
+                <p>${mvp}</p>
+            </div>
+            <div class="highlight-card card animate-bounce-down" style="--delay: 0.2s">
+                <i class="fas fa-bolt fa-2x" style="color: var(--secondary);"></i>
+                <h4>الأسرع</h4>
+                <p>${speedster}</p>
+            </div>
+            <div class="highlight-card card animate-bounce-down" style="--delay: 0.3s">
+                <i class="fas fa-bullseye fa-2x" style="color: var(--primary);"></i>
+                <h4>المالك</h4>
+                <p>${consistent}</p>
+            </div>
+        `;
+
+        document.getElementById('stat-rounds').textContent = data.rounds_played || 0;
+        const dur = data.game_duration || 0;
+        document.getElementById('stat-duration').textContent = Math.floor(dur/60) + ' دقيقة';
+
+        modal.style.display = 'flex';
+
+        // Share button logic
+        const shareBtn = document.getElementById('share-results-btn');
+        if (shareBtn) {
+            shareBtn.onclick = () => this.generateShareImage();
+        }
+    }
+
+    async generateShareImage() {
+        if (typeof html2canvas === 'undefined') {
+            ToastManager.show('جاري تحميل مكتبة المشاركة...', 'info');
+            return;
+        }
+
+        const modalContent = document.querySelector('.summary-content');
+        try {
+            const canvas = await html2canvas(modalContent, {
+                backgroundColor: '#F7FFF7',
+                scale: 2
+            });
+            const link = document.createElement('a');
+            link.download = `family-games-result-${this.gameId}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+            ToastManager.show('تم تجهيز الصورة للمشاركة!', 'success');
+        } catch (e) {
+            console.error(e);
+            ToastManager.show('فشل إنشاء الصورة', 'error');
+        }
+    }
+
+    showHint(data) {
+        let hintContainer = document.getElementById('hint-container');
+        if (!hintContainer) {
+            hintContainer = document.createElement('div');
+            hintContainer.id = 'hint-container';
+            hintContainer.style.cssText = 'position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; gap: 5px;';
+            const area = document.getElementById('pictionary-area') || document.getElementById('item-display');
+            if (area) area.appendChild(hintContainer);
+        }
+
+        const badge = document.createElement('div');
+        badge.className = 'badge badge-team-2 animate-bounce-down';
+        badge.innerHTML = `<i class="fas fa-lightbulb"></i> تلميح: ${data.hint}`;
+        hintContainer.appendChild(badge);
+        HapticManager.vibrate(50);
     }
 }
 
@@ -1035,7 +1505,9 @@ const ThemeManager = {
 
 document.addEventListener('DOMContentLoaded', () => {
     ThemeManager.init();
+    KeyboardShortcuts.init();
     AudioManager.init();
+    Lobby.init();
     const isGamePage = window.location.pathname.includes('/game/');
     
     if (isGamePage) {

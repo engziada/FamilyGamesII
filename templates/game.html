@@ -14,13 +14,23 @@
                 <i class="fas fa-user-circle"></i>
                 الدور على: <span id="current-turn">...</span>
             </div>
-            <div id="timer" class="timer-box">
-                <i class="fas fa-clock"></i>
-                <span>02:00</span>
+            <div id="timer" class="timer-container u-hidden">
+                <svg class="timer-svg" viewBox="0 0 100 100">
+                    <circle class="timer-bg" cx="50" cy="50" r="45"></circle>
+                    <circle class="timer-progress" cx="50" cy="50" r="45"></circle>
+                </svg>
+                <span class="timer-text">0:00</span>
             </div>
         </div>
 
         <div class="display-area card">
+            <!-- Pause Overlay -->
+            <div id="pause-overlay" class="u-hidden u-full-width u-flex-center" style="position: absolute; inset: 0; background: rgba(255,255,255,0.9); z-index: 100; flex-direction: column; border-radius: inherit;">
+                <i class="fas fa-pause-circle fa-5x animate-heartbeat" style="color: var(--primary); margin-bottom: 1.5rem;"></i>
+                <h2 style="color: var(--text);">اللعبة متوقفة مؤقتاً</h2>
+                <p style="color: var(--text-light); font-weight: 700;">المضيف أوقف اللعبة، استراحة قصيرة!</p>
+            </div>
+
             <div id="item-display" class="item-card animate-jelly u-hidden u-full-width">
                 <!-- Content populated by JS -->
             </div>
@@ -42,13 +52,13 @@
 
             <div class="game-actions u-flex-center u-full-width u-margin-top">
                 <button id="readyButton" class="btn btn-primary u-hidden">
-                    <i class="fas fa-play"></i> أنا جاهز!
+                <i class="fas fa-play"></i> أنا جاهز! <kbd>Space</kbd>
                 </button>
                 <button id="passButton" class="btn btn-outline u-hidden">
                     <i class="fas fa-forward"></i> تخطي
                 </button>
                 <button id="guessButton" class="btn btn-secondary u-hidden">
-                    <i class="fas fa-check"></i> عرفتها!
+                <i class="fas fa-check"></i> عرفتها! <kbd>Enter</kbd>
                 </button>
             </div>
         </div>
@@ -60,6 +70,9 @@
             </button>
             <button id="nextButton" class="btn btn-secondary" style="display: none;">
                 <i class="fas fa-step-forward"></i> الجولة التالية
+            </button>
+            <button id="pauseButton" class="btn btn-outline">
+                <i class="fas fa-pause"></i> <span id="pause-btn-text">إيقاف مؤقت</span> <kbd>P</kbd>
             </button>
             <button id="close-room" class="btn btn-outline" style="color: white; background-color: var(--danger);">
                 <i class="fas fa-times-circle"></i> إنهاء اللعبة
@@ -95,6 +108,47 @@
                 </button>
             </p>
             <p>أنت تلعب بصفتك: <strong style="color: var(--secondary);">{{ player_name }}</strong></p>
+            <button id="show-rules-btn" class="btn btn-outline u-full-width u-margin-top" onclick="Utils.showRulesModal('{{ game_type }}')">
+                <i class="fas fa-question-circle"></i> إزاي تلعب؟ <kbd>H</kbd>
+            </button>
+        </div>
+    </div>
+
+    <div class="reaction-bar animate-bounce-down">
+        <button onclick="window.gameInstance.sendReaction('👍')">👍</button>
+        <button onclick="window.gameInstance.sendReaction('😂')">😂</button>
+        <button onclick="window.gameInstance.sendReaction('🔥')">🔥</button>
+        <button onclick="window.gameInstance.sendReaction('❤️')">❤️</button>
+        <button onclick="window.gameInstance.sendReaction('😮')">😮</button>
+    </div>
+</div>
+
+<!-- Game Summary Modal -->
+<div id="summary-modal" class="modal">
+    <div class="modal-content animate-jelly summary-content" style="max-width: 600px;">
+        <h2 style="color: var(--primary);">🏁 انتهت اللعبة!</h2>
+        <div id="summary-leaderboard" class="u-margin-bottom"></div>
+
+        <div id="summary-highlights" class="highlights-grid u-margin-bottom"></div>
+
+        <div class="summary-stats card u-margin-bottom" style="padding: 1rem;">
+            <div style="display: flex; justify-content: space-around; text-align: center;">
+                <div>
+                    <h4 id="stat-rounds">-</h4>
+                    <p style="font-size: 0.8rem;">جولة</p>
+                </div>
+                <div>
+                    <h4 id="stat-duration">-</h4>
+                    <p style="font-size: 0.8rem;">مدة اللعب</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="buttons u-full-width">
+            <button class="btn btn-primary" onclick="location.href='/'" style="flex: 1;">الرئيسية</button>
+            <button class="btn btn-secondary" id="share-results-btn" style="flex: 1;">
+                <i class="fas fa-share-alt"></i> شارك النتيجة
+            </button>
         </div>
     </div>
 </div>

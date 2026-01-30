@@ -509,6 +509,27 @@ header h1 {
 .badge-team-1 { background-color: var(--purple); color: white; }
 .badge-team-2 { background-color: var(--secondary); color: white; }
 
+kbd {
+    background-color: #eee;
+    border-radius: 3px;
+    border: 1px solid #b4b4b4;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.2), 0 2px 0 0 rgba(255,255,255,0.7) inset;
+    color: #333;
+    display: inline-block;
+    font-size: 0.85em;
+    font-weight: 700;
+    line-height: 1;
+    padding: 2px 4px;
+    white-space: nowrap;
+    margin-right: 5px;
+}
+
+[data-theme="dark"] kbd {
+    background-color: #333;
+    color: #eee;
+    border-color: #555;
+}
+
 /* --- Trivia Options --- */
 .options-grid button {
     transition: var(--transition);
@@ -543,6 +564,169 @@ header h1 {
     margin-bottom: 1rem;
     font-size: 1.5rem;
 }
+
+/* Phase 3 & 4 Styles */
+.avatar-btn {
+    font-size: 2rem;
+    background: white;
+    border: 3px solid var(--text);
+    border-radius: 15px;
+    cursor: pointer;
+    padding: 0.5rem;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-small);
+}
+
+.avatar-btn:hover {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.avatar-picker-container {
+    background: white;
+    border: 3px solid var(--text);
+    border-radius: 20px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: var(--shadow-pop);
+}
+
+.avatar-picker {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.5rem;
+}
+
+.avatar-option {
+    font-size: 1.8rem;
+    cursor: pointer;
+    text-align: center;
+    padding: 0.5rem;
+    border-radius: 10px;
+    transition: all 0.2s;
+}
+
+.avatar-option:hover, .avatar-option.selected {
+    background: var(--accent);
+    transform: scale(1.2);
+}
+
+/* Floating Reactions */
+.reaction-bar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 0.8rem 1.5rem;
+    border-radius: 50px;
+    display: flex;
+    gap: 1rem;
+    border: 3px solid var(--text);
+    box-shadow: var(--shadow-pop);
+    z-index: 1000;
+}
+
+.reaction-bar button {
+    font-size: 1.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.reaction-bar button:hover {
+    transform: scale(1.3);
+}
+
+.floating-reaction {
+    position: fixed;
+    pointer-events: none;
+    z-index: 1500;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: flyUpAndFade 2.5s ease-out forwards;
+}
+
+.reaction-name {
+    font-size: 0.8rem;
+    font-weight: 700;
+    background: var(--text);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-bottom: 5px;
+}
+
+.reaction-emoji {
+    font-size: 2.5rem;
+}
+
+@keyframes flyUpAndFade {
+    0% { transform: translateY(0) scale(0.5); opacity: 0; }
+    10% { opacity: 1; transform: translateY(-20px) scale(1.2); }
+    100% { transform: translateY(-300px) scale(1); opacity: 0; }
+}
+
+/* Circular Timer */
+.timer-container {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timer-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.timer-bg {
+    fill: none;
+    stroke: rgba(0,0,0,0.1);
+    stroke-width: 8;
+}
+
+.timer-progress {
+    fill: none;
+    stroke: var(--success);
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s linear, stroke 0.3s;
+}
+
+.timer-text {
+    position: absolute;
+    font-family: 'Changa', sans-serif;
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: var(--text);
+}
+
+.timer-container.warning .timer-progress { stroke: var(--accent); }
+.timer-container.danger .timer-progress { stroke: var(--danger); }
+.timer-container.pulse { animation: heartbeat 1s infinite; }
+
+/* Summary */
+.highlights-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.highlight-card {
+    text-align: center;
+    padding: 1.5rem 1rem;
+    background: white;
+}
+
+.highlight-card h4 { margin-bottom: 0.5rem; }
+.highlight-card p { font-weight: 800; color: var(--primary); }
 
 /* --- Animations --- */
 
@@ -590,7 +774,7 @@ header h1 {
 }
 
 /* --- Utilities --- */
-.u-hidden { display: none !important; }
+.u-hidden { display: none; }
 .u-flex-center { display: flex; justify-content: center; align-items: center; gap: 1rem; }
 .u-full-width { width: 100%; }
 .u-margin-top { margin-top: 1.5rem; }
@@ -617,6 +801,17 @@ header h1 {
 
 .score-highlight {
     animation: scoreHighlight 1s ease-in-out;
+}
+
+/* Mobile Optimizations */
+@media (pointer: coarse) {
+    .btn, .input-control, input, select {
+        min-height: 50px;
+    }
+
+    .reaction-bar button {
+        padding: 0.5rem;
+    }
 }
 
 /* --- Responsive --- */
@@ -649,4 +844,50 @@ header h1 {
         padding: 0.8rem 1.5rem;
         font-size: 1rem;
     }
+}
+
+/* Avatar Picker */
+.avatar-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    max-height: 150px;
+    overflow-y: auto;
+    padding: 1rem;
+    background: rgba(0,0,0,0.05);
+    border-radius: 15px;
+    justify-content: center;
+}
+
+[data-theme="dark"] .avatar-picker {
+    background: rgba(255,255,255,0.05);
+}
+
+.avatar-option {
+    font-size: 1.8rem;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+    border: 2px solid transparent;
+}
+
+.avatar-option:hover {
+    transform: scale(1.2);
+    background: var(--accent);
+}
+
+.avatar-option.selected {
+    background: var(--secondary);
+    border-color: var(--primary);
+    transform: scale(1.1);
+}
+
+.player-avatar {
+    font-size: 1.5rem;
+    margin-left: 0.5rem;
 }

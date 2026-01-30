@@ -16,6 +16,7 @@
             <p>قم بتمثيل الكلمة بدون استخدام الكلام وخلي صحابك يخمنوا! اللعبة الأشهر في كل تجمعاتنا.</p>
             <div class="game-meta">
                 <span><i class="fas fa-users"></i> 2 - 8 لاعبين</span>
+                <span style="cursor: pointer; margin-right: 1rem;" onclick="Utils.showRulesModal('charades')"><i class="fas fa-question-circle"></i> إزاي تلعب؟</span>
             </div>
             <div class="buttons">
                 <button class="btn btn-primary" onclick="Utils.showGameModal('charades', 'create')">
@@ -36,6 +37,7 @@
             <p>لعبة الرسم والذكاء. ارسم الكلمة وحاول تخلي صحابك يعرفوها في أسرع وقت!</p>
             <div class="game-meta">
                 <span><i class="fas fa-users"></i> 2 - 8 لاعبين</span>
+                <span style="cursor: pointer; margin-right: 1rem;" onclick="Utils.showRulesModal('pictionary')"><i class="fas fa-question-circle"></i> إزاي تلعب؟</span>
             </div>
             <div class="buttons">
                 <button class="btn btn-primary" onclick="Utils.showGameModal('pictionary', 'create')">
@@ -56,6 +58,7 @@
             <p>اختبر معلوماتك العامة مع أهلك وأصحابك في مسابقة ثقافية ممتعة. أسئلة في كل المجالات!</p>
             <div class="game-meta">
                 <span><i class="fas fa-users"></i> 2 - 8 لاعبين</span>
+                <span style="cursor: pointer; margin-right: 1rem;" onclick="Utils.showRulesModal('trivia')"><i class="fas fa-question-circle"></i> إزاي تلعب؟</span>
             </div>
             <div class="buttons">
                 <button class="btn btn-primary" onclick="Utils.showGameModal('trivia', 'create')">
@@ -67,6 +70,13 @@
             </div>
         </div>
     </div>
+
+    <footer style="margin-top: 4rem; text-align: center; padding-bottom: 2rem;">
+        <p style="color: var(--text-light);">© 2026 ألعاب العيلة - جميع الحقوق محفوظة</p>
+        <a href="#" id="show-tutorial-btn" class="tutorial-link">
+            <i class="fas fa-question-circle"></i> عرض التعليمات التعليمية
+        </a>
+    </footer>
 </div>
 
 <!-- Create Game Modal -->
@@ -75,10 +85,18 @@
     <div class="modal-content animate-bounce-down">
         <h2 id="modal-title">إنشاء غرفة جديدة</h2>
         <div id="create-error-message" class="error-message badge badge-team-1 u-hidden u-full-width u-margin-bottom"></div>
-        <div class="input-group">
-            <label for="host-name">اسمك</label>
-            <input type="text" id="host-name" placeholder="اكتب اسمك هنا...">
-        </div>
+        <div id="host-form" class="u-full-width">
+            <div class="input-group">
+                <label for="host-name">اسمك</label>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <button type="button" id="host-avatar-btn" class="avatar-btn" onclick="Lobby.toggleAvatarPicker('host-avatar-picker-container')">👤</button>
+                    <input type="text" id="host-name" placeholder="اكتب اسمك هنا..." style="flex: 1;">
+                </div>
+                <div id="host-avatar-picker-container" class="avatar-picker-container u-hidden animate-bounce-down">
+                    <div class="avatar-picker" id="host-avatar-picker"></div>
+                </div>
+                <input type="hidden" id="host-avatar" value="🐶">
+            </div>
         <div class="input-group">
             <label>نظام اللعب</label>
             <select id="game-teams" class="input-control">
@@ -122,7 +140,14 @@
             <div id="join-error-message" class="error-message badge badge-team-1 u-hidden u-full-width u-margin-bottom"></div>
             <div class="input-group">
                 <label for="player-name">اسمك</label>
-                <input type="text" id="player-name" placeholder="اكتب اسمك...">
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <button type="button" id="player-avatar-btn" class="avatar-btn" onclick="Lobby.toggleAvatarPicker('player-avatar-picker-container')">👤</button>
+                    <input type="text" id="player-name" placeholder="اكتب اسمك..." style="flex: 1;">
+                </div>
+                <div id="player-avatar-picker-container" class="avatar-picker-container u-hidden animate-bounce-down">
+                    <div class="avatar-picker" id="player-avatar-picker"></div>
+                </div>
+                <input type="hidden" id="player-avatar" value="🐶">
             </div>
             <div class="input-group">
                 <label for="room-code">رقم الغرفة</label>

@@ -15,3 +15,16 @@ class PictionaryGame(CharadesGame):
 
     def add_stroke(self, stroke):
         self.canvas_data.append(stroke)
+
+    def get_hints(self, elapsed):
+        hints = []
+        if not self.current_item: return hints
+
+        word = self.current_item.get('item', '')
+        # 30s: Word length
+        if elapsed >= 30:
+            hints.append(f"الكلمة من {len(word)} حروف")
+        # 60s: First letter
+        if elapsed >= 60:
+            hints.append(f"أول حرف هو: {word[0]}")
+        return hints

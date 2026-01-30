@@ -16,12 +16,18 @@ class TriviaGame:
         self.current_question = None
         self.question_active = False
         self.round_start_time = None
+        self.paused = False
+        self.pause_start_time = None
+        self.rounds_played = 0
+        self.game_start_time = datetime.now()
+        self.player_stats = {} # {player_name: {'correct': 0, 'fastest': 999, 'total_time': 0}}
         self.players_answered = set()  # Track who answered current question
         self.players_answered_wrong = set()  # Track who answered wrong
         self.settings = settings or {
             'teams': False,
             'difficulty': 'all',
-            'time_limit': 30
+            'time_limit': 30,
+            'max_rounds': 10
         }
         
         # Get data service instance
@@ -57,6 +63,7 @@ class TriviaGame:
             team = 2 if t2 < t1 else 1
 
         self.players.append({'name': player_name, 'isHost': False, 'team': team, 'ready': False})
+        self.player_stats[player_name] = {'correct': 0, 'fastest': 999, 'total_time': 0}
 
     def set_player_ready(self, player_name, ready_status=True):
         for player in self.players:
@@ -80,10 +87,32 @@ class TriviaGame:
         self.current_question = self.get_question()
         self.question_active = True
         self.round_start_time = datetime.now()
+        self.paused = False
+        self.rounds_played = 0
+        self.game_start_time = datetime.now()
         self.players_answered = set()
         self.players_answered_wrong = set()
 
+    def toggle_pause(self):
+        self.paused = not self.paused
+        if self.paused:
+            self.pause_start_time = datetime.now()
+        else:
+            if self.round_start_time and self.pause_start_time:
+                pause_duration = datetime.now() - self.pause_start_time
+                self.round_start_time += pause_duration
+            self.pause_start_time = None
+        return self.paused
+
     def next_round(self):
+        self.rounds_played += 1
+
+        # Check if game should end
+        max_rounds = int(self.settings.get('max_rounds', 10))
+        if self.rounds_played >= max_rounds:
+            self.status = 'ended'
+            return
+
         self.reset_ready_status()
         self.current_question = self.get_question()
         self.status = 'round_active'
@@ -132,6 +161,18 @@ class TriviaGame:
 
     def add_score(self, player_name, points):
         self.scores[player_name] = self.scores.get(player_name, 0) + points
+
+        # Track stats
+        if points > 0:
+            if player_name not in self.player_stats:
+                self.player_stats[player_name] = {'correct': 0, 'fastest': 999, 'total_time': 0}
+            self.player_stats[player_name]['correct'] += 1
+            if self.round_start_time:
+                elapsed = (datetime.now() - self.round_start_time).total_seconds()
+                self.player_stats[player_name]['total_time'] += elapsed
+                if elapsed < self.player_stats[player_name]['fastest']:
+                    self.player_stats[player_name]['fastest'] = elapsed
+
         if self.settings.get('teams'):
             p = next((p for p in self.players if p['name'] == player_name), None)
             if p:
@@ -155,5 +196,9 @@ class TriviaGame:
             'team_scores': self.team_scores,
             'current_player': self.current_player,
             'current_question': q,
-            'settings': self.settings
+            'paused': self.paused,
+            'settings': self.settings,
+            'rounds_played': self.rounds_played,
+            'player_stats': self.player_stats,
+            'game_duration': (datetime.now() - self.game_start_time).total_seconds()
         }

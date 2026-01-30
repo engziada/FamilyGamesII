@@ -15,13 +15,21 @@ class CharadesGame:
         self.current_player = ''
         self.current_item = None
         self.round_start_time = None
+        self.paused = False
+        self.pause_start_time = None
+        self.rounds_played = 0
+        self.game_start_time = datetime.now()
         
-        # Settings: {teams: bool, difficulty: str, custom_words: str, time_limit: int}
+        # Statistics tracking
+        self.player_stats = {} # {player_name: {'correct': 0, 'fastest': 999, 'total_time': 0}}
+
+        # Settings: {teams: bool, difficulty: str, custom_words: str, time_limit: int, max_rounds: int}
         self.settings = settings or {
             'teams': False,
             'difficulty': 'all',
             'custom_words': '',
-            'time_limit': 120
+            'time_limit': 120,
+            'max_rounds': 10
         }
         
         self.custom_items = []
@@ -65,6 +73,13 @@ class CharadesGame:
             team = 2 if team2_count < team1_count else 1
             
         self.players.append({'name': player_name, 'isHost': False, 'team': team, 'ready': False})
+
+        # Initialize stats for player
+        self.player_stats[player_name] = {
+            'correct': 0,
+            'fastest': 999,
+            'total_time': 0
+        }
 
     def set_player_ready(self, player_name, ready_status=True):
         for player in self.players:
@@ -120,7 +135,21 @@ class CharadesGame:
         self.current_player = self.players[0]['name']
         self.current_item = None
         self.round_start_time = None
-        
+        self.paused = False
+        self.rounds_played = 0
+        self.game_start_time = datetime.now()
+
+    def toggle_pause(self):
+        self.paused = not self.paused
+        if self.paused:
+            self.pause_start_time = datetime.now()
+        else:
+            if self.round_start_time and self.pause_start_time:
+                pause_duration = datetime.now() - self.pause_start_time
+                self.round_start_time += pause_duration
+            self.pause_start_time = None
+        return self.paused
+
     def set_current_item(self, item):
         """Set the current item for the player's turn"""
         self.current_item = item
@@ -133,6 +162,14 @@ class CharadesGame:
         if not self.players:
             raise ValueError("لا يوجد لاعبين")
         
+        self.rounds_played += 1
+
+        # Check if game should end
+        max_rounds = int(self.settings.get('max_rounds', 10))
+        if self.rounds_played >= max_rounds:
+            self.status = 'ended'
+            return
+
         self.reset_ready_status()
 
         # Find next player
@@ -147,6 +184,19 @@ class CharadesGame:
         if player_name not in self.scores:
             self.scores[player_name] = 0
         self.scores[player_name] += points
+
+        # Track stats for correct guess
+        if points > 0:
+            if player_name not in self.player_stats:
+                self.player_stats[player_name] = {'correct': 0, 'fastest': 999, 'total_time': 0}
+
+            self.player_stats[player_name]['correct'] += 1
+
+            if self.round_start_time:
+                elapsed = (datetime.now() - self.round_start_time).total_seconds()
+                self.player_stats[player_name]['total_time'] += elapsed
+                if elapsed < self.player_stats[player_name]['fastest']:
+                    self.player_stats[player_name]['fastest'] = elapsed
 
     @staticmethod
     def calculate_score(start_time):
@@ -186,7 +236,11 @@ class CharadesGame:
             'settings': self.settings,
             'current_player': self.current_player,
             'current_item': current_item_data,
-            'round_start_time': self.round_start_time.isoformat() if self.round_start_time else None
+            'paused': self.paused,
+            'round_start_time': self.round_start_time.isoformat() if self.round_start_time else None,
+            'rounds_played': self.rounds_played,
+            'player_stats': self.player_stats,
+            'game_duration': (datetime.now() - self.game_start_time).total_seconds()
         }
 
     def get_item(self):
