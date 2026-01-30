@@ -7,7 +7,7 @@ class CharadesGame:
     def __init__(self, game_id, host, settings=None):
         self.game_id = game_id
         self.host = host
-        self.players = [{'name': host, 'isHost': True, 'team': 1}]
+        self.players = [{'name': host, 'isHost': True, 'team': 1, 'ready': False}]
         self.game_type = 'charades'
         self.status = 'waiting'
         self.scores = {} # {player_name: score}
@@ -64,7 +64,17 @@ class CharadesGame:
             team2_count = len([p for p in self.players if p.get('team') == 2])
             team = 2 if team2_count < team1_count else 1
             
-        self.players.append({'name': player_name, 'isHost': False, 'team': team})
+        self.players.append({'name': player_name, 'isHost': False, 'team': team, 'ready': False})
+
+    def set_player_ready(self, player_name, ready_status=True):
+        for player in self.players:
+            if player['name'] == player_name:
+                player['ready'] = ready_status
+                break
+
+    def reset_ready_status(self):
+        for player in self.players:
+            player['ready'] = False
 
     def remove_player(self, player_name):
         was_host = any(p['name'] == player_name and p.get('isHost', True) for p in self.players)
@@ -123,6 +133,8 @@ class CharadesGame:
         if not self.players:
             raise ValueError("لا يوجد لاعبين")
         
+        self.reset_ready_status()
+
         # Find next player
         current_idx = next((i for i, p in enumerate(self.players) if p['name'] == self.current_player), 0)
         next_idx = (current_idx + 1) % len(self.players)
