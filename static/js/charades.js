@@ -495,6 +495,19 @@ class GameEngine {
     setGameStatus(status) {
         if (this.gameStatus !== status) {
             this.gameStatus = status;
+            
+            // Clear item display when transitioning to 'playing' (waiting for next round)
+            if (status === 'playing') {
+                const itemDisplay = document.getElementById('item-display');
+                if (itemDisplay) {
+                    itemDisplay.innerHTML = '';
+                    itemDisplay.classList.remove('visible');
+                    itemDisplay.style.display = 'none';
+                }
+                // Clear the stored category
+                this.currentItemCategory = null;
+            }
+            
             this.updateButtonVisibility();
         }
     }
