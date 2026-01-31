@@ -390,7 +390,7 @@ def handle_turn_skip(game_obj, skipper_name):
         # Cancel hint timers
         timer_manager.cancel_hint_timers(game_obj.game_id)
         
-        emit('reveal_item', game_obj.current_item, room=game_obj.game_id)
+        socketio.emit('reveal_item', game_obj.current_item, room=game_obj.game_id)
         item = game_obj.get_item()
         game_obj.next_round(item)
         game_obj.status = 'playing'
@@ -398,17 +398,17 @@ def handle_turn_skip(game_obj, skipper_name):
         # Start turn timer for next player
         timer_manager.start_turn_timer(game_obj.game_id, game_obj.current_player, auto_skip_player, TURN_TIMEOUT_SECONDS)
         
-        emit('pass_turn', {'player': skipper_name, 'next_player': game_obj.current_player, 'game_status': game_obj.status}, room=game_obj.game_id)
+        socketio.emit('pass_turn', {'player': skipper_name, 'next_player': game_obj.current_player, 'game_status': game_obj.status}, room=game_obj.game_id)
         if game_obj.game_type == 'pictionary':
             game_obj.clear_canvas()
-            emit('clear_canvas', room=game_obj.game_id)
+            socketio.emit('clear_canvas', room=game_obj.game_id)
         sid = get_player_sid(game_obj.current_player)
         if sid: socketio.emit('new_item', game_obj.current_item, to=sid)
     else:
         # Trivia forced next
         game_obj.next_round()
-        emit('pass_turn', {'player': skipper_name, 'game_status': game_obj.status}, room=game_obj.game_id)
-        emit('timer_start', {'duration': game_obj.settings.get('time_limit', 30)}, room=game_obj.game_id)
+        socketio.emit('pass_turn', {'player': skipper_name, 'game_status': game_obj.status}, room=game_obj.game_id)
+        socketio.emit('timer_start', {'duration': game_obj.settings.get('time_limit', 30)}, room=game_obj.game_id)
         
     emit_game_state(game_obj.game_id)
 
@@ -585,7 +585,7 @@ def emit_game_state(gid: str) -> None:
     if gid in game_rooms:
         game_obj = game_rooms[gid]
         state = game_obj.to_dict(include_answer=False)
-        emit('game_state', state, room=gid)
+        socketio.emit('game_state', state, room=gid)
 
 if __name__ == '__main__':
     socketio.run(app, host='127.0.0.1', port=5000, debug=True)
