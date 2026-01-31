@@ -724,8 +724,6 @@ class GameEngine {
         });
         bindClick('guessButton', () => this.socket.emit('guess_correct', { game_id: this.gameId, player_name: this.playerName }));
         bindClick('passButton', () => this.socket.emit('player_passed', { game_id: this.gameId, player_name: this.playerName }));
-        bindClick('pauseButton', () => this.socket.emit('pause_game', { game_id: this.gameId }));
-        bindClick('resumeButton', () => this.socket.emit('resume_game', { game_id: this.gameId }));
         bindClick('finishButton', () => {
             if (confirm('هل أنت متأكد أنك تريد إنهاء اللعبة وعرض النتائج النهائية؟')) {
                 this.socket.emit('finish_game', { game_id: this.gameId });
@@ -847,16 +845,6 @@ class GameEngine {
             setTimeout(() => window.location.href = '/', 2000);
         });
 
-        this.socket.on('game_paused', (data) => {
-            this.stopTimer();
-            document.getElementById('pause-overlay').classList.remove('u-hidden');
-            Utils.showMessage(`اللعبة متوقفة من قبل ${data.paused_by}`, 'warning');
-        });
-
-        this.socket.on('game_resumed', () => {
-            document.getElementById('pause-overlay').classList.add('u-hidden');
-            Utils.showMessage('تم استئناف اللعبة!', 'success');
-        });
 
         this.socket.on('game_ended', (data) => {
             this.showGameSummary(data);
@@ -885,16 +873,8 @@ class GameEngine {
         
         if (data.settings) this.gameSettings = data.settings;
         if (data.status) this.setGameStatus(data.status);
-        // Only update pause overlay if game is actually in round_active status
-        // This prevents showing the overlay during initial game start
-        if (data.paused !== undefined && this.gameStatus === 'round_active') {
-            if (data.paused) {
-                this.stopTimer();
-                document.getElementById('pause-overlay').classList.remove('u-hidden');
-            } else {
-                document.getElementById('pause-overlay').classList.add('u-hidden');
-            }
-        }
+        
+        
         if (data.message) Utils.showMessage(data.message);
         if (data.players) this.updatePlayersList(data.players, data.ready_players);
         if (data.current_player !== undefined) this.updateCurrentPlayer(data.current_player);
@@ -1030,8 +1010,6 @@ class GameEngine {
             waitingArea.style.display = (this.gameStatus === 'playing' || (this.gameStatus === 'waiting' && this.gameType !== 'trivia')) ? 'block' : 'none';
         }
 
-        const isPaused = !document.getElementById('pause-overlay').classList.contains('u-hidden');
-
         switch (this.gameStatus) {
             case 'waiting':
                 if (btns.start && this.isHost) btns.start.style.display = 'block';
@@ -1044,13 +1022,11 @@ class GameEngine {
                 break;
             case 'round_active':
                 if (this.gameType === 'charades' || this.gameType === 'pictionary') {
-                    if (btns.guess && currentPlayer !== this.playerName && !isPaused) btns.guess.style.display = 'block';
-                    if (btns.pass && currentPlayer === this.playerName && !isPaused) btns.pass.style.display = 'block';
+                    if (btns.guess && currentPlayer !== this.playerName) btns.guess.style.display = 'block';
+                    if (btns.pass && currentPlayer === this.playerName) btns.pass.style.display = 'block';
                 }
                 if (btns.next && this.isHost) btns.next.style.display = 'block';
                 if (this.isHost) {
-                    if (isPaused) btns.resume.style.display = 'block';
-                    else btns.pause.style.display = 'block';
                     btns.finish.style.display = 'block';
                 }
                 break;

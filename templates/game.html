@@ -72,12 +72,6 @@
             <button id="nextButton" class="btn btn-secondary" style="display: none;">
                 <i class="fas fa-step-forward"></i> الجولة التالية
             </button>
-            <button id="pauseButton" class="btn btn-outline" style="display: none;">
-                <i class="fas fa-pause"></i> إيقاف مؤقت
-            </button>
-            <button id="resumeButton" class="btn btn-primary" style="display: none;">
-                <i class="fas fa-play"></i> استئناف
-            </button>
             <button id="finishButton" class="btn btn-primary" style="display: none; background-color: var(--success);">
                 <i class="fas fa-flag-checkered"></i> إنهاء وعرض النتائج
             </button>
@@ -171,12 +165,6 @@
     </div>
 </div>
 
-<!-- Pause Overlay -->
-<div id="pause-overlay" class="u-hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 4000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; backdrop-filter: blur(5px);">
-    <i class="fas fa-pause-circle fa-5x mb-4 animate-heartbeat"></i>
-    <h1 style="font-size: 3rem; margin-top: 2rem;">اللعبة متوقفة</h1>
-    <p style="font-size: 1.5rem;">بانتظار المضيف لاستئناف اللعبة...</p>
-</div>
 
 <div id="error-message"></div>
 {% endblock %}

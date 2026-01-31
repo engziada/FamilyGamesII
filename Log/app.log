@@ -9,3 +9,22 @@
 2026-01-30 04:17:11,900 INFO:  * Restarting with stat
 2026-01-30 04:17:14,219 WARNING:  * Debugger is active!
 2026-01-30 04:17:14,245 INFO:  * Debugger PIN: 109-781-019
+2026-01-31 22:23:48,330 INFO:  * Restarting with stat
+2026-01-31 22:23:50,055 WARNING:  * Debugger is active!
+2026-01-31 22:23:50,074 INFO:  * Debugger PIN: 109-781-019
+2026-01-31 22:27:39,630 INFO: Auto-skipping inactive player p1 in room 1962
+2026-01-31 22:38:43,283 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
+2026-01-31 22:38:43,674 INFO:  * Restarting with stat
+2026-01-31 22:38:46,943 WARNING:  * Debugger is active!
+2026-01-31 22:38:46,976 INFO:  * Debugger PIN: 109-781-019
+2026-01-31 22:39:09,171 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\games\\charades\\models.py', reloading
+2026-01-31 22:39:09,439 INFO:  * Restarting with stat
+2026-01-31 22:39:12,163 WARNING:  * Debugger is active!
+2026-01-31 22:39:12,195 INFO:  * Debugger PIN: 109-781-019
+2026-01-31 22:39:35,385 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\games\\trivia\\models.py', reloading
+2026-01-31 22:39:35,659 INFO:  * Restarting with stat
+2026-01-31 22:39:37,879 WARNING:  * Debugger is active!
+2026-01-31 22:39:37,896 INFO:  * Debugger PIN: 109-781-019
+2026-01-31 22:40:20,577 INFO:  * Restarting with stat
+2026-01-31 22:40:22,332 WARNING:  * Debugger is active!
+2026-01-31 22:40:22,356 INFO:  * Debugger PIN: 109-781-019

@@ -11,8 +11,6 @@ class CharadesGame:
         self.game_type = 'charades'
         self.status = 'waiting'
         self.ready_players = set()
-        self.paused = False
-        self.pause_start_time = None
         self.scores = {} # {player_name: score}
         self.team_scores = {'1': 0, '2': 0}
         self.current_player = ''
@@ -121,25 +119,6 @@ class CharadesGame:
     def start_round_timer(self):
         """Start the timer for the current round"""
         self.round_start_time = datetime.now()
-        self.paused = False
-        self.pause_start_time = None
-
-    def pause_game(self):
-        if self.status == 'round_active' and not self.paused:
-            self.paused = True
-            self.pause_start_time = datetime.now()
-            return True
-        return False
-
-    def resume_game(self):
-        if self.paused:
-            pause_duration = datetime.now() - self.pause_start_time
-            if self.round_start_time:
-                self.round_start_time += pause_duration
-            self.paused = False
-            self.pause_start_time = None
-            return True
-        return False
         
     def next_round(self, item):
         if not self.players:
@@ -193,7 +172,6 @@ class CharadesGame:
             'players': self.players,
             'game_type': self.game_type,
             'status': self.status,
-            'paused': self.paused,
             'ready_players': list(self.ready_players),
             'scores': self.scores,
             'team_scores': self.team_scores,

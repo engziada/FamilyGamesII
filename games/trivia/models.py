@@ -11,8 +11,6 @@ class TriviaGame:
         self.game_type = 'trivia'
         self.status = 'waiting'
         self.ready_players = set()
-        self.paused = False
-        self.pause_start_time = None
         self.scores = {}
         self.team_scores = {'1': 0, '2': 0}
         self.current_player = '' # Trivia won't use this as much now
@@ -73,7 +71,6 @@ class TriviaGame:
         self.current_question = self.get_question()
         self.question_active = True
         self.round_start_time = datetime.now()
-        self.paused = False
         self.players_answered = set()
         self.players_answered_wrong = set()
 
@@ -83,26 +80,8 @@ class TriviaGame:
         self.ready_players.clear()
         self.question_active = True
         self.round_start_time = datetime.now()
-        self.paused = False
         self.players_answered = set()
         self.players_answered_wrong = set()
-
-    def pause_game(self):
-        if self.status == 'round_active' and not self.paused:
-            self.paused = True
-            self.pause_start_time = datetime.now()
-            return True
-        return False
-
-    def resume_game(self):
-        if self.paused:
-            pause_duration = datetime.now() - self.pause_start_time
-            if self.round_start_time:
-                self.round_start_time += pause_duration
-            self.paused = False
-            self.pause_start_time = None
-            return True
-        return False
 
     def get_question(self):
         """Get a question using data service (prevents repetition)"""
@@ -163,7 +142,6 @@ class TriviaGame:
             'players': self.players,
             'game_type': self.game_type,
             'status': self.status,
-            'paused': self.paused,
             'ready_players': list(self.ready_players),
             'scores': self.scores,
             'team_scores': self.team_scores,

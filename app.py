@@ -404,29 +404,6 @@ def handle_leave(data):
             emit_game_state(rid)
         leave_room(rid)
 
-@socketio.on('pause_game')
-def handle_pause_game(data):
-    game_id = str(data.get('game_id'))
-    game_obj = game_rooms.get(game_id)
-    if game_obj and game_obj.host == session.get('player_name'):
-        if game_obj.pause_game():
-            emit('game_paused', {'paused_by': game_obj.host}, room=game_id)
-            emit_game_state(game_id)
-
-@socketio.on('resume_game')
-def handle_resume_game(data):
-    game_id = str(data.get('game_id'))
-    game_obj = game_rooms.get(game_id)
-    if game_obj and game_obj.host == session.get('player_name'):
-        if game_obj.resume_game():
-            emit('game_resumed', room=game_id)
-            # Send updated timer
-            elapsed = (datetime.now() - game_obj.round_start_time).total_seconds()
-            limit = game_obj.settings.get('time_limit', 90)
-            remaining = max(0, int(limit - elapsed))
-            emit('timer_start', {'duration': remaining}, room=game_id)
-            emit_game_state(game_id)
-
 @socketio.on('finish_game')
 def handle_finish_game(data):
     game_id = str(data.get('game_id'))
