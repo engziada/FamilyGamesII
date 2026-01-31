@@ -66,6 +66,7 @@ class TriviaGame:
             self.players[0]['isHost'] = True
 
     def start_game(self):
+        self.ready_players.clear()  # Fix Bug #9: Clear ready players on game start
         self.status = 'round_active' # Automatically start the round
         self.current_question = self.get_question()
         self.question_active = True

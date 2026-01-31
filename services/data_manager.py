@@ -1,12 +1,26 @@
 """
 Data Manager Service
-Handles caching, pre-fetching, and item distribution for all game types.
+Handles database operations for game items with caching and usage tracking.
 """
-from datetime import datetime, timedelta
 from typing import List, Dict, Optional
-from sqlalchemy import and_, or_
+from datetime import datetime
 from models.game_items import GameItem, RoomItemUsage, get_session, init_db
+import logging
 import random
+
+logger = logging.getLogger(__name__)
+
+def normalize_text(text: str) -> str:
+    """
+    Normalize text for comparison to avoid near-duplicates.
+    
+    Args:
+        text: Text to normalize
+        
+    Returns:
+        Normalized text (stripped, lowercase, single spaces)
+    """
+    return ' '.join(text.strip().lower().split())
 
 
 class DataManager:
@@ -120,7 +134,7 @@ class DataManager:
     
     def add_items(self, game_type: str, category: str, items: List[Dict], source: str):
         """
-        Add fetched items to the cache.
+        Add fetched items to the cache with duplicate detection.
         
         Args:
             game_type: Type of game
@@ -131,13 +145,37 @@ class DataManager:
         session = get_session()
         try:
             for item_data in items:
-                game_item = GameItem(
-                    game_type=game_type,
-                    category=category,
-                    item_data=item_data,
-                    source=source
-                )
-                session.add(game_item)
+                # Fix Bug #12: Check for duplicates with normalized text
+                is_duplicate = False
+                
+                if game_type == 'trivia':
+                    question_text = normalize_text(item_data.get('question', ''))
+                    if question_text:
+                        existing = session.query(GameItem).filter(
+                            GameItem.game_type == game_type,
+                            GameItem.item_data['question'].astext.ilike(f'%{question_text}%')
+                        ).first()
+                        is_duplicate = existing is not None
+                else:
+                    # For charades/pictionary
+                    item_name = normalize_text(item_data.get('item', ''))
+                    if item_name:
+                        existing = session.query(GameItem).filter(
+                            GameItem.game_type == game_type,
+                            GameItem.item_data['item'].astext.ilike(f'%{item_name}%')
+                        ).first()
+                        is_duplicate = existing is not None
+                
+                if not is_duplicate:
+                    game_item = GameItem(
+                        game_type=game_type,
+                        category=category,
+                        item_data=item_data,
+                        source=source
+                    )
+                    session.add(game_item)
+                else:
+                    logger.debug(f"Skipping duplicate item for {game_type}: {item_data.get('question') or item_data.get('item')}")
             
             session.commit()
         except Exception as e:
