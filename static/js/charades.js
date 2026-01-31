@@ -8,7 +8,7 @@ const AudioManager = {
 
     init() {
         this.sounds.guessed = new Audio('/static/sounds/guessed.mp3');
-        this.sounds.timeout = new Audio('/static/sounds/timeout.mp3');
+        this.sounds.timeout = new Audio('/static/sounds/guessed.mp3'); // Using guessed sound temporarily - more pleasant than buzz
         // Pre-load sounds
         Object.values(this.sounds).forEach(s => s.load());
     },

@@ -279,7 +279,7 @@ def handle_guess_correct(data):
             
         emit_game_state(game_obj.game_id)
         sid = get_player_sid(game_obj.current_player)
-        if sid: emit('new_item', game_obj.current_item, room=sid)
+        if sid: socketio.emit('new_item', game_obj.current_item, to=sid)
 
 @socketio.on('submit_answer')
 def handle_submit_answer(data):
@@ -360,7 +360,7 @@ def handle_round_timeout(data):
             
             emit('round_timeout', {'next_player': game_obj.current_player, 'game_status': game_obj.status}, room=game_obj.game_id)
             sid = get_player_sid(game_obj.current_player)
-            if sid: emit('new_item', game_obj.current_item, room=sid)
+            if sid: socketio.emit('new_item', game_obj.current_item, to=sid)
             if game_obj.game_type == 'pictionary':
                 game_obj.clear_canvas()
                 emit('clear_canvas', room=game_obj.game_id)
@@ -403,7 +403,7 @@ def handle_turn_skip(game_obj, skipper_name):
             game_obj.clear_canvas()
             emit('clear_canvas', room=game_obj.game_id)
         sid = get_player_sid(game_obj.current_player)
-        if sid: emit('new_item', game_obj.current_item, room=sid)
+        if sid: socketio.emit('new_item', game_obj.current_item, to=sid)
     else:
         # Trivia forced next
         game_obj.next_round()
@@ -444,7 +444,7 @@ def handle_verify_game(data):
                 # Also ensure they have the latest question
                 emit('new_question', game_obj.to_dict(include_answer=False).get('current_question'))
             elif game_obj.current_player == pname:
-                if game_obj.game_type in ['charades', 'pictionary'] and game_obj.current_item: emit('new_item', game_obj.current_item)
+                if game_obj.game_type in ['charades', 'pictionary'] and game_obj.current_item: socketio.emit('new_item', game_obj.current_item, to=request.sid)
             
             if game_obj.game_type == 'pictionary' and hasattr(game_obj, 'canvas_data'):
                 emit('sync_canvas', game_obj.canvas_data)
