@@ -122,8 +122,13 @@ def handle_connect():
     """Handle new socket connection and store player SID."""
     player_name = session.get('player_name')
     if player_name:
+        # Migration: Convert old string SIDs to list format
         if player_name not in player_sids:
             player_sids[player_name] = []
+        elif isinstance(player_sids[player_name], str):
+            # Convert old string format to list
+            player_sids[player_name] = [player_sids[player_name]]
+        
         player_sids[player_name].append(request.sid)
         logger.debug(f"Player {player_name} connected with SID {request.sid}")
 
