@@ -16,6 +16,8 @@ class CharadesGame:
         self.current_player = ''
         self.current_item = None
         self.round_start_time = None
+        self.paused = False  # Fix Bug #3: Add paused attribute
+        self.ready_players = set()  # Fix Bug #9: Add ready_players attribute
         
         # Settings: {teams: bool, difficulty: str, custom_words: str, time_limit: int}
         self.settings = settings or {
@@ -107,6 +109,7 @@ class CharadesGame:
     def start_game(self):
         if len(self.players) < 2:
             raise ValueError("عدد اللاعبين غير كافي")
+        self.ready_players.clear()  # Fix Bug #9: Clear ready players on game start
         self.status = 'playing'
         self.current_player = self.players[0]['name']
         self.current_item = None
@@ -255,6 +258,35 @@ class CharadesGame:
         except Exception as e:
             print(f"Error loading charades items: {e}")
             return None
+
+    def get_hint(self, hint_number):
+        """
+        Get hint for pictionary game.
+        
+        Args:
+            hint_number: Hint number (1, 2, or 3)
+            
+        Returns:
+            Hint string or None if no hint available
+        """
+        if not self.current_item:
+            return None
+        
+        item_text = self.current_item.get('item', '')
+        
+        # Fix Bug #6: Add null check for empty item text
+        if not item_text:
+            return None
+        
+        if hint_number == 1:
+            return f"أول حرف: {item_text[0]}"
+        elif hint_number == 2:
+            return f"عدد الحروف: {len(item_text)}"
+        elif hint_number == 3:
+            # Last letter hint
+            return f"آخر حرف: {item_text[-1]}"
+        
+        return None
 
     @classmethod
     def from_dict(cls, game_id, data):
