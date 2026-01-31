@@ -24,6 +24,13 @@
     --shadow-heavy: 8px 8px 0 rgba(0,0,0,0.6);
 }
 
+/* Fix readability for accent backgrounds in dark mode */
+[data-theme="dark"] .btn-outline,
+[data-theme="dark"] .diff-medium,
+[data-theme="dark"] .toast-warning {
+    color: #2F2F2F;
+}
+
 * {
     margin: 0;
     padding: 0;

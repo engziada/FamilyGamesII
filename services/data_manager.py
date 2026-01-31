@@ -120,7 +120,7 @@ class DataManager:
     
     def add_items(self, game_type: str, category: str, items: List[Dict], source: str):
         """
-        Add fetched items to the cache.
+        Add fetched items to the cache, avoiding duplicates.
         
         Args:
             game_type: Type of game
@@ -130,16 +130,44 @@ class DataManager:
         """
         session = get_session()
         try:
+            added_count = 0
             for item_data in items:
-                game_item = GameItem(
-                    game_type=game_type,
-                    category=category,
-                    item_data=item_data,
-                    source=source
-                )
-                session.add(game_item)
+                # Check for duplicates based on the item content
+                # For trivia: check question text
+                # For charades/pictionary: check item name
+                is_duplicate = False
+                
+                if game_type == 'trivia':
+                    # Check if question already exists
+                    question_text = item_data.get('question', '')
+                    existing = session.query(GameItem).filter(
+                        GameItem.game_type == game_type,
+                        GameItem.item_data['question'].astext == question_text
+                    ).first()
+                    is_duplicate = existing is not None
+                else:
+                    # For charades/pictionary, check item name
+                    item_name = item_data.get('item', '')
+                    existing = session.query(GameItem).filter(
+                        GameItem.game_type == game_type,
+                        GameItem.item_data['item'].astext == item_name
+                    ).first()
+                    is_duplicate = existing is not None
+                
+                # Only add if not duplicate
+                if not is_duplicate:
+                    game_item = GameItem(
+                        game_type=game_type,
+                        category=category,
+                        item_data=item_data,
+                        source=source
+                    )
+                    session.add(game_item)
+                    added_count += 1
             
             session.commit()
+            if added_count < len(items):
+                print(f"Skipped {len(items) - added_count} duplicate items for {game_type}")
         except Exception as e:
             session.rollback()
             raise e
