@@ -2,8 +2,13 @@
 Unit tests for TimerManager class
 Tests timer creation, cancellation, and cleanup functionality.
 """
-import pytest
 import eventlet
+import sys
+import os
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from services.timer_manager import TimerManager
 
 
