@@ -218,7 +218,6 @@ const Lobby = {
                 correctLevel: QRCode.CorrectLevel.H
             });
         }
-        document.getElementById('host-ready-btn-area').style.display = 'block';
 
         const buttonsDiv = document.querySelector('#create-game-modal .buttons');
         buttonsDiv.innerHTML = `
@@ -707,8 +706,6 @@ class GameEngine {
                 player_name: this.playerName,
                 transfer_id: this.transferId
             });
-            // Ensure pause overlay is hidden on connect
-            document.getElementById('pause-overlay').classList.add('u-hidden');
         });
         this.setupSocketListeners();
     }
@@ -888,7 +885,9 @@ class GameEngine {
         
         if (data.settings) this.gameSettings = data.settings;
         if (data.status) this.setGameStatus(data.status);
-        if (data.paused !== undefined) {
+        // Only update pause overlay if game is actually in round_active status
+        // This prevents showing the overlay during initial game start
+        if (data.paused !== undefined && this.gameStatus === 'round_active') {
             if (data.paused) {
                 this.stopTimer();
                 document.getElementById('pause-overlay').classList.remove('u-hidden');

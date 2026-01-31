@@ -111,7 +111,11 @@
             <button class="btn-help" onclick="Utils.showRules('{{ game_type }}')" style="margin-top: 0; margin-bottom: 1rem;">
                 <i class="fas fa-question-circle"></i> القوانين
             </button>
-            <p>رقم الغرفة: <strong id="game-room-id" style="color: var(--primary);">{{ game_id }}</strong></p>
+            <p>رقم الغرفة: <strong id="game-room-id" style="color: var(--primary);">{{ game_id }}</strong>
+                <button class="btn-copy" onclick="Utils.copyToClipboard('game-room-id')" title="نسخ رقم الغرفة">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </p>
             <p>أنت تلعب بصفتك: <strong style="color: var(--secondary);">{{ player_name }}</strong></p>
         </div>
     </div>
@@ -172,7 +176,6 @@
     <i class="fas fa-pause-circle fa-5x mb-4 animate-heartbeat"></i>
     <h1 style="font-size: 3rem; margin-top: 2rem;">اللعبة متوقفة</h1>
     <p style="font-size: 1.5rem;">بانتظار المضيف لاستئناف اللعبة...</p>
-    <button class="btn btn-primary mt-4" onclick="document.getElementById('pause-overlay').classList.add('u-hidden')">أغلق</button>
 </div>
 
 <div id="error-message"></div>
