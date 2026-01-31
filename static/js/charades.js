@@ -23,62 +23,45 @@ const AudioManager = {
     }
 };
 
-// --- Managers ---
-
 const HapticManager = {
     vibrate(pattern) {
-        if (!("vibrate" in navigator)) return;
-
-        const patterns = {
-            correct: 50,
-            wrong: [100, 50, 100],
-            timeout: 200,
-            win: [50, 50, 50, 200]
-        };
-
-        navigator.vibrate(patterns[pattern] || pattern);
-    }
-};
-
-const KeyboardShortcuts = {
-    shortcuts: {
-        ' ': 'readyButton',
-        'Enter': 'guessButton',
-        'Escape': 'close-room',
-        'p': 'pauseButton', // Host only
-        't': 'theme-toggle',
-        'h': 'show-rules-btn',
-        'm': 'mute-toggle'
+        if ('vibrate' in navigator) {
+            navigator.vibrate(pattern);
+        }
     },
-
-    init() {
-        document.addEventListener('keydown', (e) => {
-            // Don't trigger if user is typing in an input
-            if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
-
-            const actionId = this.shortcuts[e.key];
-            if (actionId) {
-                const el = document.getElementById(actionId);
-                if (el && el.style.display !== 'none' && !el.disabled) {
-                    e.preventDefault();
-                    el.click();
-                }
-            }
-        });
-    }
+    success() { this.vibrate(50); },
+    error() { this.vibrate([100, 50, 100]); },
+    warning() { this.vibrate(100); },
+    timeout() { this.vibrate(200); },
+    win() { this.vibrate([50, 50, 50, 200]); }
 };
 
 const ToastManager = {
-    show(message, type = 'info', duration = 4000) {
-        let container = document.getElementById('toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'toast-container';
-            container.style.cssText = 'position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem; align-items: center; width: min(90vw, 400px);';
-            document.body.appendChild(container);
-        }
+    container: null,
+
+    init() {
+        if (document.getElementById('toast-container')) return;
+        this.container = document.createElement('div');
+        this.container.id = 'toast-container';
+        this.container.style.cssText = `
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            pointer-events: none;
+        `;
+        document.body.appendChild(this.container);
+    },
+
+    show(message, type = 'info', duration = 3000) {
+        if (!this.container) this.init();
 
         const toast = document.createElement('div');
+        toast.className = `toast toast-${type} animate__animated animate__fadeInUp`;
+
         const icons = {
             success: 'fa-check-circle',
             error: 'fa-exclamation-circle',
@@ -86,45 +69,17 @@ const ToastManager = {
             warning: 'fa-exclamation-triangle'
         };
 
-        toast.className = `card animate-bounce-down ${type}`;
-        toast.style.cssText = 'padding: 1rem 2rem; border-radius: 20px 50px; min-width: 300px; display: flex; align-items: center; gap: 1rem; cursor: pointer;';
-        if (type === 'success') toast.style.borderColor = 'var(--success)';
-        if (type === 'error') toast.style.borderColor = 'var(--danger)';
-
         toast.innerHTML = `
-            <i class="fas ${icons[type] || icons.info}" style="font-size: 1.2rem;"></i>
-            <span style="font-weight: 700;">${message}</span>
+            <i class="fas ${icons[type] || icons.info}"></i>
+            <span>${message}</span>
         `;
 
-        toast.onclick = () => {
-            toast.style.opacity = '0';
-            setTimeout(() => toast.remove(), 300);
-        };
-
-        container.appendChild(toast);
+        this.container.appendChild(toast);
 
         setTimeout(() => {
-            if (toast.parentNode) {
-                toast.style.opacity = '0';
-                toast.style.transition = 'opacity 0.5s ease';
-                setTimeout(() => toast.remove(), 500);
-            }
+            toast.classList.replace('animate__fadeInUp', 'animate__fadeOutDown');
+            setTimeout(() => toast.remove(), 500);
         }, duration);
-    }
-};
-
-// --- Socket Management ---
-const SocketManager = {
-    socket: null,
-    getSocket() {
-        if (!this.socket) {
-            this.socket = io({
-                reconnection: true,
-                reconnectionAttempts: 5,
-                timeout: 10000
-            });
-        }
-        return this.socket;
     }
 };
 
@@ -133,51 +88,11 @@ const SocketManager = {
 const Lobby = {
     socket: null,
     gameType: 'charades',
-    avatars: ['🐶','🐱','🐼','🦁','🐸','🦊','🐻','🐨','🐯','🦄','🐷','🐮','🐵','🦉','🐙','🦀','🐢','🦋','🐝','🐛'],
     
     init() {
-        this.initAvatarPicker('host-avatar-picker', 'host-avatar');
-        this.initAvatarPicker('player-avatar-picker', 'player-avatar');
-
-        // Only init socket if we are on the index page (not game page)
-        // because GameEngine will handle it on game page.
-        if (window.location.pathname === '/') {
-            if (!this.socket) {
-                this.socket = SocketManager.getSocket();
-                this.setupListeners();
-            }
-        }
-    },
-
-    initAvatarPicker(containerId, inputId) {
-        const container = document.getElementById(containerId);
-        const input = document.getElementById(inputId);
-        if (!container || !input) return;
-
-        container.innerHTML = '';
-        this.avatars.forEach(avatar => {
-            const span = document.createElement('span');
-            span.className = 'avatar-option';
-            if (avatar === input.value) span.classList.add('selected');
-            span.textContent = avatar;
-            span.onclick = () => {
-                container.querySelectorAll('.avatar-option').forEach(opt => opt.classList.remove('selected'));
-                span.classList.add('selected');
-                input.value = avatar;
-                const btnId = inputId === 'host-avatar' ? 'host-avatar-btn' : 'player-avatar-btn';
-                document.getElementById(btnId).textContent = avatar;
-                this.toggleAvatarPicker(containerId + '-container');
-                HapticManager.vibrate(50);
-            };
-            container.appendChild(span);
-        });
-    },
-
-    toggleAvatarPicker(containerId) {
-        const el = document.getElementById(containerId);
-        if (el) {
-            const isHidden = el.classList.contains('u-hidden');
-            Utils.toggleVisibility(el, isHidden);
+        if (!this.socket) {
+            this.socket = io();
+            this.setupListeners();
         }
     },
 
@@ -189,21 +104,21 @@ const Lobby = {
 
         this.socket.on('join_success', (data) => {
             console.log('Join success:', data);
-            document.getElementById('join-form').classList.add('u-hidden');
-            document.getElementById('join-lobby').classList.remove('u-hidden');
+            document.getElementById('join-form').style.display = 'none';
+            document.getElementById('join-lobby').style.display = 'block';
             document.getElementById('join-room-id').textContent = document.getElementById('room-code').value;
-            this.updatePlayerList(data.players, data.host);
+            this.updatePlayerList(data.players, data.host, data.ready_players);
         });
 
         this.socket.on('player_joined', (data) => {
             console.log('Player joined:', data);
-            this.updatePlayerList(data.players);
+            this.updatePlayerList(data.players, null, data.ready_players);
             AudioManager.play('guessed');
         });
 
         this.socket.on('player_left', (data) => {
             console.log('Player left:', data);
-            this.updatePlayerList(data.players);
+            this.updatePlayerList(data.players, null, data.ready_players);
             AudioManager.play('timeout');
             Utils.showMessage(`${data.player_name} انسحب من اللعبة`, 'error');
         });
@@ -228,9 +143,31 @@ const Lobby = {
         });
     },
 
+    populateAvatarPickers() {
+        const avatars = ['🐶','🐱','🐼','🦁','🐸','🦊','🐻','🐨','🐯','🦄','🐷','🐮','🐵','🦉','🐙','🦀','🐢','🦋','🐝','🐛'];
+        const pickers = [document.getElementById('host-avatar-picker'), document.getElementById('join-avatar-picker')];
+        const inputs = [document.getElementById('host-avatar'), document.getElementById('join-avatar')];
+
+        pickers.forEach((picker, i) => {
+            if (!picker) return;
+            picker.innerHTML = '';
+            avatars.forEach(av => {
+                const span = document.createElement('span');
+                span.className = 'avatar-option';
+                if (av === inputs[i].value) span.classList.add('selected');
+                span.textContent = av;
+                span.onclick = () => {
+                    picker.querySelectorAll('.avatar-option').forEach(s => s.classList.remove('selected'));
+                    span.classList.add('selected');
+                    inputs[i].value = av;
+                };
+                picker.appendChild(span);
+            });
+        });
+    },
+
     createGame() {
         const hostName = document.getElementById('host-name').value.trim();
-        const avatar = document.getElementById('host-avatar').value;
         if (!hostName) {
             ToastManager.show('من فضلك اكتب اسمك', 'warning');
             return;
@@ -247,6 +184,7 @@ const Lobby = {
         };
 
         const gameId = Math.floor(1000 + Math.random() * 9000);
+        const avatar = document.getElementById('host-avatar').value;
         this.init();
 
         this.socket.emit('create_game', {
@@ -263,22 +201,24 @@ const Lobby = {
         });
 
         document.getElementById('room-id').textContent = gameId;
-        document.getElementById('room-info').classList.remove('u-hidden');
-        document.querySelector('.players-list').classList.remove('u-hidden');
+        document.getElementById('room-info').style.display = 'block';
+        document.querySelector('.players-list').style.display = 'block';
 
-        // Generate QR Code
-        const qrContainer = document.getElementById('qrcode');
-        if (qrContainer && typeof QRCode !== 'undefined') {
-            qrContainer.innerHTML = '';
-            new QRCode(qrContainer, {
-                text: window.location.origin + "/?room=" + gameId,
-                width: 128,
-                height: 128,
-                colorDark : "#2F2F2F",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
+        // QR Code Generation
+        const qrcodeEl = document.getElementById('qrcode');
+        if (qrcodeEl && typeof QRCode === 'function') {
+            qrcodeEl.innerHTML = '';
+            const joinUrl = `${window.location.origin}/?join=${gameId}`;
+            new QRCode(qrcodeEl, {
+                text: joinUrl,
+                width: 120,
+                height: 120,
+                colorDark: "#2F2F2F",
+                colorLight: "#FFFFFF",
+                correctLevel: QRCode.CorrectLevel.H
             });
         }
+        document.getElementById('host-ready-btn-area').style.display = 'block';
 
         const buttonsDiv = document.querySelector('#create-game-modal .buttons');
         buttonsDiv.innerHTML = `
@@ -301,7 +241,7 @@ const Lobby = {
     joinGame() {
         const playerName = document.getElementById('player-name').value.trim();
         const roomCode = document.getElementById('room-code').value.trim();
-        const avatar = document.getElementById('player-avatar').value;
+        const avatar = document.getElementById('join-avatar').value;
 
         if (!playerName || !roomCode) {
             ToastManager.show('من فضلك اكتب اسمك ورقم الأوضة', 'warning');
@@ -332,7 +272,15 @@ const Lobby = {
         }
     },
 
-    updatePlayerList(players, host) {
+    toggleReady() {
+        const roomCode = document.getElementById('room-id').textContent || document.getElementById('join-room-id').textContent;
+        if (this.socket && roomCode) {
+            this.socket.emit('player_ready_status', { game_id: roomCode });
+        }
+    },
+
+    updatePlayerList(players, host, readyPlayers = []) {
+        console.log("Updating player list with avatars:", players);
         const hostList = document.getElementById('host-players-list');
         const joinList = document.getElementById('join-players-list');
         const lists = [hostList, joinList].filter(list => list);
@@ -341,18 +289,18 @@ const Lobby = {
             list.innerHTML = '';
             players.forEach(player => {
                 const li = document.createElement('li');
-                li.style.display = 'flex';
-                li.style.alignItems = 'center';
-                li.style.gap = '0.5rem';
-
                 const name = typeof player === 'object' ? player.name : player;
+                const avatar = typeof player === 'object' ? (player.avatar || '🐶') : '🐶';
                 const isHost = typeof player === 'object' ? player.isHost : (name === host);
-                const avatar = typeof player === 'object' ? player.avatar || '🐶' : '🐶';
+                const isReady = readyPlayers.includes(name);
 
-                li.innerHTML = `
-                    <span class="player-avatar">${avatar}</span>
-                    <span class="player-name">${name} ${isHost ? '👑' : ''}</span>
-                `;
+                li.innerHTML = `<span class="player-avatar">${avatar}</span><span>${name} ${isHost ? '👑' : ''}</span>`;
+
+                const statusSpan = document.createElement('span');
+                statusSpan.className = `ready-status ${isReady ? 'ready' : 'waiting'}`;
+                statusSpan.innerHTML = isReady ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-hourglass-start"></i>';
+                li.appendChild(statusSpan);
+
                 if (isHost) li.classList.add('host');
                 list.appendChild(li);
             });
@@ -390,91 +338,189 @@ const Lobby = {
 
 const GameRules = {
     charades: {
-        title: "بدون كلام",
-        objective: "مثل الكلمة أو الفيلم لأصحابك من غير ما تنطق ولا حرف!",
-        rules: [
-            "ممنوع الكلام تماماً أو إصدار أي صوت.",
-            "ممنوع تشاور على حاجات موجودة في الأوضة.",
-            "ممنوع ترسم في الهوا حروف أو أرقام.",
-            "التمثيل بالوش والجسم بس."
-        ],
-        tips: "اتفقوا على إشارات معينة للحاجات المتكررة (زي فيلم، مسلسل، قديم، جديد)."
+        title: "قوانين بدون كلام 🎭",
+        content: `
+            <ul style="list-style-type: none; padding: 0;">
+                <li style="margin-bottom: 1rem;"><strong>🎯 الهدف:</strong> تمثيل الكلمة أو الجملة لفريقك أو أصحابك بدون استخدام أي صوت.</li>
+                <li style="margin-bottom: 1rem;"><strong>📜 القواعد:</strong>
+                    <ul style="margin-top: 0.5rem;">
+                        <li>ممنوع الكلام أو الهمس أو إصدار أي صوت.</li>
+                        <li>ممنوع الإشارة لأشياء موجودة في المكان.</li>
+                        <li>ممنوع رسم الحروف في الهواء.</li>
+                    </ul>
+                </li>
+                <li style="margin-bottom: 1rem;"><strong>🏆 النقاط:</strong> 10 نقاط لو عرفتوا الكلمة في الدقيقة الأولى، و5 نقاط في الدقيقة التانية.</li>
+            </ul>
+        `
     },
     pictionary: {
-        title: "ارسم وخمن",
-        objective: "ارسم الكلمة المطلوبة وصحابك لازم يعرفوها قبل الوقت ما يخلص.",
-        rules: [
-            "ممنوع كتابة أي حروف أو أرقام على اللوحة.",
-            "ممنوع الكلام أو إعطاء تلميحات بالصوت.",
-            "أول واحد يكتب الإجابة الصح بياخد نقط."
-        ],
-        tips: "استخدم الألوان المختلفة عشان توضح التفاصيل أكتر."
+        title: "قوانين ارسم وخمن 🎨",
+        content: `
+            <ul style="list-style-type: none; padding: 0;">
+                <li style="margin-bottom: 1rem;"><strong>🎯 الهدف:</strong> رسم الكلمة المطلوبة على الشاشة ومحاولة جعل الآخرين يخمنونها.</li>
+                <li style="margin-bottom: 1rem;"><strong>📜 القواعد:</strong>
+                    <ul style="margin-top: 0.5rem;">
+                        <li>ممنوع كتابة حروف أو أرقام.</li>
+                        <li>استخدم الألوان وأحجام الفرشاة المختلفة لتسهيل الرسم.</li>
+                    </ul>
+                </li>
+                <li style="margin-bottom: 1rem;"><strong>🏆 النقاط:</strong> يحصل الرسام والمخمن الصحيح على نقاط متساوية.</li>
+            </ul>
+        `
     },
     trivia: {
-        title: "بنك المعلومات",
-        objective: "جاوب على الأسئلة الثقافية المتنوعة واجمع أكبر عدد من النقط.",
-        rules: [
-            "السؤال بيظهر لكل اللاعبين في نفس الوقت.",
-            "أسرع واحد بيجاوب صح هو اللي بياخد النقط.",
-            "لو جاوبت غلط، مش هتقدر تجاوب تاني على نفس السؤال."
-        ],
-        tips: "السرعة هي مفتاح الفوز في بنك المعلومات!"
+        title: "قوانين بنك المعلومات 💡",
+        content: `
+            <ul style="list-style-type: none; padding: 0;">
+                <li style="margin-bottom: 1rem;"><strong>🎯 الهدف:</strong> الإجابة على الأسئلة الثقافية المتنوعة بأسرع وقت.</li>
+                <li style="margin-bottom: 1rem;"><strong>📜 القواعد:</strong>
+                    <ul style="margin-top: 0.5rem;">
+                        <li>كل الأسئلة اختيار من متعدد.</li>
+                        <li>أول واحد يجاوب صح بياخد النقاط والدور بيخلص.</li>
+                    </ul>
+                </li>
+                <li style="margin-bottom: 1rem;"><strong>🏆 النقاط:</strong> 10 نقاط لكل إجابة صحيحة.</li>
+            </ul>
+        `
+    }
+};
+
+const KeyboardShortcuts = {
+    init() {
+        document.addEventListener('keydown', (e) => {
+            if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+                if (e.key === 'Escape') document.activeElement.blur();
+                return;
+            }
+
+            switch(e.key.toLowerCase()) {
+                case ' ':
+                    const readyBtn = document.getElementById('readyButton');
+                    if (readyBtn && readyBtn.style.display !== 'none') {
+                        e.preventDefault();
+                        readyBtn.click();
+                    }
+                    break;
+                case 'enter':
+                    const guessBtn = document.getElementById('guessButton');
+                    if (guessBtn && guessBtn.style.display !== 'none') {
+                        e.preventDefault();
+                        guessBtn.click();
+                    }
+                    break;
+                case 'escape':
+                    const modals = document.querySelectorAll('.modal');
+                    modals.forEach(m => m.style.display = 'none');
+                    break;
+                case 't':
+                    Utils.toggleTheme();
+                    break;
+                case 'h':
+                    const gameType = window.gameInstance ? window.gameInstance.gameType : 'charades';
+                    Utils.showRules(gameType);
+                    break;
+                case 'p':
+                    const pauseBtn = document.getElementById('pauseButton');
+                    if (pauseBtn && pauseBtn.style.display !== 'none') pauseBtn.click();
+                    break;
+                case 'n':
+                    const nextBtn = document.getElementById('nextButton');
+                    if (nextBtn && nextBtn.style.display !== 'none') nextBtn.click();
+                    break;
+                case '?':
+                    this.showHelp();
+                    break;
+            }
+        });
+    },
+
+    showHelp() {
+        const helpHtml = `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; text-align: right; direction: rtl;">
+                <div><kbd>Space</kbd> أنا جاهز</div>
+                <div><kbd>Enter</kbd> عرفت الإجابة</div>
+                <div><kbd>Esc</kbd> إغلاق النوافذ</div>
+                <div><kbd>T</kbd> تغيير المظهر</div>
+                <div><kbd>H</kbd> القوانين</div>
+                <div><kbd>P</kbd> إيقاف (للمضيف)</div>
+                <div><kbd>N</kbd> التالي (للمضيف)</div>
+                <div><kbd>?</kbd> قائمة الاختصارات</div>
+            </div>
+        `;
+        Utils.showGenericModal('اختصارات الكيبورد ⌨️', helpHtml);
     }
 };
 
 const Utils = {
+    showRules(gameType) {
+        const rules = GameRules[gameType];
+        if (rules) {
+            const titleEl = document.getElementById('rules-title');
+            const contentEl = document.getElementById('rules-content');
+            if (titleEl && contentEl) {
+                titleEl.textContent = rules.title;
+                contentEl.innerHTML = rules.content;
+                document.getElementById('rules-modal').style.display = 'flex';
+            }
+        }
+    },
+
+    copyJoinLink() {
+        const roomId = document.getElementById('room-id').textContent;
+        const joinUrl = `${window.location.origin}/?join=${roomId}`;
+
+        navigator.clipboard.writeText(joinUrl).then(() => {
+            ToastManager.show("تم نسخ رابط الانضمام! 🔗", "success");
+        }).catch(() => {
+            const textArea = document.createElement("textarea");
+            textArea.value = joinUrl;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            ToastManager.show("تم نسخ رابط الانضمام! 🔗", "success");
+        });
+    },
+
+    copyToClipboard(elementId) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        const text = el.textContent.trim();
+        navigator.clipboard.writeText(text).then(() => {
+            Utils.showMessage("تم نسخ رقم الغرفة! 📋", "success");
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+            // Fallback
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                Utils.showMessage("تم نسخ رقم الغرفة! 📋", "success");
+            } catch (err) {
+                console.error('Fallback copy failed', err);
+            }
+            document.body.removeChild(textArea);
+        });
+    },
+
     showGameModal(gameType, action) {
+        Lobby.populateAvatarPickers();
         const modalId = action === 'create' ? 'create-game-modal' : 'join-game-modal';
         if (action === 'create') {
             document.getElementById('modal-game-type').value = gameType;
-            let title = 'إنشاء غرفة جديدة';
-            if (gameType === 'charades') title = 'إنشاء غرفة بدون كلام';
-            else if (gameType === 'pictionary') title = 'إنشاء غرفة ارسم وخمن';
-            else if (gameType === 'trivia') title = 'إنشاء غرفة بنك المعلومات';
-            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-title').textContent = gameType === 'charades' ? 'إنشاء غرفة بدون كلام' : 'إنشاء غرفة بنك المعلومات';
         }
         document.getElementById(modalId).style.display = 'flex';
-    },
-
-    showRulesModal(gameType) {
-        const rules = GameRules[gameType];
-        if (!rules) return;
-
-        let modal = document.getElementById('rules-modal');
-        if (!modal) {
-            modal = document.createElement('div');
-            modal.id = 'rules-modal';
-            modal.className = 'modal';
-            document.body.appendChild(modal);
-        }
-
-        modal.innerHTML = `
-            <div class="modal-content animate-jelly">
-                <i class="fas fa-book-open fa-3x" style="color: var(--secondary); margin-bottom: 1rem;"></i>
-                <h2>كيف تلعب: ${rules.title}</h2>
-                <div class="rules-body u-text-right" style="width: 100%; text-align: right; margin-block: 1.5rem;">
-                    <h4 style="color: var(--primary); margin-bottom: 0.5rem;"><i class="fas fa-bullseye"></i> الهدف:</h4>
-                    <p style="margin-bottom: 1.5rem;">${rules.objective}</p>
-
-                    <h4 style="color: var(--primary); margin-bottom: 0.5rem;"><i class="fas fa-list-ol"></i> القوانين:</h4>
-                    <ul style="margin-bottom: 1.5rem; padding-right: 1.5rem;">
-                        ${rules.rules.map(r => `<li style="margin-bottom: 0.5rem;">${r}</li>`).join('')}
-                    </ul>
-
-                    <h4 style="color: var(--primary); margin-bottom: 0.5rem;"><i class="fas fa-lightbulb"></i> نصيحة:</h4>
-                    <p>${rules.tips}</p>
-                </div>
-                <button class="btn btn-primary u-full-width" onclick="Utils.hideModal('rules-modal')">فهمت!</button>
-            </div>
-        `;
-        modal.style.display = 'flex';
     },
 
     hideModal(modalId) {
         document.getElementById(modalId).style.display = 'none';
         if (modalId === 'create-game-modal') {
             document.getElementById('host-name').value = '';
-            document.getElementById('room-info').classList.add('u-hidden');
+            document.getElementById('room-info').style.display = 'none';
+            document.getElementById('host-ready-btn-area').style.display = 'none';
             document.getElementById('host-players-list').innerHTML = '';
             const buttonsDiv = document.querySelector('#create-game-modal .buttons');
             buttonsDiv.innerHTML = `
@@ -490,33 +536,90 @@ const Utils = {
         }
     },
 
-    showError(message) {
-        ToastManager.show(message, 'error');
+    showGenericModal(title, content) {
+        let modal = document.getElementById('generic-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'generic-modal';
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content animate-bounce-down">
+                    <h2 id="generic-modal-title"></h2>
+                    <div id="generic-modal-content" class="u-full-width"></div>
+                    <div class="buttons u-full-width">
+                        <button class="btn btn-primary u-full-width" onclick="Utils.hideModal('generic-modal')">حسناً</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        document.getElementById('generic-modal-title').textContent = title;
+        document.getElementById('generic-modal-content').innerHTML = content;
+        modal.style.display = 'flex';
     },
 
-    copyToClipboard(text) {
-        if (!text) return;
-        navigator.clipboard.writeText(text).then(() => {
-            this.showMessage('تم النسخ!', 'success');
-        }).catch(err => {
-            console.error('Could not copy text: ', err);
-            // Fallback for older browsers
-            const textArea = document.createElement("textarea");
-            textArea.value = text;
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                this.showMessage('تم النسخ!', 'success');
-            } catch (err) {
-                console.error('Fallback copy failed', err);
+    showError(message) {
+        ToastManager.show(message, 'error');
+        // Check if join modal is active
+        const joinModal = document.getElementById('join-game-modal');
+        const createModal = document.getElementById('create-game-modal');
+
+        if (joinModal && joinModal.style.display === 'flex') {
+            const joinErrorDiv = document.getElementById('join-error-message');
+            if (joinErrorDiv) {
+                joinErrorDiv.textContent = message;
+                joinErrorDiv.style.display = 'block';
+                setTimeout(() => joinErrorDiv.style.display = 'none', 5000);
+                return;
             }
-            document.body.removeChild(textArea);
-        });
+        }
+
+        if (createModal && createModal.style.display === 'flex') {
+            const createErrorDiv = document.getElementById('create-error-message');
+            if (createErrorDiv) {
+                createErrorDiv.textContent = message;
+                createErrorDiv.style.display = 'block';
+                setTimeout(() => createErrorDiv.style.display = 'none', 5000);
+                return;
+            }
+        }
+
+        // Fallback to game error message or alert
+        const errorDiv = document.getElementById('error-message');
+        if (errorDiv) {
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => errorDiv.style.display = 'none', 5000);
+        } else {
+            alert(message);
+        }
+    },
+
+    toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+
+        const icon = document.querySelector('.theme-toggle i');
+        if (icon) {
+            icon.className = newTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+        }
+    },
+
+    toggleSound() {
+        AudioManager.enabled = !AudioManager.enabled;
+        localStorage.setItem('sound_enabled', AudioManager.enabled);
+
+        const icon = document.querySelector('.sound-toggle i');
+        if (icon) {
+            icon.className = AudioManager.enabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+        }
+        ToastManager.show(AudioManager.enabled ? "تم تشغيل الصوت 🔊" : "تم كتم الصوت 🔇", "info");
     },
 
     triggerConfetti(type = 'burst') {
-        if (!AudioManager.enabled) return; // Optional: separate confetti toggle?
+        if (typeof confetti !== 'function') return;
         const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#6BCB77'];
 
         if (type === 'burst') {
@@ -526,46 +629,45 @@ const Utils = {
                 origin: { y: 0.6 },
                 colors: colors
             });
-        } else if (type === 'full') {
+        } else if (type === 'win') {
             const duration = 5 * 1000;
             const animationEnd = Date.now() + duration;
-            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0, colors: colors };
-
-            const randomInRange = (min, max) => Math.random() * (max - min) + min;
-
             const interval = setInterval(function() {
                 const timeLeft = animationEnd - Date.now();
-
-                if (timeLeft <= 0) {
-                    return clearInterval(interval);
-                }
-
+                if (timeLeft <= 0) return clearInterval(interval);
                 const particleCount = 50 * (timeLeft / duration);
-                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+                confetti({
+                    particleCount,
+                    spread: 360,
+                    startVelocity: 30,
+                    origin: { x: Math.random(), y: Math.random() - 0.2 },
+                    colors: colors
+                });
             }, 250);
         } else if (type === 'gold') {
             confetti({
                 particleCount: 150,
                 spread: 100,
                 origin: { y: 0.6 },
-                colors: ['#FFE66D', '#FFD700']
+                colors: ['#FFE66D', '#D4AF37']
             });
         }
     },
 
     showMessage(message, type = 'info') {
         ToastManager.show(message, type);
-    },
+        const statusElement = document.getElementById('game-status');
+        if (statusElement) {
+            statusElement.textContent = message;
+            statusElement.className = `animate-bounce-down ${type}`;
+            statusElement.style.display = 'flex';
 
-    toggleVisibility(el, visible, displayType = 'block') {
-        if (!el) return;
-        if (visible) {
-            el.classList.remove('u-hidden');
-            el.style.display = displayType;
-        } else {
-            el.classList.add('u-hidden');
-            el.style.display = 'none';
+            if (this.hideTimeout) clearTimeout(this.hideTimeout);
+
+            this.hideTimeout = setTimeout(() => {
+                statusElement.style.display = 'none';
+                statusElement.classList.remove('animate-bounce-down');
+            }, 4000);
         }
     }
 };
@@ -582,9 +684,11 @@ class GameEngine {
         this.socket = null;
         this.gameStatus = 'waiting';
         this.timerInterval = null;
-        this.paused = false;
         this.gameSettings = {};
         this.currentItemCategory = null;
+        this.lastScores = {};
+        this.lastReactionTime = 0;
+        this.skipInterval = null;
         
         this.isDrawing = false;
         this.lastPos = { x: 0, y: 0 };
@@ -594,7 +698,7 @@ class GameEngine {
     }
 
     init() {
-        this.socket = SocketManager.getSocket();
+        this.socket = io();
         this.socket.on('connect', () => {
             console.log('Game Socket connected');
             this.setupUIListeners();
@@ -615,13 +719,19 @@ class GameEngine {
 
         bindClick('startButton', () => this.socket.emit('start_game', { game_id: this.gameId }));
         bindClick('nextButton', () => this.socket.emit('force_next_turn', { game_id: this.gameId }));
-        bindClick('pauseButton', () => this.socket.emit('toggle_pause', { game_id: this.gameId }));
         bindClick('readyButton', () => {
-            Utils.toggleVisibility(document.getElementById('readyButton'), false);
+            this.socket.emit('player_ready_status', { game_id: this.gameId });
             this.socket.emit('player_ready', { game_id: this.gameId });
         });
         bindClick('guessButton', () => this.socket.emit('guess_correct', { game_id: this.gameId, player_name: this.playerName }));
         bindClick('passButton', () => this.socket.emit('player_passed', { game_id: this.gameId, player_name: this.playerName }));
+        bindClick('pauseButton', () => this.socket.emit('pause_game', { game_id: this.gameId }));
+        bindClick('resumeButton', () => this.socket.emit('resume_game', { game_id: this.gameId }));
+        bindClick('finishButton', () => {
+            if (confirm('هل أنت متأكد أنك تريد إنهاء اللعبة وعرض النتائج النهائية؟')) {
+                this.socket.emit('finish_game', { game_id: this.gameId });
+            }
+        });
 
         bindClick('leave-room', () => {
             if (confirm('هل أنت متأكد أنك تريد الانسحاب؟')) {
@@ -648,24 +758,19 @@ class GameEngine {
     setupSocketListeners() {
         this.socket.on('game_state', (data) => {
             this.gameType = data.game_type || 'charades';
-            if (data.paused !== undefined) {
-                this.paused = data.paused;
-                this.updatePauseUI();
-            }
             this.updateGameState(data);
         });
         this.socket.on('timer_start', (data) => this.startTimer(data.duration));
         this.socket.on('correct_guess', (data) => {
             AudioManager.play('guessed');
-            HapticManager.vibrate('correct');
-            ToastManager.show(`${data.guesser} عرف الإجابة!`, 'success');
+            HapticManager.success();
             Utils.triggerConfetti('burst');
+            Utils.showMessage(`${data.guesser} عرف الإجابة!`, 'success');
         });
         
         this.socket.on('round_timeout', (data) => {
             this.stopTimer();
             this.playTimeoutTwice();
-            HapticManager.vibrate('timeout');
             if (data.game_status) this.setGameStatus(data.game_status);
             if (data.next_player) this.updateCurrentPlayer(data.next_player);
         });
@@ -701,13 +806,13 @@ class GameEngine {
         this.socket.on('answer_result', (data) => {
             if (data.is_correct) {
                 AudioManager.play('guessed');
-                HapticManager.vibrate('correct');
-                ToastManager.show(`${data.player} جاوب صح ✅. الإجابة كانت: ${data.correct_answer}`, 'success');
+                HapticManager.success();
                 Utils.triggerConfetti('burst');
+                Utils.showMessage(`${data.player} جاوب صح ✅. الإجابة كانت: ${data.correct_answer}`, 'success');
             } else {
                 AudioManager.play('timeout');
-                HapticManager.vibrate('wrong');
-                ToastManager.show(`${data.player} جاوب غلط ❌`, 'error');
+                HapticManager.error();
+                Utils.showMessage(`${data.player} جاوب غلط ❌`, 'error');
             }
         });
 
@@ -729,26 +834,6 @@ class GameEngine {
 
         this.socket.on('reveal_item', (data) => this.showRevealMessage(data));
 
-        this.socket.on('game_paused', (data) => {
-            this.paused = data.paused;
-            this.updatePauseUI();
-            const action = this.paused ? 'توقف' : 'استئناف';
-            ToastManager.show(`تم ${action} اللعبة بواسطة ${data.paused_by}`, 'info');
-        });
-
-        this.socket.on('player_ready_status', (data) => {
-            // Find player in this.players list and update ready status
-            if (this.lastPlayersList) {
-                this.lastPlayersList.forEach(p => {
-                    const name = typeof p === 'object' ? p.name : p;
-                    if (name === data.player_name) {
-                        p.ready = data.ready;
-                    }
-                });
-                this.updatePlayersList(this.lastPlayersList);
-            }
-        });
-
         this.socket.on('host_transferred', (data) => {
             if (data.gameState) this.updateGameState(data.gameState);
             Utils.showMessage(data.message);
@@ -763,11 +848,35 @@ class GameEngine {
             setTimeout(() => window.location.href = '/', 2000);
         });
 
-        this.socket.on('error', (data) => Utils.showError(data.message));
-        this.socket.on('new_reaction', (data) => this.showReaction(data));
-        this.socket.on('game_ended', (data) => this.showGameSummary(data));
-        this.socket.on('item_hint', (data) => this.showHint(data));
+        this.socket.on('game_paused', (data) => {
+            this.stopTimer();
+            document.getElementById('pause-overlay').classList.remove('u-hidden');
+            Utils.showMessage(`اللعبة متوقفة من قبل ${data.paused_by}`, 'warning');
+        });
 
+        this.socket.on('game_resumed', () => {
+            document.getElementById('pause-overlay').classList.add('u-hidden');
+            Utils.showMessage('تم استئناف اللعبة!', 'success');
+        });
+
+        this.socket.on('game_ended', (data) => {
+            this.showGameSummary(data);
+        });
+
+        this.socket.on('new_reaction', (data) => {
+            this.showFloatingReaction(data.reaction);
+        });
+
+        this.socket.on('new_hint', (data) => {
+            this.displayHint(data.hint);
+        });
+
+        this.socket.on('player_inactive', (data) => {
+            ToastManager.show(`تم تخطي ${data.player} بسبب عدم الاستجابة`, 'warning');
+            HapticManager.warning();
+        });
+
+        this.socket.on('error', (data) => Utils.showError(data.message));
         this.socket.on('game_error', (data) => Utils.showError(data.message));
     }
 
@@ -775,18 +884,18 @@ class GameEngine {
         if (!data) return;
         console.log("Game state update:", data);
         
-        if (data.paused !== undefined) {
-            this.paused = data.paused;
-            this.updatePauseUI();
-        }
-
         if (data.settings) this.gameSettings = data.settings;
         if (data.status) this.setGameStatus(data.status);
-        if (data.message) Utils.showMessage(data.message);
-        if (data.players) {
-            this.lastPlayersList = data.players;
-            this.updatePlayersList(data.players);
+        if (data.paused !== undefined) {
+            if (data.paused) {
+                this.stopTimer();
+                document.getElementById('pause-overlay').classList.remove('u-hidden');
+            } else {
+                document.getElementById('pause-overlay').classList.add('u-hidden');
+            }
         }
+        if (data.message) Utils.showMessage(data.message);
+        if (data.players) this.updatePlayersList(data.players, data.ready_players);
         if (data.current_player !== undefined) this.updateCurrentPlayer(data.current_player);
         if (data.scores || data.team_scores) this.updateScores(data);
         
@@ -804,9 +913,82 @@ class GameEngine {
         this.updateButtonVisibility();
     }
 
+    sendReaction(emoji) {
+        const now = Date.now();
+        if (now - this.lastReactionTime < 1500) return; // limit frequency
+        this.lastReactionTime = now;
+
+        if (this.socket) {
+            this.socket.emit('player_reaction', {
+                game_id: this.gameId,
+                reaction: emoji
+            });
+        }
+    }
+
+    showFloatingReaction(emoji) {
+        const floating = document.createElement('div');
+        floating.className = 'floating-reaction';
+        floating.textContent = emoji;
+
+        const x = 20 + Math.random() * 60;
+        floating.style.left = x + '%';
+        floating.style.bottom = '15%';
+
+        document.body.appendChild(floating);
+        setTimeout(() => floating.remove(), 2000);
+    }
+
+    startSkipTimer() {
+        if (this.skipInterval) clearInterval(this.skipInterval);
+        const el = document.getElementById('skip-countdown');
+        const valEl = document.getElementById('skip-timer-val');
+
+        const currentPlayer = document.getElementById('current-turn').textContent;
+        if (this.gameType === 'trivia' || this.gameStatus !== 'playing' || currentPlayer !== this.playerName) {
+            if (el) el.classList.add('u-hidden');
+            return;
+        }
+
+        let timeLeft = 30;
+        if (el) el.classList.remove('u-hidden');
+        if (valEl) valEl.textContent = timeLeft;
+
+        this.skipInterval = setInterval(() => {
+            timeLeft--;
+            if (valEl) valEl.textContent = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(this.skipInterval);
+                if (el) el.classList.add('u-hidden');
+            }
+        }, 1000);
+    }
+
+    displayHint(hintText) {
+        const container = document.getElementById('hints-container');
+        if (!container) return;
+
+        const hint = document.createElement('div');
+        hint.className = 'badge badge-team-1 animate__animated animate__bounceIn';
+        hint.style.fontSize = '1.1rem';
+        hint.style.padding = '0.8rem 1.2rem';
+        hint.innerHTML = `<i class="fas fa-lightbulb"></i> ${hintText}`;
+
+        container.appendChild(hint);
+        AudioManager.play('guessed');
+        HapticManager.success();
+    }
+
     setGameStatus(status) {
         if (this.gameStatus !== status) {
             this.gameStatus = status;
+
+            if (this.skipInterval) clearInterval(this.skipInterval);
+            const skipEl = document.getElementById('skip-countdown');
+            if (skipEl) skipEl.classList.add('u-hidden');
+
+            const hintsContainer = document.getElementById('hints-container');
+            if (hintsContainer) hintsContainer.innerHTML = '';
             
             // Clear item display when transitioning to 'playing' (waiting for next round)
             if (status === 'playing') {
@@ -814,7 +996,7 @@ class GameEngine {
                 if (itemDisplay) {
                     itemDisplay.innerHTML = '';
                     itemDisplay.classList.remove('visible');
-                    Utils.toggleVisibility(itemDisplay, false);
+                    itemDisplay.style.display = 'none';
                 }
                 // Clear the stored category
                 this.currentItemCategory = null;
@@ -832,67 +1014,145 @@ class GameEngine {
             next: document.getElementById('nextButton'),
             reveal: document.getElementById('revealButton'),
             pass: document.getElementById('passButton'),
-            pause: document.getElementById('pauseButton')
+            pause: document.getElementById('pauseButton'),
+            resume: document.getElementById('resumeButton'),
+            finish: document.getElementById('finishButton')
         };
 
         const waitingArea = document.getElementById('waiting-area');
 
-        Object.values(btns).forEach(b => { if(b) Utils.toggleVisibility(b, false); });
+        Object.values(btns).forEach(b => { if(b) b.style.display = 'none'; });
 
         const currentPlayer = document.getElementById('current-turn').textContent;
 
         if (waitingArea) {
-            const shouldShowWaiting = (this.gameStatus === 'playing' || (this.gameStatus === 'waiting' && this.gameType !== 'trivia'));
-            Utils.toggleVisibility(waitingArea, shouldShowWaiting);
+            waitingArea.style.display = (this.gameStatus === 'playing' || (this.gameStatus === 'waiting' && this.gameType !== 'trivia')) ? 'block' : 'none';
         }
+
+        const isPaused = !document.getElementById('pause-overlay').classList.contains('u-hidden');
 
         switch (this.gameStatus) {
             case 'waiting':
-                if (btns.start && this.isHost) Utils.toggleVisibility(btns.start, true);
+                if (btns.start && this.isHost) btns.start.style.display = 'block';
                 break;
             case 'playing':
                 if (this.gameType !== 'trivia') {
-                    if (btns.ready && currentPlayer === this.playerName) Utils.toggleVisibility(btns.ready, true);
+                    if (btns.ready && currentPlayer === this.playerName) btns.ready.style.display = 'block';
                 }
-                if (btns.next && this.isHost) Utils.toggleVisibility(btns.next, true);
-                if (btns.pause && this.isHost) Utils.toggleVisibility(btns.pause, true);
+                if (btns.next && this.isHost) btns.next.style.display = 'block';
                 break;
             case 'round_active':
                 if (this.gameType === 'charades' || this.gameType === 'pictionary') {
-                    if (btns.guess && currentPlayer !== this.playerName) Utils.toggleVisibility(btns.guess, true);
-                    if (btns.pass && currentPlayer === this.playerName) Utils.toggleVisibility(btns.pass, true);
+                    if (btns.guess && currentPlayer !== this.playerName && !isPaused) btns.guess.style.display = 'block';
+                    if (btns.pass && currentPlayer === this.playerName && !isPaused) btns.pass.style.display = 'block';
                 }
-                if (btns.next && this.isHost) Utils.toggleVisibility(btns.next, true);
-                if (btns.pause && this.isHost) Utils.toggleVisibility(btns.pause, true);
+                if (btns.next && this.isHost) btns.next.style.display = 'block';
+                if (this.isHost) {
+                    if (isPaused) btns.resume.style.display = 'block';
+                    else btns.pause.style.display = 'block';
+                    btns.finish.style.display = 'block';
+                }
                 break;
-        }
-
-        if (this.paused) {
-            if (btns.guess) Utils.toggleVisibility(btns.guess, false);
-            if (btns.pass) Utils.toggleVisibility(btns.pass, false);
-            if (btns.ready) Utils.toggleVisibility(btns.ready, false);
         }
     }
 
-    updatePauseUI() {
-        const overlay = document.getElementById('pause-overlay');
-        const pauseBtnText = document.getElementById('pause-btn-text');
-        const pauseBtnIcon = document.querySelector('#pauseButton i');
+    showGameSummary(data) {
+        const modal = document.getElementById('summary-modal');
+        const winnerNameEl = document.getElementById('winner-name');
+        const leaderboardEl = document.getElementById('final-leaderboard');
+        const statsEl = document.getElementById('game-stats');
 
-        if (overlay) Utils.toggleVisibility(overlay, this.paused, 'flex');
+        if (!modal) return;
 
-        if (pauseBtnText) {
-            pauseBtnText.textContent = this.paused ? 'استئناف اللعبة' : 'إيقاف مؤقت';
+        // Confetti
+        Utils.triggerConfetti('win');
+
+        // Winner
+        const sortedScores = Object.entries(data.scores).sort((a, b) => b[1] - a[1]);
+        if (sortedScores.length > 0) {
+            winnerNameEl.textContent = `بطل اللعبة: ${sortedScores[0][0]}! 🏆`;
+        } else {
+            winnerNameEl.textContent = 'انتهت اللعبة!';
         }
 
-        if (pauseBtnIcon) {
-            pauseBtnIcon.className = this.paused ? 'fas fa-play' : 'fas fa-pause';
+        // Leaderboard
+        leaderboardEl.innerHTML = sortedScores.map(([name, score], i) => `
+            <div class="player-item animate__animated animate__fadeInUp" style="animation-delay: ${i * 0.1}s; justify-content: space-between;">
+                <span>${i + 1}. ${name} ${i === 0 ? '👑' : ''}</span>
+                <span class="score-val">${score} نقطة</span>
+            </div>
+        `).join('');
+
+        // Highlights
+        if (data.highlights && data.highlights.length > 0) {
+            statsEl.innerHTML = data.highlights.map(h => `
+                <div class="card" style="padding: 1rem; text-align: center; border-radius: 20px;">
+                    <h4 style="margin: 0; color: var(--secondary); font-size: 1rem;">${h.title}</h4>
+                    <div style="font-weight: 800; font-size: 1.1rem; margin-block: 0.3rem;">${h.player}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-light);">${h.desc}</div>
+                </div>
+            `).join('');
+        } else {
+            statsEl.innerHTML = '';
         }
 
-        this.updateButtonVisibility();
+        modal.style.display = 'flex';
+    }
+
+    async shareResults() {
+        const modalContent = document.querySelector('#summary-modal .modal-content');
+        if (!modalContent || typeof html2canvas !== 'function') return;
+
+        ToastManager.show('جاري تحضير الصورة...', 'info');
+
+        try {
+            const buttons = modalContent.querySelector('.buttons');
+            if (buttons) buttons.style.visibility = 'hidden';
+
+            const canvas = await html2canvas(modalContent, {
+                backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-main').trim() || '#F7FFF7',
+                scale: 2,
+                logging: false,
+                useCORS: true
+            });
+
+            if (buttons) buttons.style.visibility = 'visible';
+
+            canvas.toBlob(async (blob) => {
+                const file = new File([blob], 'game-results.png', { type: 'image/png' });
+
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
+                        await navigator.share({
+                            files: [file],
+                            title: 'نتائج ألعاب العيلة 🏆',
+                            text: 'شوفوا النتيجة اللي حققتها في ألعاب العيلة!'
+                        });
+                    } catch (err) {
+                        if (err.name !== 'AbortError') this.downloadImage(canvas);
+                    }
+                } else {
+                    this.downloadImage(canvas);
+                }
+            });
+        } catch (err) {
+            console.error('Error generating image:', err);
+            ToastManager.show('عذراً، فشل توليد الصورة', 'error');
+        }
+    }
+
+    downloadImage(canvas) {
+        const link = document.createElement('a');
+        link.download = 'family-games-results.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        ToastManager.show('تم تحميل الصورة بنجاح! 🖼️', 'success');
     }
 
     updateCurrentPlayer(player) {
+        if (this.gameStatus === 'playing') {
+            this.startSkipTimer();
+        }
         const el = document.getElementById('current-turn');
         if (el) {
             if (this.gameType === 'trivia') {
@@ -911,35 +1171,34 @@ class GameEngine {
         if (itemDisplay) {
             // In Trivia, everyone sees the question. In others, only the performer (isMe) sees it.
             if (this.gameType === 'trivia' || isMe) {
-                Utils.toggleVisibility(itemDisplay, true);
+                itemDisplay.style.display = 'block';
                 // Don't add .visible here if we're about to call displayQuestion/displayItem
             } else if (this.gameType === 'pictionary' && !isMe && this.currentItemCategory) {
                 // Show category hint for non-drawing players in easy/medium difficulty
                 const difficulty = this.gameSettings.difficulty || 'medium';
                 if (difficulty === 'easy' || difficulty === 'medium') {
-                    Utils.toggleVisibility(itemDisplay, true);
+                    itemDisplay.style.display = 'block';
                     itemDisplay.innerHTML = `<div class="item-category" style="font-size: 1.8rem;">${this.currentItemCategory}</div>`;
                     itemDisplay.classList.add('visible');
                 } else {
-                    Utils.toggleVisibility(itemDisplay, false);
+                    itemDisplay.style.display = 'none';
                     itemDisplay.classList.remove('visible');
                     console.log('Hard difficulty - no category hint');
                 }
             } else {
-                Utils.toggleVisibility(itemDisplay, false);
+                itemDisplay.style.display = 'none';
                 itemDisplay.classList.remove('visible');
             }
         }
 
         if (pictionaryArea) {
             if (this.gameType === 'pictionary' && this.gameStatus === 'round_active') {
-                Utils.toggleVisibility(pictionaryArea, true);
+                pictionaryArea.style.display = 'block';
                 this.initCanvas();
                 // Show controls only to the drawer
-                const controls = document.querySelector('.canvas-controls');
-                if (controls) Utils.toggleVisibility(controls, isMe, 'flex');
+                document.querySelector('.canvas-controls').style.display = isMe ? 'flex' : 'none';
             } else {
-                Utils.toggleVisibility(pictionaryArea, false);
+                pictionaryArea.style.display = 'none';
             }
         }
 
@@ -949,20 +1208,26 @@ class GameEngine {
     displayItem(category, itemData) {
         const el = document.getElementById('item-display');
         if (el) {
-            Utils.toggleVisibility(el, true);
+            el.style.display = 'block';
             const item = typeof itemData === 'object' ? itemData.item : itemData;
             const year = itemData.year ? `<div class="item-meta">سنة الإنتاج: ${itemData.year}</div>` : '';
             const starring = itemData.starring ? `<div class="item-meta">بطولة: ${itemData.starring}</div>` : '';
             const type = itemData.type ? `<span class="badge badge-team-2">${itemData.type}</span>` : '';
 
             const categoryIcons = {
-                'أفلام': '🎬', 'مسلسلات': '📺', 'مسرحيات': '🎭', 'أغاني': '🎵', 'شخصيات': '👤', 'أمثال': '🗣️'
+                'أفلام': '🎬', 'مسلسلات': '📺', 'مسرحيات': '🎭', 'أغاني': '🎵',
+                'أمثال': '🗣️', 'أماكن': '📍', 'أشخاص': '👤', 'أشياء': '📦',
+                'أكل': '🍔', 'حيوانات': '🐶'
             };
             const icon = categoryIcons[category] || '🎮';
 
+            const difficulty = itemData.difficulty || 'medium';
+            const diffLabels = {'easy': 'سهل', 'medium': 'متوسط', 'hard': 'صعب'};
+            const diffBadge = `<span class="diff-badge diff-${difficulty}">${diffLabels[difficulty] || 'متوسط'}</span>`;
+
             el.innerHTML = `
-                <div class="item-category animate-bounce-down">${icon} ${category} ${type}</div>
-                <div class="item-name animate-jelly">${item}</div>
+                <div class="item-category">${icon} ${category} ${type} ${diffBadge}</div>
+                <div class="item-name">${item}</div>
                 ${year}
                 ${starring}
             `;
@@ -973,7 +1238,8 @@ class GameEngine {
     displayQuestion(data) {
         const el = document.getElementById('item-display');
         if (el) {
-            Utils.toggleVisibility(el, true);
+            el.classList.remove('u-hidden', 'is-flipped');
+            el.style.display = 'block';
             let html = `<div class="item-category">${data.category}</div>`;
             html += `<div class="item-name" style="font-size: 1.8rem;">${data.question}</div>`;
             
@@ -984,7 +1250,9 @@ class GameEngine {
             html += `</div>`;
             
             el.innerHTML = html;
-            setTimeout(() => el.classList.add('visible'), 100);
+            // Force reflow and add visible class
+            void el.offsetWidth;
+            el.classList.add('visible');
         }
     }
 
@@ -1055,42 +1323,6 @@ class GameEngine {
         canvas.ontouchstart = start;
         canvas.ontouchmove = draw;
         canvas.ontouchend = stop;
-
-        this.initSwipeGestures();
-    }
-
-    initSwipeGestures() {
-        let touchstartX = 0;
-        let touchstartY = 0;
-        let touchendX = 0;
-        let touchendY = 0;
-
-        const handleSwipe = () => {
-            const dx = touchendX - touchstartX;
-            const dy = touchendY - touchstartY;
-            if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 100) {
-                if (dx > 0) { // Swipe Right
-                    const passBtn = document.getElementById('passButton');
-                    if (passBtn && !passBtn.classList.contains('u-hidden')) passBtn.click();
-                } else { // Swipe Left
-                    const readyBtn = document.getElementById('readyButton');
-                    if (readyBtn && !readyBtn.classList.contains('u-hidden')) readyBtn.click();
-                    const guessBtn = document.getElementById('guessButton');
-                    if (guessBtn && !guessBtn.classList.contains('u-hidden')) guessBtn.click();
-                }
-            }
-        };
-
-        document.addEventListener('touchstart', e => {
-            touchstartX = e.changedTouches[0].screenX;
-            touchstartY = e.changedTouches[0].screenY;
-        }, false);
-
-        document.addEventListener('touchend', e => {
-            touchendX = e.changedTouches[0].screenX;
-            touchendY = e.changedTouches[0].screenY;
-            handleSwipe();
-        }, false);
     }
 
     drawStroke(s) {
@@ -1114,177 +1346,154 @@ class GameEngine {
         this.ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 
-    updatePlayersList(players) {
+    updatePlayersList(players, readyPlayers = []) {
+        console.log("GameEngine updating players with avatars:", players);
         const listEl = document.getElementById('players-list');
         if (!listEl) return;
         
-        this.lastPlayersList = players;
         listEl.innerHTML = '';
         const ul = document.createElement('ul');
         ul.classList.add('players-ul');
         
         players.forEach(p => {
             const name = typeof p === 'object' ? p.name : p;
-            const avatar = typeof p === 'object' ? p.avatar || '🐶' : '🐶';
+            const avatar = typeof p === 'object' ? (p.avatar || '🐶') : '🐶';
             const isHost = typeof p === 'object' ? p.isHost : false;
             const team = typeof p === 'object' ? p.team : null;
-            const isReady = typeof p === 'object' ? p.ready : false;
+            const isReady = readyPlayers.includes(name);
 
             const li = document.createElement('li');
             li.className = `player-item ${name === this.playerName ? 'current-player' : ''}`;
 
-            let statusIcon = isReady ?
-                '<span class="ready-status animate-fade-in"><i class="fas fa-check-circle" style="color: var(--success);"></i></span>' :
-                '<span class="ready-status">⏳</span>';
-
-            // Don't show status icon for trivia since it's "all players" or if game hasn't started
-            if (this.gameStatus === 'waiting') statusIcon = '';
-
-            let html = `
-                <div class="player-info">
-                    ${statusIcon}
-                    <span class="player-avatar" style="margin-left: 0.5rem;">${avatar}</span>
-                    <span>${name} ${isHost ? '👑' : ''} ${name === this.playerName ? '(أنت)' : ''}</span>
-                </div>
-            `;
+            let html = `<span class="player-avatar">${avatar}</span><span>${name} ${isHost ? '👑' : ''} ${name === this.playerName ? '(أنت)' : ''}</span>`;
             if (team) {
                 html += `<span class="badge badge-team-${team}">فريق ${team}</span>`;
             }
 
+            const statusSpan = document.createElement('span');
+            statusSpan.className = `ready-status ${isReady ? 'ready' : 'waiting'}`;
+            statusSpan.innerHTML = isReady ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-hourglass-start"></i>';
+
             li.innerHTML = html;
+            li.appendChild(statusSpan);
             ul.appendChild(li);
         });
         listEl.appendChild(ul);
+    }
+
+    animateScoreChange(player, diff) {
+        const playerItems = document.querySelectorAll('.score-item');
+        playerItems.forEach(item => {
+            const nameSpan = item.querySelector('span');
+            if (nameSpan && nameSpan.textContent.trim() === player) {
+                // Pulse
+                item.classList.add('pulse-highlight');
+                setTimeout(() => item.classList.remove('pulse-highlight'), 1000);
+
+                // Floating +X
+                const floating = document.createElement('div');
+                floating.className = 'floating-score';
+                floating.textContent = `+${diff}`;
+                item.appendChild(floating);
+                setTimeout(() => floating.remove(), 1500);
+            }
+        });
     }
 
     updateScores(data) {
         const el = document.getElementById('scores');
         if (!el) return;
         
-        const newScores = data.scores || (data.team_scores ? {} : data);
-        const previousScores = this.previousScores || {};
-        const players = data.players || [];
+        const currentScores = data.scores || {};
+
+        // Detect changes for animation
+        Object.entries(currentScores).forEach(([player, score]) => {
+            const oldScore = this.lastScores[player] || 0;
+            if (score > oldScore) {
+                const diff = score - oldScore;
+                this.animateScoreChange(player, diff);
+            }
+        });
+        this.lastScores = { ...currentScores };
 
         let html = '';
         
-        // Show team scores with bars
+        // Show team scores with progress bars
         if (data.team_scores && (data.team_scores['1'] > 0 || data.team_scores['2'] > 0)) {
-            const t1 = data.team_scores['1'] || 0;
-            const t2 = data.team_scores['2'] || 0;
-            const max = Math.max(t1, t2, 10);
+            const s1 = data.team_scores['1'] || 0;
+            const s2 = data.team_scores['2'] || 0;
+            const max = Math.max(s1 + s2, 1);
+            const p1 = (s1 / max) * 100;
+            const p2 = (s2 / max) * 100;
 
-            html += '<div class="team-scores-bars u-margin-bottom">';
-            [1, 2].forEach(teamNum => {
-                const score = data.team_scores[teamNum] || 0;
-                const percent = (score / max) * 100;
-                html += `
-                    <div class="team-bar-container u-margin-bottom">
-                        <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:700;">
-                            <span>فريق ${teamNum}</span>
-                            <span>${score}</span>
-                        </div>
-                        <div class="progress-bar" style="height:10px; background:rgba(0,0,0,0.1); border-radius:5px; overflow:hidden;">
-                            <div style="width:${percent}%; height:100%; background:var(--team-${teamNum}-color, ${teamNum === 1 ? '#FF6B6B' : '#4ECDC4'}); transition:width 1s ease;"></div>
-                        </div>
-                    </div>
-                `;
-            });
+            html += '<div class="team-scores-container">';
+            html += `
+                <div class="team-score-row u-margin-bottom">
+                    <div style="display:flex; justify-content:space-between; font-weight:800;"><span>فريق 1</span><span>${s1}</span></div>
+                    <div class="team-progress-wrapper"><div class="team-progress-bar bg-team-1" style="width:${p1}%"></div></div>
+                </div>
+                <div class="team-score-row">
+                    <div style="display:flex; justify-content:space-between; font-weight:800;"><span>فريق 2</span><span>${s2}</span></div>
+                    <div class="team-progress-wrapper"><div class="team-progress-bar bg-team-2" style="width:${p2}%"></div></div>
+                </div>
+            `;
             html += '</div>';
-            this.previousTeamScores = Object.assign({}, data.team_scores);
         }
         
-        // Sort individual scores for leaderboard view
-        const sortedScores = Object.entries(newScores).sort((a, b) => b[1] - a[1]);
-
-        // Show individual scores
-        html += sortedScores
-            .map(([p, s], index) => {
-                const prevScore = previousScores[p] || 0;
-                const diff = s - prevScore;
-                const animClass = diff > 0 ? 'score-highlight' : '';
-                const playerObj = players.find(pl => pl.name === p);
-                const avatar = playerObj ? playerObj.avatar || '🐶' : '🐶';
-
-                const medals = ['🥇', '🥈', '🥉'];
-                const rank = index < 3 ? medals[index] : (index + 1) + '.';
-
+        // Show individual scores with medals
+        const medals = ['🥇', '🥈', '🥉'];
+        html += Object.entries(currentScores)
+            .sort((a, b) => b[1] - a[1])
+            .map(([p, s], i) => {
+                const medal = medals[i] || '';
                 return `
-                    <div class="score-item ${p === this.playerName ? 'current-player' : ''} ${animClass}" style="position: relative; display:flex; align-items:center; gap:0.5rem;">
-                        <span style="font-size:0.8rem; min-width:20px;">${rank}</span>
-                        <span class="player-avatar">${avatar}</span>
-                        <span style="flex:1;">${p}</span>
-                        <span class="score-val" id="player-score-${p}" style="font-weight:800;">${s}</span>
-                        ${diff > 0 ? `<span class="flying-score">+${diff}</span>` : ''}
-                    </div>`;
+                    <div class="score-item ${p === this.playerName ? 'current-player' : ''}">
+                        <span>${medal} ${p}</span>
+                        <span class="score-val">${s}</span>
+                    </div>
+                `;
             })
             .join('');
 
         el.innerHTML = html;
-
-        // Animate count-up for changed scores
-        Object.entries(newScores).forEach(([p, s]) => {
-            const prevScore = previousScores[p] || 0;
-            if (s > prevScore) {
-                this.animateValue(`player-score-${p}`, prevScore, s, 800);
-            }
-        });
-
-        this.previousScores = Object.assign({}, newScores);
-    }
-
-    animateValue(id, start, end, duration) {
-        const obj = document.getElementById(id);
-        if (!obj) return;
-        const range = end - start;
-        let current = start;
-        const increment = end > start ? 1 : -1;
-        const stepTime = Math.abs(Math.floor(duration / range));
-        const timer = setInterval(() => {
-            current += increment;
-            obj.innerText = current;
-            if (current == end) {
-                clearInterval(timer);
-            }
-        }, stepTime || 10);
     }
 
     startTimer(duration) {
         this.stopTimer();
-        if (this.paused) return;
         const timerEl = document.getElementById('timer');
-        const timerText = timerEl ? timerEl.querySelector('.timer-text') : null;
-        const progressCircle = timerEl ? timerEl.querySelector('.timer-progress') : null;
-
+        const timerText = document.getElementById('timer-val');
+        const progressCircle = document.getElementById('timer-progress');
         if (!timerEl || !timerText || !progressCircle) return;
         
         this.setGameStatus('round_active');
         let timeLeft = duration;
-        Utils.toggleVisibility(timerEl, true, 'flex');
-        timerEl.className = 'timer-container'; // Reset classes
-
-        const totalLength = 2 * Math.PI * 45;
-        progressCircle.style.strokeDasharray = totalLength;
+        const totalTime = duration;
+        timerEl.style.display = 'flex';
+        timerEl.className = 'timer-container';
 
         const format = (s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2, '0')}`;
         timerText.textContent = format(timeLeft);
 
-        this.timerInterval = setInterval(() => {
-            if (this.paused) return;
-            timeLeft--;
-            timerText.textContent = format(timeLeft);
-
-            // Circular progress
-            const offset = totalLength - (timeLeft / duration) * totalLength;
+        const updateCircle = (left) => {
+            const offset = 283 - (left / totalTime) * 283;
             progressCircle.style.strokeDashoffset = offset;
 
-            // Colors
-            const percent = (timeLeft / duration) * 100;
-            if (percent < 15) timerEl.classList.add('danger');
-            else if (percent < 40) timerEl.classList.add('warning');
+            const pct = (left / totalTime) * 100;
+            timerEl.classList.remove('warning', 'orange', 'danger');
+            if (pct <= 15) timerEl.classList.add('danger');
+            else if (pct <= 30) timerEl.classList.add('orange');
+            else if (pct <= 50) timerEl.classList.add('warning');
+        };
 
-            if (timeLeft <= 10) {
-                timerEl.classList.add('pulse');
-                if (timeLeft <= 5 && timeLeft > 0) AudioManager.play('timeout');
+        updateCircle(timeLeft);
+
+        this.timerInterval = setInterval(() => {
+            timeLeft--;
+            timerText.textContent = format(timeLeft);
+            updateCircle(timeLeft);
+
+            if (timeLeft <= 5 && timeLeft > 0) {
+                AudioManager.play('timeout');
             }
 
             if (timeLeft <= 0) {
@@ -1300,7 +1509,13 @@ class GameEngine {
             this.timerInterval = null;
         }
         const el = document.getElementById('timer');
-        if (el) Utils.toggleVisibility(el, false);
+        const txt = document.getElementById('timer-val');
+        const progressCircle = document.getElementById('timer-progress');
+        if (el && txt) {
+            txt.textContent = '0:00';
+            el.style.display = 'none';
+            if (progressCircle) progressCircle.style.strokeDashoffset = '0';
+        }
     }
 
     playTimeoutTwice() {
@@ -1313,7 +1528,7 @@ class GameEngine {
         if (!msg) {
             msg = document.createElement('div');
             msg.id = 'reveal-message';
-            msg.className = 'reveal-message card animate-bounce-down';
+            msg.className = 'reveal-message card';
             document.body.appendChild(msg);
         }
 
@@ -1321,193 +1536,110 @@ class GameEngine {
         const starring = data.starring ? `<div class="item-meta">بطولة: ${data.starring}</div>` : '';
 
         msg.innerHTML = `
-            <div class="reveal-content">
-                <h3>انتهى الدور!</h3>
-                <div class="item-name" style="font-size: 2rem; color: var(--primary); margin-block: 1rem;">${data.item}</div>
-                <div class="badge badge-team-2" style="margin-bottom: 1rem;">${data.category}</div>
-                ${year}
-                ${starring}
+            <div class="flip-inner" style="width:100%; height:100%;">
+                <div class="flip-front">
+                    <h3>انتهى الدور!</h3>
+                    <i class="fas fa-question-circle fa-5x" style="color: var(--secondary); margin-top: 1rem;"></i>
+                </div>
+                <div class="flip-back reveal-content">
+                    <div class="item-name" style="font-size: 2rem; color: var(--primary); margin-block: 1rem;">${data.item}</div>
+                    <div class="badge badge-team-2" style="margin-bottom: 1rem;">${data.category}</div>
+                    ${year}
+                    ${starring}
+                </div>
             </div>
         `;
-        Utils.toggleVisibility(msg, true);
-        setTimeout(() => Utils.toggleVisibility(msg, false), 5000);
-    }
+        msg.style.display = 'flex';
 
-    sendReaction(emoji) {
-        if (this.lastReactionTime && Date.now() - this.lastReactionTime < 2000) return;
-        this.lastReactionTime = Date.now();
-        this.socket.emit('player_reaction', { game_id: this.gameId, reaction: emoji });
-        HapticManager.vibrate(50);
-    }
+        const inner = msg.querySelector('.flip-inner');
+        setTimeout(() => inner.classList.add('flipped'), 1000);
 
-    showReaction(data) {
-        const floating = document.createElement('div');
-        floating.className = 'floating-reaction';
-        floating.innerHTML = `<span class="reaction-name">${data.player}</span><span class="reaction-emoji">${data.reaction}</span>`;
-
-        // Random horizontal position
-        const x = 20 + Math.random() * 60;
-        floating.style.left = x + '%';
-        floating.style.bottom = '20%';
-
-        document.body.appendChild(floating);
-        setTimeout(() => floating.remove(), 2500);
-    }
-
-    showGameSummary(data) {
-        const modal = document.getElementById('summary-modal');
-        if (!modal) return;
-
-        this.stopTimer();
-        Utils.triggerConfetti('full');
-        AudioManager.play('guessed');
-
-        // Leaderboard
-        const lb = document.getElementById('summary-leaderboard');
-        const sorted = Object.entries(data.scores || {}).sort((a,b) => b[1] - a[1]);
-        const medals = ['🥇', '🥈', '🥉'];
-
-        lb.innerHTML = sorted.map(([name, score], i) => `
-            <div class="summary-player card" style="display:flex; align-items:center; gap:1rem; margin-bottom:0.5rem; padding:0.8rem 1.5rem;">
-                <span style="font-size:1.5rem;">${medals[i] || (i+1)+'.'}</span>
-                <span style="flex:1; font-weight:700;">${name}</span>
-                <span class="badge badge-primary">${score} نقطة</span>
-            </div>
-        `).join('');
-
-        // Highlights
-        const highlights = document.getElementById('summary-highlights');
-        const stats = data.player_stats || {};
-        let mvp = sorted[0] ? sorted[0][0] : '-';
-
-        let speedster = '-';
-        let fastestTime = 999;
-        let consistent = '-';
-        let maxCorrect = 0;
-
-        Object.entries(stats).forEach(([name, s]) => {
-            if (s.fastest < fastestTime) {
-                fastestTime = s.fastest;
-                speedster = name;
-            }
-            if (s.correct > maxCorrect) {
-                maxCorrect = s.correct;
-                consistent = name;
-            }
-        });
-
-        highlights.innerHTML = `
-            <div class="highlight-card card animate-bounce-down" style="--delay: 0.1s">
-                <i class="fas fa-crown fa-2x" style="color: gold;"></i>
-                <h4>MVP</h4>
-                <p>${mvp}</p>
-            </div>
-            <div class="highlight-card card animate-bounce-down" style="--delay: 0.2s">
-                <i class="fas fa-bolt fa-2x" style="color: var(--secondary);"></i>
-                <h4>الأسرع</h4>
-                <p>${speedster}</p>
-            </div>
-            <div class="highlight-card card animate-bounce-down" style="--delay: 0.3s">
-                <i class="fas fa-bullseye fa-2x" style="color: var(--primary);"></i>
-                <h4>المالك</h4>
-                <p>${consistent}</p>
-            </div>
-        `;
-
-        document.getElementById('stat-rounds').textContent = data.rounds_played || 0;
-        const dur = data.game_duration || 0;
-        document.getElementById('stat-duration').textContent = Math.floor(dur/60) + ' دقيقة';
-
-        modal.style.display = 'flex';
-
-        // Share button logic
-        const shareBtn = document.getElementById('share-results-btn');
-        if (shareBtn) {
-            shareBtn.onclick = () => this.generateShareImage();
-        }
-    }
-
-    async generateShareImage() {
-        if (typeof html2canvas === 'undefined') {
-            ToastManager.show('جاري تحميل مكتبة المشاركة...', 'info');
-            return;
-        }
-
-        const modalContent = document.querySelector('.summary-content');
-        try {
-            const canvas = await html2canvas(modalContent, {
-                backgroundColor: '#F7FFF7',
-                scale: 2
-            });
-            const link = document.createElement('a');
-            link.download = `family-games-result-${this.gameId}.png`;
-            link.href = canvas.toDataURL();
-            link.click();
-            ToastManager.show('تم تجهيز الصورة للمشاركة!', 'success');
-        } catch (e) {
-            console.error(e);
-            ToastManager.show('فشل إنشاء الصورة', 'error');
-        }
-    }
-
-    showHint(data) {
-        let hintContainer = document.getElementById('hint-container');
-        if (!hintContainer) {
-            hintContainer = document.createElement('div');
-            hintContainer.id = 'hint-container';
-            hintContainer.style.cssText = 'position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; gap: 5px;';
-            const area = document.getElementById('pictionary-area') || document.getElementById('item-display');
-            if (area) area.appendChild(hintContainer);
-        }
-
-        const badge = document.createElement('div');
-        badge.className = 'badge badge-team-2 animate-bounce-down';
-        badge.innerHTML = `<i class="fas fa-lightbulb"></i> تلميح: ${data.hint}`;
-        hintContainer.appendChild(badge);
-        HapticManager.vibrate(50);
+        setTimeout(() => {
+            msg.style.display = 'none';
+            if (inner) inner.classList.remove('flipped');
+        }, 6000);
     }
 }
 
-// --- Theme Manager ---
+// --- Initialization ---
 
-const ThemeManager = {
+const MobileUtils = {
     init() {
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        this.setTheme(savedTheme);
-
-        const toggleBtn = document.getElementById('theme-toggle');
-        if (toggleBtn) {
-            toggleBtn.onclick = () => {
-                const currentTheme = document.documentElement.getAttribute('data-theme');
-                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                this.setTheme(newTheme);
-            };
-        }
+        this.initSwipeGestures();
     },
 
-    setTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
+    initSwipeGestures() {
+        let touchstartX = 0;
+        let touchstartY = 0;
+        let touchendX = 0;
+        let touchendY = 0;
 
-        const toggleBtn = document.getElementById('theme-toggle');
-        if (toggleBtn) {
-            const icon = toggleBtn.querySelector('i');
-            if (theme === 'dark') {
-                icon.className = 'fas fa-sun';
+        document.addEventListener('touchstart', e => {
+            touchstartX = e.changedTouches[0].screenX;
+            touchstartY = e.changedTouches[0].screenY;
+        }, {passive: true});
+
+        document.addEventListener('touchend', e => {
+            touchendX = e.changedTouches[0].screenX;
+            touchendY = e.changedTouches[0].screenY;
+
+            const dx = touchendX - touchstartX;
+            const dy = touchendY - touchstartY;
+
+            // Ignore if drawing on canvas
+            if (e.target.id === 'game-canvas') return;
+            // Ignore small movements
+            if (Math.abs(dx) < 100 && Math.abs(dy) < 100) return;
+
+            if (Math.abs(dx) > Math.abs(dy)) {
+                if (dx > 100) { // Swipe Right
+                    const nextBtn = document.getElementById('nextButton');
+                    if (nextBtn && nextBtn.style.display !== 'none') nextBtn.click();
+                } else if (dx < -100) { // Swipe Left
+                    const passBtn = document.getElementById('passButton');
+                    if (passBtn && passBtn.style.display !== 'none') passBtn.click();
+                }
             } else {
-                icon.className = 'fas fa-moon';
+                if (dy > 100) { // Swipe Down
+                    const modals = document.querySelectorAll('.modal');
+                    modals.forEach(m => m.style.display = 'none');
+                }
             }
-        }
+        }, {passive: true});
     }
 };
 
-// --- Initialization ---
-
 document.addEventListener('DOMContentLoaded', () => {
-    ThemeManager.init();
-    KeyboardShortcuts.init();
     AudioManager.init();
-    Lobby.init();
+    MobileUtils.init();
+
+    // Sound settings
+    const soundPref = localStorage.getItem('sound_enabled');
+    if (soundPref !== null) {
+        AudioManager.enabled = (soundPref === 'true');
+        const sIcon = document.querySelector('.sound-toggle i');
+        if (sIcon) sIcon.className = AudioManager.enabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+    }
+    KeyboardShortcuts.init();
+
+    // Handle join link
+    const urlParams = new URLSearchParams(window.location.search);
+    const joinRoom = urlParams.get('join');
+    if (joinRoom) {
+        setTimeout(() => {
+            Utils.showGameModal('charades', 'join');
+            const roomInput = document.getElementById('room-code');
+            if (roomInput) roomInput.value = joinRoom;
+        }, 500);
+    }
+
+    // Sync theme toggle icon
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    const icon = document.querySelector('.theme-toggle i');
+    if (icon) {
+        icon.className = savedTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+    }
+
     const isGamePage = window.location.pathname.includes('/game/');
     
     if (isGamePage) {

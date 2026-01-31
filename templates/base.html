@@ -14,22 +14,23 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="{{ url_for('static', filename='js/tutorial.js') }}"></script>
 </head>
 <body>
-    <div id="game-status" style="display: none;"></div>
-    <div class="theme-controls" style="display: flex; gap: 0.5rem; align-items: center;">
-        <kbd style="opacity: 0.6; font-size: 0.8rem;">M</kbd>
-        <button id="mute-toggle" class="btn-theme" title="كتم الصوت" onclick="AudioManager.enabled = !AudioManager.enabled; this.querySelector('i').className = AudioManager.enabled ? 'fas fa-volume-up' : 'fas fa-volume-mute'; localStorage.setItem('mute', !AudioManager.enabled);">
-            <i class="fas fa-volume-up"></i>
-        </button>
-        <kbd style="opacity: 0.6; font-size: 0.8rem;">T</kbd>
-        <button id="theme-toggle" class="btn-theme" title="تبديل الوضع الليلي">
-            <i class="fas fa-moon"></i>
-        </button>
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+    <div class="theme-toggle" onclick="Utils.toggleTheme()" title="تغيير المظهر">
+        <i class="fas fa-moon"></i>
+    </div>
+    <div class="sound-toggle" onclick="Utils.toggleSound()" title="كتم/تشغيل الصوت">
+        <i class="fas fa-volume-up"></i>
     </div>
     {% block content %}{% endblock %}
-    <script src="{{ url_for('static', filename='js/tutorial.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

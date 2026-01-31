@@ -1,53 +1,41 @@
-/* --- Onboarding Tutorial Styling --- */
 
 .tutorial-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.75);
-    z-index: 9999;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 5000;
     display: none;
     align-items: center;
     justify-content: center;
-    opacity: 0;
+    backdrop-filter: blur(4px);
     transition: opacity 0.3s ease;
 }
 
 .tutorial-overlay.active {
     display: flex;
-    opacity: 1;
 }
 
 .tutorial-card {
     background: var(--surface);
     border: 4px solid var(--text);
-    border-radius: 30px 80px 30px 70px / 70px 30px 80px 30px;
+    border-radius: 30px 60px;
     padding: 2rem;
-    width: min(90vw, 500px);
+    max-width: 450px;
+    width: 90%;
     position: relative;
-    box-shadow: var(--shadow-heavy);
+    box-shadow: 10px 10px 0 var(--secondary);
     text-align: center;
-    animation: zoomIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.tutorial-step-content {
-    margin-bottom: 2rem;
-}
-
-.tutorial-step-content i {
-    font-size: 3rem;
+.tutorial-card h2 {
     color: var(--primary);
     margin-bottom: 1rem;
-    display: block;
 }
 
-.tutorial-step-content h3 {
-    font-size: 1.8rem;
-    margin-bottom: 1rem;
-    color: var(--secondary);
-}
-
-.tutorial-step-content p {
-    color: var(--text-light);
+.tutorial-content {
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
     line-height: 1.6;
 }
 
@@ -55,73 +43,41 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 1.5rem;
+    gap: 1rem;
 }
 
-.tutorial-progress {
+.tutorial-dots {
     display: flex;
-    gap: 0.5rem;
+    gap: 8px;
 }
 
-.progress-dot {
+.tutorial-dot {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: #ccc;
-    transition: all 0.3s ease;
+    background: var(--text-light);
+    opacity: 0.3;
 }
 
-.progress-dot.active {
+.tutorial-dot.active {
     background: var(--primary);
-    transform: scale(1.3);
+    opacity: 1;
+    transform: scale(1.2);
 }
 
-.tutorial-btns {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.tutorial-btn {
-    padding: 0.5rem 1rem;
-    border-radius: 10px;
-    font-weight: 700;
-    cursor: pointer;
-    border: 2px solid var(--text);
-    transition: var(--transition);
-    font-family: 'Changa', sans-serif;
-}
-
-.tutorial-btn-next { background: var(--secondary); color: white; }
-.tutorial-btn-skip { background: transparent; color: var(--text-light); border-color: transparent; }
-
-/* Spotlight Effect */
-.tutorial-spotlight {
-    position: fixed;
-    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75);
-    border-radius: 15px;
-    z-index: 9998;
+.spotlight {
+    position: absolute;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
+    border-radius: 12px;
+    z-index: 4999;
     pointer-events: none;
     transition: all 0.3s ease;
-    display: none;
+    border: 3px solid var(--accent);
 }
 
-.tutorial-spotlight.active {
-    display: block;
-}
-
-footer .tutorial-link {
-    display: inline-block;
-    margin-top: 2rem;
-    color: var(--secondary);
-    text-decoration: none;
-    font-weight: 800;
-    cursor: pointer;
-    border-bottom: 2px dashed var(--secondary);
-    transition: var(--transition);
-}
-
-footer .tutorial-link:hover {
-    color: var(--primary);
-    border-color: var(--primary);
-    transform: translateY(-2px);
+@keyframes bounceIn {
+    0% { transform: scale(0.3); opacity: 0; }
+    50% { transform: scale(1.05); }
+    70% { transform: scale(0.9); }
+    100% { transform: scale(1); opacity: 1; }
 }

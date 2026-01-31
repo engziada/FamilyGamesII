@@ -4,32 +4,27 @@ import random
 from services.data_service import get_data_service
 
 class CharadesGame:
-    def __init__(self, game_id, host, settings=None):
+    def __init__(self, game_id, host, settings=None, avatar='🐶'):
         self.game_id = game_id
         self.host = host
-        self.players = [{'name': host, 'isHost': True, 'team': 1, 'ready': False}]
+        self.players = [{'name': host, 'isHost': True, 'team': 1, 'avatar': avatar}]
         self.game_type = 'charades'
         self.status = 'waiting'
+        self.ready_players = set()
+        self.paused = False
+        self.pause_start_time = None
         self.scores = {} # {player_name: score}
         self.team_scores = {'1': 0, '2': 0}
         self.current_player = ''
         self.current_item = None
         self.round_start_time = None
-        self.paused = False
-        self.pause_start_time = None
-        self.rounds_played = 0
-        self.game_start_time = datetime.now()
         
-        # Statistics tracking
-        self.player_stats = {} # {player_name: {'correct': 0, 'fastest': 999, 'total_time': 0}}
-
-        # Settings: {teams: bool, difficulty: str, custom_words: str, time_limit: int, max_rounds: int}
+        # Settings: {teams: bool, difficulty: str, custom_words: str, time_limit: int}
         self.settings = settings or {
             'teams': False,
             'difficulty': 'all',
             'custom_words': '',
-            'time_limit': 120,
-            'max_rounds': 10
+            'time_limit': 120
         }
         
         self.custom_items = []
@@ -59,7 +54,7 @@ class CharadesGame:
             print(f"Error loading items: {e}")
             return []
 
-    def add_player(self, player_name):
+    def add_player(self, player_name, avatar='🐶'):
         if len(self.players) >= 8:
             raise ValueError("غرفة اللعب ممتلئة")
         if any(p['name'] == player_name for p in self.players):
@@ -72,24 +67,7 @@ class CharadesGame:
             team2_count = len([p for p in self.players if p.get('team') == 2])
             team = 2 if team2_count < team1_count else 1
             
-        self.players.append({'name': player_name, 'isHost': False, 'team': team, 'ready': False})
-
-        # Initialize stats for player
-        self.player_stats[player_name] = {
-            'correct': 0,
-            'fastest': 999,
-            'total_time': 0
-        }
-
-    def set_player_ready(self, player_name, ready_status=True):
-        for player in self.players:
-            if player['name'] == player_name:
-                player['ready'] = ready_status
-                break
-
-    def reset_ready_status(self):
-        for player in self.players:
-            player['ready'] = False
+        self.players.append({'name': player_name, 'isHost': False, 'team': team, 'avatar': avatar})
 
     def remove_player(self, player_name):
         was_host = any(p['name'] == player_name and p.get('isHost', True) for p in self.players)
@@ -135,20 +113,6 @@ class CharadesGame:
         self.current_player = self.players[0]['name']
         self.current_item = None
         self.round_start_time = None
-        self.paused = False
-        self.rounds_played = 0
-        self.game_start_time = datetime.now()
-
-    def toggle_pause(self):
-        self.paused = not self.paused
-        if self.paused:
-            self.pause_start_time = datetime.now()
-        else:
-            if self.round_start_time and self.pause_start_time:
-                pause_duration = datetime.now() - self.pause_start_time
-                self.round_start_time += pause_duration
-            self.pause_start_time = None
-        return self.paused
 
     def set_current_item(self, item):
         """Set the current item for the player's turn"""
@@ -157,20 +121,31 @@ class CharadesGame:
     def start_round_timer(self):
         """Start the timer for the current round"""
         self.round_start_time = datetime.now()
+        self.paused = False
+        self.pause_start_time = None
+
+    def pause_game(self):
+        if self.status == 'round_active' and not self.paused:
+            self.paused = True
+            self.pause_start_time = datetime.now()
+            return True
+        return False
+
+    def resume_game(self):
+        if self.paused:
+            pause_duration = datetime.now() - self.pause_start_time
+            if self.round_start_time:
+                self.round_start_time += pause_duration
+            self.paused = False
+            self.pause_start_time = None
+            return True
+        return False
         
     def next_round(self, item):
         if not self.players:
             raise ValueError("لا يوجد لاعبين")
         
-        self.rounds_played += 1
-
-        # Check if game should end
-        max_rounds = int(self.settings.get('max_rounds', 10))
-        if self.rounds_played >= max_rounds:
-            self.status = 'ended'
-            return
-
-        self.reset_ready_status()
+        self.ready_players.clear()
 
         # Find next player
         current_idx = next((i for i, p in enumerate(self.players) if p['name'] == self.current_player), 0)
@@ -184,19 +159,6 @@ class CharadesGame:
         if player_name not in self.scores:
             self.scores[player_name] = 0
         self.scores[player_name] += points
-
-        # Track stats for correct guess
-        if points > 0:
-            if player_name not in self.player_stats:
-                self.player_stats[player_name] = {'correct': 0, 'fastest': 999, 'total_time': 0}
-
-            self.player_stats[player_name]['correct'] += 1
-
-            if self.round_start_time:
-                elapsed = (datetime.now() - self.round_start_time).total_seconds()
-                self.player_stats[player_name]['total_time'] += elapsed
-                if elapsed < self.player_stats[player_name]['fastest']:
-                    self.player_stats[player_name]['fastest'] = elapsed
 
     @staticmethod
     def calculate_score(start_time):
@@ -231,17 +193,28 @@ class CharadesGame:
             'players': self.players,
             'game_type': self.game_type,
             'status': self.status,
+            'paused': self.paused,
+            'ready_players': list(self.ready_players),
             'scores': self.scores,
             'team_scores': self.team_scores,
             'settings': self.settings,
             'current_player': self.current_player,
             'current_item': current_item_data,
-            'paused': self.paused,
-            'round_start_time': self.round_start_time.isoformat() if self.round_start_time else None,
-            'rounds_played': self.rounds_played,
-            'player_stats': self.player_stats,
-            'game_duration': (datetime.now() - self.game_start_time).total_seconds()
+            'round_start_time': self.round_start_time.isoformat() if self.round_start_time else None
         }
+
+    def get_hint(self, hint_number):
+        if not self.current_item: return None
+        item_text = self.current_item.get('item', '')
+        if hint_number == 1:
+            return f"أول حرف: {item_text[0]}"
+        elif hint_number == 2:
+            # Masked word: "____"
+            masked = " ".join(["_" if c != " " else "  " for c in item_text])
+            return f"عدد الحروف: {masked} ({len(item_text.replace(' ', ''))} حرف)"
+        elif hint_number == 3:
+            return f"الفئة: {self.current_item.get('category')}"
+        return None
 
     def get_item(self):
         """Get an item based on game settings using data service"""

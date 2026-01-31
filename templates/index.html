@@ -16,7 +16,6 @@
             <p>قم بتمثيل الكلمة بدون استخدام الكلام وخلي صحابك يخمنوا! اللعبة الأشهر في كل تجمعاتنا.</p>
             <div class="game-meta">
                 <span><i class="fas fa-users"></i> 2 - 8 لاعبين</span>
-                <span style="cursor: pointer; margin-right: 1rem;" onclick="Utils.showRulesModal('charades')"><i class="fas fa-question-circle"></i> إزاي تلعب؟</span>
             </div>
             <div class="buttons">
                 <button class="btn btn-primary" onclick="Utils.showGameModal('charades', 'create')">
@@ -26,6 +25,9 @@
                     <i class="fas fa-sign-in-alt"></i> انضمام
                 </button>
             </div>
+            <button class="btn-help" onclick="Utils.showRules('charades')" title="كيف تلعب؟">
+                <i class="fas fa-question-circle"></i> كيف تلعب؟
+            </button>
         </div>
 
         <!-- Pictionary Card -->
@@ -37,7 +39,6 @@
             <p>لعبة الرسم والذكاء. ارسم الكلمة وحاول تخلي صحابك يعرفوها في أسرع وقت!</p>
             <div class="game-meta">
                 <span><i class="fas fa-users"></i> 2 - 8 لاعبين</span>
-                <span style="cursor: pointer; margin-right: 1rem;" onclick="Utils.showRulesModal('pictionary')"><i class="fas fa-question-circle"></i> إزاي تلعب؟</span>
             </div>
             <div class="buttons">
                 <button class="btn btn-primary" onclick="Utils.showGameModal('pictionary', 'create')">
@@ -47,6 +48,9 @@
                     <i class="fas fa-sign-in-alt"></i> انضمام
                 </button>
             </div>
+            <button class="btn-help" onclick="Utils.showRules('pictionary')" title="كيف تلعب؟">
+                <i class="fas fa-question-circle"></i> كيف تلعب؟
+            </button>
         </div>
 
         <!-- Trivia Card -->
@@ -58,7 +62,6 @@
             <p>اختبر معلوماتك العامة مع أهلك وأصحابك في مسابقة ثقافية ممتعة. أسئلة في كل المجالات!</p>
             <div class="game-meta">
                 <span><i class="fas fa-users"></i> 2 - 8 لاعبين</span>
-                <span style="cursor: pointer; margin-right: 1rem;" onclick="Utils.showRulesModal('trivia')"><i class="fas fa-question-circle"></i> إزاي تلعب؟</span>
             </div>
             <div class="buttons">
                 <button class="btn btn-primary" onclick="Utils.showGameModal('trivia', 'create')">
@@ -68,15 +71,11 @@
                     <i class="fas fa-sign-in-alt"></i> انضمام
                 </button>
             </div>
+            <button class="btn-help" onclick="Utils.showRules('trivia')" title="كيف تلعب؟">
+                <i class="fas fa-question-circle"></i> كيف تلعب؟
+            </button>
         </div>
     </div>
-
-    <footer style="margin-top: 4rem; text-align: center; padding-bottom: 2rem;">
-        <p style="color: var(--text-light);">© 2026 ألعاب العيلة - جميع الحقوق محفوظة</p>
-        <a href="#" id="show-tutorial-btn" class="tutorial-link">
-            <i class="fas fa-question-circle"></i> عرض التعليمات التعليمية
-        </a>
-    </footer>
 </div>
 
 <!-- Create Game Modal -->
@@ -85,18 +84,17 @@
     <div class="modal-content animate-bounce-down">
         <h2 id="modal-title">إنشاء غرفة جديدة</h2>
         <div id="create-error-message" class="error-message badge badge-team-1 u-hidden u-full-width u-margin-bottom"></div>
-        <div id="host-form" class="u-full-width">
-            <div class="input-group">
-                <label for="host-name">اسمك</label>
-                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                    <button type="button" id="host-avatar-btn" class="avatar-btn" onclick="Lobby.toggleAvatarPicker('host-avatar-picker-container')">👤</button>
-                    <input type="text" id="host-name" placeholder="اكتب اسمك هنا..." style="flex: 1;">
-                </div>
-                <div id="host-avatar-picker-container" class="avatar-picker-container u-hidden animate-bounce-down">
-                    <div class="avatar-picker" id="host-avatar-picker"></div>
-                </div>
-                <input type="hidden" id="host-avatar" value="🐶">
+        <div class="input-group">
+            <label for="host-name">اسمك</label>
+            <input type="text" id="host-name" placeholder="اكتب اسمك هنا...">
+        </div>
+        <div class="input-group">
+            <label>اختر شخصيتك</label>
+            <div id="host-avatar-picker" class="avatar-picker">
+                <!-- Avatars populated by JS -->
             </div>
+            <input type="hidden" id="host-avatar" value="🐶">
+        </div>
         <div class="input-group">
             <label>نظام اللعب</label>
             <select id="game-teams" class="input-control">
@@ -113,13 +111,20 @@
             </select>
         </div>
         <div id="room-info" class="card u-hidden u-full-width u-margin-bottom" style="padding: 1.5rem;">
-            <p>رقم الغرفة:
-                <span id="room-id" style="font-weight: 800; color: var(--primary); font-size: 1.5rem;"></span>
-                <button class="btn-copy" onclick="Utils.copyToClipboard(document.getElementById('room-id').textContent)" title="نسخ رقم الغرفة">
-                    <i class="fas fa-copy"></i>
-                </button>
-            </p>
-            <p style="font-size: 0.9rem; color: var(--text-light);">شارك هذا الرقم مع أصدقائك للإنضمام</p>
+            <div style="display: flex; gap: 2rem; align-items: center; justify-content: center; flex-wrap: wrap;">
+                <div id="qrcode" style="background: white; padding: 10px; border-radius: 10px; border: 2px solid var(--text);"></div>
+                <div style="text-align: right;">
+                    <p>رقم الغرفة: <span id="room-id" style="font-weight: 800; color: var(--primary); font-size: 1.5rem;"></span>
+                        <button class="btn-copy" onclick="Utils.copyToClipboard('room-id')" title="نسخ رقم الغرفة">
+                            <i class="fas fa-copy"></i> نسخ
+                        </button>
+                    </p>
+                    <p style="font-size: 0.9rem; color: var(--text-light);">شارك هذا الرقم مع أصدقائك للإنضمام أو خليهم يصوروا الكود!</p>
+                    <button class="btn btn-outline" onclick="Utils.copyJoinLink()" style="padding: 0.5rem 1rem; font-size: 0.8rem; margin-top: 10px;">
+                        <i class="fas fa-link"></i> نسخ رابط الانضمام
+                    </button>
+                </div>
+            </div>
         </div>
         <div class="players-list u-hidden u-full-width">
             <h4>اللاعبين في الغرفة:</h4>
@@ -128,6 +133,22 @@
         <div class="buttons u-flex-center u-full-width">
             <button class="btn btn-primary" style="flex: 2;" onclick="Lobby.createGame()">أنشئ الغرفة</button>
             <button class="btn btn-outline" style="flex: 1;" onclick="Utils.hideModal('create-game-modal')">إلغاء</button>
+        </div>
+        <div id="host-ready-btn-area" class="u-hidden u-full-width u-margin-top">
+            <button class="btn btn-secondary u-full-width" onclick="Lobby.toggleReady()">أنا جاهز! <i class="fas fa-check"></i></button>
+        </div>
+    </div>
+</div>
+
+<!-- Rules Modal -->
+<div id="rules-modal" class="modal">
+    <div class="modal-content animate-bounce-down" style="max-width: 600px;">
+        <h2 id="rules-title">كيف تلعب؟</h2>
+        <div id="rules-content" class="u-text-right u-full-width" style="text-align: right; max-height: 60vh; overflow-y: auto; padding: 1rem; background: var(--bg-main); border-radius: 15px;">
+            <!-- Rules populated by JS -->
+        </div>
+        <div class="buttons u-flex-center u-full-width">
+            <button class="btn btn-primary" style="width: 100%;" onclick="Utils.hideModal('rules-modal')">فهمت!</button>
         </div>
     </div>
 </div>
@@ -140,14 +161,14 @@
             <div id="join-error-message" class="error-message badge badge-team-1 u-hidden u-full-width u-margin-bottom"></div>
             <div class="input-group">
                 <label for="player-name">اسمك</label>
-                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                    <button type="button" id="player-avatar-btn" class="avatar-btn" onclick="Lobby.toggleAvatarPicker('player-avatar-picker-container')">👤</button>
-                    <input type="text" id="player-name" placeholder="اكتب اسمك..." style="flex: 1;">
+                <input type="text" id="player-name" placeholder="اكتب اسمك...">
+            </div>
+            <div class="input-group">
+                <label>اختر شخصيتك</label>
+                <div id="join-avatar-picker" class="avatar-picker">
+                    <!-- Avatars populated by JS -->
                 </div>
-                <div id="player-avatar-picker-container" class="avatar-picker-container u-hidden animate-bounce-down">
-                    <div class="avatar-picker" id="player-avatar-picker"></div>
-                </div>
-                <input type="hidden" id="player-avatar" value="🐶">
+                <input type="hidden" id="join-avatar" value="🐶">
             </div>
             <div class="input-group">
                 <label for="room-code">رقم الغرفة</label>
@@ -160,9 +181,8 @@
         </div>
         <div id="join-lobby" class="u-hidden u-full-width">
             <h2 class="u-margin-bottom">في انتظار البداية</h2>
-            <p class="u-margin-bottom" style="color: var(--primary); font-weight: 700; font-size: 1.2rem;">رقم الغرفة:
-                <span id="join-room-id"></span>
-                <button class="btn-copy" onclick="Utils.copyToClipboard(document.getElementById('join-room-id').textContent)" title="نسخ رقم الغرفة">
+            <p class="u-margin-bottom" style="color: var(--primary); font-weight: 700; font-size: 1.2rem;">رقم الغرفة: <span id="join-room-id"></span>
+                <button class="btn-copy" onclick="Utils.copyToClipboard('join-room-id')" title="نسخ رقم الغرفة">
                     <i class="fas fa-copy"></i>
                 </button>
             </p>
@@ -173,8 +193,9 @@
             <p class="animate-heartbeat" style="color: var(--secondary); font-weight: 800; font-size: 1.1rem;">
                 في انتظار المضيف لبدء اللعبة...
             </p>
-            <div class="buttons u-full-width u-margin-top">
-                <button class="btn btn-outline" onclick="Lobby.leaveGame()">خروج</button>
+            <div class="buttons u-full-width u-margin-top" style="display: flex; gap: 10px;">
+                <button class="btn btn-primary" style="flex: 2;" onclick="Lobby.toggleReady()">أنا جاهز! <i class="fas fa-check"></i></button>
+                <button class="btn btn-outline" style="flex: 1;" onclick="Lobby.leaveGame()">خروج</button>
             </div>
         </div>
     </div>

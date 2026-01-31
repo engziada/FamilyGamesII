@@ -14,23 +14,21 @@
                 <i class="fas fa-user-circle"></i>
                 الدور على: <span id="current-turn">...</span>
             </div>
-            <div id="timer" class="timer-container u-hidden">
+            <div id="timer" class="timer-container">
                 <svg class="timer-svg" viewBox="0 0 100 100">
                     <circle class="timer-bg" cx="50" cy="50" r="45"></circle>
-                    <circle class="timer-progress" cx="50" cy="50" r="45"></circle>
+                    <circle id="timer-progress" class="timer-progress" cx="50" cy="50" r="45"></circle>
                 </svg>
-                <span class="timer-text">0:00</span>
+                <div class="timer-text">
+                    <span id="timer-val">02:00</span>
+                </div>
             </div>
         </div>
 
         <div class="display-area card">
-            <!-- Pause Overlay -->
-            <div id="pause-overlay" class="u-hidden u-full-width u-flex-center" style="position: absolute; inset: 0; background: rgba(255,255,255,0.9); z-index: 100; flex-direction: column; border-radius: inherit;">
-                <i class="fas fa-pause-circle fa-5x animate-heartbeat" style="color: var(--primary); margin-bottom: 1.5rem;"></i>
-                <h2 style="color: var(--text);">اللعبة متوقفة مؤقتاً</h2>
-                <p style="color: var(--text-light); font-weight: 700;">المضيف أوقف اللعبة، استراحة قصيرة!</p>
+            <div id="skip-countdown" class="u-hidden" style="position: absolute; top: 1rem; right: 1rem; background: var(--danger); color: white; padding: 0.5rem 1rem; border-radius: 50px; font-weight: 800; z-index: 100; box-shadow: var(--shadow-pop);">
+                سيتم تخطيك خلال <span id="skip-timer-val">30</span>ث!
             </div>
-
             <div id="item-display" class="item-card animate-jelly u-hidden u-full-width">
                 <!-- Content populated by JS -->
             </div>
@@ -43,6 +41,9 @@
                     <input type="range" id="draw-size" min="1" max="20" value="5" class="input-control" style="width: 120px; min-height: auto; padding: 0.5rem;">
                 </div>
                 <canvas id="game-canvas" width="600" height="400" style="border: 4px solid var(--text); border-radius: 20px 60px; background: white; cursor: crosshair; width: 100%; height: auto; touch-action: none; box-shadow: var(--shadow-pop);"></canvas>
+                <div id="hints-container" class="u-flex-center u-margin-top" style="flex-wrap: wrap; gap: 10px;">
+                    <!-- Hints populated by JS -->
+                </div>
             </div>
 
             <div id="waiting-area" class="waiting-area u-text-center">
@@ -52,13 +53,13 @@
 
             <div class="game-actions u-flex-center u-full-width u-margin-top">
                 <button id="readyButton" class="btn btn-primary u-hidden">
-                <i class="fas fa-play"></i> أنا جاهز! <kbd>Space</kbd>
+                    <i class="fas fa-play"></i> أنا جاهز!
                 </button>
                 <button id="passButton" class="btn btn-outline u-hidden">
                     <i class="fas fa-forward"></i> تخطي
                 </button>
                 <button id="guessButton" class="btn btn-secondary u-hidden">
-                <i class="fas fa-check"></i> عرفتها! <kbd>Enter</kbd>
+                    <i class="fas fa-check"></i> عرفتها!
                 </button>
             </div>
         </div>
@@ -71,11 +72,17 @@
             <button id="nextButton" class="btn btn-secondary" style="display: none;">
                 <i class="fas fa-step-forward"></i> الجولة التالية
             </button>
-            <button id="pauseButton" class="btn btn-outline">
-                <i class="fas fa-pause"></i> <span id="pause-btn-text">إيقاف مؤقت</span> <kbd>P</kbd>
+            <button id="pauseButton" class="btn btn-outline" style="display: none;">
+                <i class="fas fa-pause"></i> إيقاف مؤقت
+            </button>
+            <button id="resumeButton" class="btn btn-primary" style="display: none;">
+                <i class="fas fa-play"></i> استئناف
+            </button>
+            <button id="finishButton" class="btn btn-primary" style="display: none; background-color: var(--success);">
+                <i class="fas fa-flag-checkered"></i> إنهاء وعرض النتائج
             </button>
             <button id="close-room" class="btn btn-outline" style="color: white; background-color: var(--danger);">
-                <i class="fas fa-times-circle"></i> إنهاء اللعبة
+                <i class="fas fa-times-circle"></i> إغلاق الغرفة
             </button>
             {% else %}
             <button id="leaveButton" class="btn btn-outline">
@@ -101,56 +108,74 @@
         </div>
 
         <div class="card info-card" style="padding: 1.2rem; font-size: 0.9rem; color: var(--text-light); text-align: center;">
-            <p>رقم الغرفة:
-                <strong id="game-room-id" style="color: var(--primary);">{{ game_id }}</strong>
-                <button class="btn-copy" onclick="Utils.copyToClipboard('{{ game_id }}')" title="نسخ رقم الغرفة">
+            <button class="btn-help" onclick="Utils.showRules('{{ game_type }}')" style="margin-top: 0; margin-bottom: 1rem;">
+                <i class="fas fa-question-circle"></i> القوانين
+            </button>
+            <p>رقم الغرفة: <strong id="game-room-id" style="color: var(--primary);">{{ game_id }}</strong>
+                <button class="btn-copy" onclick="Utils.copyToClipboard('game-room-id')" title="نسخ رقم الغرفة">
                     <i class="fas fa-copy"></i>
                 </button>
             </p>
             <p>أنت تلعب بصفتك: <strong style="color: var(--secondary);">{{ player_name }}</strong></p>
-            <button id="show-rules-btn" class="btn btn-outline u-full-width u-margin-top" onclick="Utils.showRulesModal('{{ game_type }}')">
-                <i class="fas fa-question-circle"></i> إزاي تلعب؟ <kbd>H</kbd>
-            </button>
         </div>
-    </div>
-
-    <div class="reaction-bar animate-bounce-down">
-        <button onclick="window.gameInstance.sendReaction('👍')">👍</button>
-        <button onclick="window.gameInstance.sendReaction('😂')">😂</button>
-        <button onclick="window.gameInstance.sendReaction('🔥')">🔥</button>
-        <button onclick="window.gameInstance.sendReaction('❤️')">❤️</button>
-        <button onclick="window.gameInstance.sendReaction('😮')">😮</button>
     </div>
 </div>
 
-<!-- Game Summary Modal -->
-<div id="summary-modal" class="modal">
-    <div class="modal-content animate-jelly summary-content" style="max-width: 600px;">
-        <h2 style="color: var(--primary);">🏁 انتهت اللعبة!</h2>
-        <div id="summary-leaderboard" class="u-margin-bottom"></div>
-
-        <div id="summary-highlights" class="highlights-grid u-margin-bottom"></div>
-
-        <div class="summary-stats card u-margin-bottom" style="padding: 1rem;">
-            <div style="display: flex; justify-content: space-around; text-align: center;">
-                <div>
-                    <h4 id="stat-rounds">-</h4>
-                    <p style="font-size: 0.8rem;">جولة</p>
-                </div>
-                <div>
-                    <h4 id="stat-duration">-</h4>
-                    <p style="font-size: 0.8rem;">مدة اللعب</p>
-                </div>
-            </div>
+<div id="rules-modal" class="modal">
+    <div class="modal-content animate-bounce-down" style="max-width: 600px;">
+        <h2 id="rules-title">كيف تلعب؟</h2>
+        <div id="rules-content" class="u-text-right u-full-width" style="text-align: right; max-height: 60vh; overflow-y: auto; padding: 1rem; background: var(--bg-main); border-radius: 15px;">
+            <!-- Rules populated by JS -->
         </div>
-
-        <div class="buttons u-full-width">
-            <button class="btn btn-primary" onclick="location.href='/'" style="flex: 1;">الرئيسية</button>
-            <button class="btn btn-secondary" id="share-results-btn" style="flex: 1;">
-                <i class="fas fa-share-alt"></i> شارك النتيجة
-            </button>
+        <div class="buttons u-flex-center u-full-width">
+            <button class="btn btn-primary" style="width: 100%;" onclick="Utils.hideModal('rules-modal')">فهمت!</button>
         </div>
     </div>
+</div>
+
+<div id="reaction-bar" class="reaction-bar">
+    <button class="reaction-btn" onclick="window.gameInstance.sendReaction('👍')">👍</button>
+    <button class="reaction-btn" onclick="window.gameInstance.sendReaction('😂')">😂</button>
+    <button class="reaction-btn" onclick="window.gameInstance.sendReaction('🔥')">🔥</button>
+    <button class="reaction-btn" onclick="window.gameInstance.sendReaction('❤️')">❤️</button>
+    <button class="reaction-btn" onclick="window.gameInstance.sendReaction('😮')">😮</button>
+</div>
+
+<div id="game-status" class="u-hidden">
+    <!-- Used for snackbar style notifications -->
+</div>
+
+<!-- Summary Modal -->
+<div id="summary-modal" class="modal">
+    <div class="modal-content animate-bounce-down" style="max-width: 700px; padding: 3rem;">
+        <div id="summary-celebration">
+            <i class="fas fa-trophy fa-5x" style="color: var(--accent); margin-bottom: 1.5rem;"></i>
+            <h1 id="winner-name" style="color: var(--primary); font-size: 2.5rem;">بطل اللعبة!</h1>
+        </div>
+
+        <div id="final-leaderboard" class="u-full-width u-margin-top">
+            <!-- Leaderboard items -->
+        </div>
+
+        <div id="game-stats" class="stats-grid u-full-width u-margin-top" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <!-- Highlights -->
+        </div>
+
+        <div class="buttons u-flex-center u-full-width u-margin-top">
+            <button class="btn btn-outline" style="flex: 1;" onclick="window.gameInstance.shareResults()">
+                <i class="fas fa-share-alt"></i> شارك النتيجة
+            </button>
+            <button class="btn btn-primary" style="flex: 1;" onclick="window.location.href='/'">الرئيسية</button>
+            <button class="btn btn-secondary" style="flex: 1;" onclick="Utils.hideModal('summary-modal')">مشاهدة الأوضة</button>
+        </div>
+    </div>
+</div>
+
+<!-- Pause Overlay -->
+<div id="pause-overlay" class="u-hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 4000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; backdrop-filter: blur(5px);">
+    <i class="fas fa-pause-circle fa-5x mb-4 animate-heartbeat"></i>
+    <h1 style="font-size: 3rem; margin-top: 2rem;">اللعبة متوقفة</h1>
+    <p style="font-size: 1.5rem;">بانتظار المضيف لاستئناف اللعبة...</p>
 </div>
 
 <div id="error-message"></div>

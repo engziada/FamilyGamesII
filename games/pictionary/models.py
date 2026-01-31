@@ -1,9 +1,9 @@
 from games.charades.models import CharadesGame
 
 class PictionaryGame(CharadesGame):
-    def __init__(self, game_id, host, settings=None):
+    def __init__(self, game_id, host, settings=None, avatar='🐶'):
         # Initialize parent without prefetching (we'll do it for pictionary)
-        super().__init__(game_id, host, settings)
+        super().__init__(game_id, host, settings, avatar)
         self.game_type = 'pictionary'
         self.canvas_data = [] # Store drawing strokes to sync new joiners
         
@@ -15,16 +15,3 @@ class PictionaryGame(CharadesGame):
 
     def add_stroke(self, stroke):
         self.canvas_data.append(stroke)
-
-    def get_hints(self, elapsed):
-        hints = []
-        if not self.current_item: return hints
-
-        word = self.current_item.get('item', '')
-        # 30s: Word length
-        if elapsed >= 30:
-            hints.append(f"الكلمة من {len(word)} حروف")
-        # 60s: First letter
-        if elapsed >= 60:
-            hints.append(f"أول حرف هو: {word[0]}")
-        return hints

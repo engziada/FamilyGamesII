@@ -54,11 +54,11 @@ socketio = SocketIO(
 # Game rooms storage
 game_rooms = {}
 player_sids = {}
-inactive_timers = {} # {game_id: {player_name: timer_job}}
-hint_timers = {} # {game_id: [timer_jobs]}
+turn_timers = {}
+hint_timers = {}
 
-def get_player_sid(room_id, player_name):
-    return player_sids.get(f"{room_id}_{player_name}")
+def get_player_sid(player_name):
+    return player_sids.get(player_name)
 
 @app.before_request
 def make_session_permanent():
@@ -100,9 +100,8 @@ def game(game_id):
 @socketio.on('connect')
 def handle_connect():
     player_name = session.get('player_name')
-    room_id = session.get('game_id')
-    if player_name and room_id:
-        player_sids[f"{room_id}_{player_name}"] = request.sid
+    if player_name:
+        player_sids[player_name] = request.sid
 
 @socketio.on('create_game')
 def handle_create_game(data):
@@ -117,21 +116,15 @@ def handle_create_game(data):
             raise ValueError("معلومات ناقصة")
             
         if game_type == 'trivia':
-            game_obj = TriviaGame(game_id, player_name, settings)
+            game_obj = TriviaGame(game_id, player_name, settings, avatar=avatar)
         elif game_type == 'pictionary':
-            game_obj = PictionaryGame(game_id, player_name, settings)
+            game_obj = PictionaryGame(game_id, player_name, settings, avatar=avatar)
         else:
-            game_obj = CharadesGame(game_id, player_name, settings)
+            game_obj = CharadesGame(game_id, player_name, settings, avatar=avatar)
             
-        # Set host avatar
-        for p in game_obj.players:
-            if p['name'] == player_name:
-                p['avatar'] = avatar
-
         game_rooms[game_id] = game_obj
         session['game_id'] = game_id
         session['player_name'] = player_name
-        player_sids[f"{game_id}_{player_name}"] = request.sid
         session['is_host'] = True
         
         emit('game_created', {'game_id': game_id, 'host': player_name, 'players': game_obj.players})
@@ -147,16 +140,10 @@ def handle_join_game(data):
         avatar = data.get('avatar', '🐶')
         if game_id not in game_rooms: raise ValueError("الغرفة غير موجودة")
         game_obj = game_rooms[game_id]
-        game_obj.add_player(player_name)
-
-        # Set player avatar
-        for p in game_obj.players:
-            if p['name'] == player_name:
-                p['avatar'] = avatar
+        game_obj.add_player(player_name, avatar=avatar)
         session['game_id'] = game_id
         session['player_name'] = player_name
         session['is_host'] = False
-        player_sids[f"{game_id}_{player_name}"] = request.sid
         join_room(game_id)
         emit('join_success', {'game_id': game_id, 'players': game_obj.players, 'host': game_obj.host})
         emit('player_joined', {'players': game_obj.players}, room=game_id)
@@ -180,6 +167,8 @@ def handle_start_game(data):
                 'redirect_url': f'/game/{game_id}',
                 'transfer_id': str(uuid.uuid4())
             }, room=game_id)
+            if game_obj.game_type != 'trivia':
+                start_turn_timer(game_id, game_obj.current_player)
     except Exception as e:
         emit('error', {'message': str(e)})
 
@@ -188,55 +177,34 @@ def handle_player_ready(data):
     game_id = str(data.get('game_id'))
     game_obj = game_rooms.get(game_id)
     player_name = session.get('player_name')
-
-    # Update SID just in case
-    player_sids[f"{game_id}_{player_name}"] = request.sid
-
-    # Cancel inactive timer if it exists
-    if game_id in inactive_timers and player_name in inactive_timers[game_id]:
-        inactive_timers[game_id][player_name].cancel()
-        del inactive_timers[game_id][player_name]
-
-    if game_obj:
-        if hasattr(game_obj, 'set_player_ready'):
-            game_obj.set_player_ready(player_name, True)
-            emit('player_ready_status', {'player_name': player_name, 'ready': True}, room=game_id)
-
     if game_obj and game_obj.game_type != 'trivia' and game_obj.current_player == player_name:
+        cancel_turn_timer(game_id)
         game_obj.status = 'round_active'
         if hasattr(game_obj, 'start_round_timer'): game_obj.start_round_timer()
 
-        # Ensure item is set if missing for some reason
-        if not game_obj.current_item:
-            game_obj.set_current_item(game_obj.get_item())
+        if game_obj.game_type == 'pictionary':
+            start_hint_cycle(game_id)
 
         emit('force_reset_timer', {'current_player': game_obj.current_player, 'game_status': game_obj.status}, room=game_obj.game_id)
         limit = game_obj.settings.get('time_limit', 90)
         emit('timer_start', {'duration': limit}, room=game_obj.game_id)
-        emit_game_state(game_obj.game_id)
+        emit_game_state(game_id)
 
-        # Send item to performer
-        emit('new_item', game_obj.current_item)
-
-        # Start hint timers for Pictionary
-        if game_obj.game_type == 'pictionary':
-            start_hint_timers(game_id)
-
-@socketio.on('player_reaction')
-def handle_reaction(data):
-    room_id = str(data.get('game_id'))
-    reaction = data.get('reaction')
+@socketio.on('player_ready_status')
+def handle_player_ready_status(data):
+    game_id = str(data.get('game_id'))
     player_name = session.get('player_name')
-    if room_id in game_rooms:
-        emit('new_reaction', {
-            'player': player_name,
-            'reaction': reaction
-        }, room=room_id)
+    game_obj = game_rooms.get(game_id)
+    if game_obj and player_name:
+        if player_name not in game_obj.ready_players:
+            game_obj.ready_players.add(player_name)
+        else:
+            game_obj.ready_players.remove(player_name)
+        emit_game_state(game_id)
 
 @socketio.on('guess_correct')
 def handle_guess_correct(data):
-    game_id = str(data.get('game_id'))
-    game_obj = game_rooms.get(game_id)
+    game_obj = game_rooms.get(str(data.get('game_id')))
     guesser = data.get('player_name')
     if game_obj and game_obj.game_type in ['charades', 'pictionary']:
         points = CharadesGame.calculate_score(game_obj.round_start_time)
@@ -249,19 +217,10 @@ def handle_guess_correct(data):
                 if p1: game_obj.team_scores[str(p1['team'])] += points
                 if p2: game_obj.team_scores[str(p2['team'])] += points
 
-        # Cancel hints
-        if game_id in hint_timers:
-            for t in hint_timers[game_id]: t.cancel()
-            del hint_timers[game_id]
-
+        cancel_hint_timers(str(data.get('game_id')))
         game_obj.next_round(game_obj.get_item())
-
-        if game_obj.status == 'ended':
-            emit('game_ended', game_obj.to_dict(include_sensitive=True), room=game_id)
-            emit_game_state(game_id)
-            return
-
         game_obj.status = 'playing'
+        start_turn_timer(game_obj.game_id, game_obj.current_player)
         emit('correct_guess', {'guesser': guesser, 'performer': game_obj.current_player}, room=game_obj.game_id)
         emit('force_reset_timer', {'next_player': game_obj.current_player, 'game_status': game_obj.status}, room=game_obj.game_id)
         
@@ -270,8 +229,7 @@ def handle_guess_correct(data):
             emit('clear_canvas', room=game_obj.game_id)
             
         emit_game_state(game_obj.game_id)
-        start_inactive_timer(game_id, game_obj.current_player)
-        sid = get_player_sid(game_id, game_obj.current_player)
+        sid = get_player_sid(game_obj.current_player)
         if sid: emit('new_item', game_obj.current_item, room=sid)
 
 @socketio.on('submit_answer')
@@ -299,12 +257,6 @@ def handle_submit_answer(data):
             # Move to next question after a short delay for everyone to see result
             eventlet.sleep(2)
             game_obj.next_round()
-
-            if game_obj.status == 'ended':
-                emit('game_ended', game_obj.to_dict(include_sensitive=True), room=game_obj.game_id)
-                emit_game_state(game_obj.game_id)
-                return
-
             emit('timer_start', {'duration': game_obj.settings.get('time_limit', 30)}, room=game_obj.game_id)
             emit_game_state(game_obj.game_id)
         else:
@@ -331,25 +283,16 @@ def handle_submit_answer(data):
 
 @socketio.on('round_timeout')
 def handle_round_timeout(data):
-    game_id = str(data.get('game_id'))
-    game_obj = game_rooms.get(game_id)
+    game_obj = game_rooms.get(str(data.get('game_id')))
     if game_obj:
         if game_obj.game_type in ['charades', 'pictionary']:
-            if game_id in hint_timers:
-                for t in hint_timers[game_id]: t.cancel()
-                del hint_timers[game_id]
+            cancel_hint_timers(str(data.get('game_id')))
             emit('reveal_item', game_obj.current_item, room=game_obj.game_id)
             game_obj.next_round(game_obj.get_item())
-
-            if game_obj.status == 'ended':
-                emit('game_ended', game_obj.to_dict(include_sensitive=True), room=game_id)
-                emit_game_state(game_id)
-                return
-
             game_obj.status = 'playing'
+            start_turn_timer(game_obj.game_id, game_obj.current_player)
             emit('round_timeout', {'next_player': game_obj.current_player, 'game_status': game_obj.status}, room=game_obj.game_id)
-            start_inactive_timer(game_id, game_obj.current_player)
-            sid = get_player_sid(game_id, game_obj.current_player)
+            sid = get_player_sid(game_obj.current_player)
             if sid: emit('new_item', game_obj.current_item, room=sid)
             if game_obj.game_type == 'pictionary':
                 game_obj.clear_canvas()
@@ -357,11 +300,6 @@ def handle_round_timeout(data):
         else:
             # Trivia timeout
             game_obj.next_round()
-            if game_obj.status == 'ended':
-                emit('game_ended', game_obj.to_dict(include_sensitive=True), room=game_id)
-                emit_game_state(game_id)
-                return
-
             emit('round_timeout', {'game_status': game_obj.status}, room=game_obj.game_id)
             emit('timer_start', {'duration': game_obj.settings.get('time_limit', 30)}, room=game_obj.game_id)
 
@@ -373,88 +311,33 @@ def handle_player_passed(data):
     if game_obj and game_obj.game_type != 'trivia' and game_obj.current_player == session.get('player_name'):
         handle_turn_skip(game_obj, session.get('player_name'))
 
-@socketio.on('toggle_pause')
-def handle_toggle_pause(data):
-    game_id = str(data.get('game_id'))
-    game_obj = game_rooms.get(game_id)
-    if game_obj and game_obj.host == session.get('player_name'):
-        is_paused = game_obj.toggle_pause()
-        emit('game_paused', {'paused': is_paused, 'paused_by': game_obj.host}, room=game_id)
-        emit_game_state(game_id)
-
 @socketio.on('force_next_turn')
 def handle_force_next_turn(data):
-    game_id = str(data.get('game_id'))
-    game_obj = game_rooms.get(game_id)
+    game_obj = game_rooms.get(str(data.get('game_id')))
     if game_obj and game_obj.host == session.get('player_name'):
         handle_turn_skip(game_obj, "المضيف")
 
 def handle_turn_skip(game_obj, skipper_name):
-    game_id = game_obj.game_id
     if game_obj.game_type in ['charades', 'pictionary']:
-        if game_id in hint_timers:
-            for t in hint_timers[game_id]: t.cancel()
-            del hint_timers[game_id]
+        cancel_hint_timers(game_obj.game_id)
         emit('reveal_item', game_obj.current_item, room=game_obj.game_id)
         item = game_obj.get_item()
         game_obj.next_round(item)
-
-        if game_obj.status == 'ended':
-            emit('game_ended', game_obj.to_dict(include_sensitive=True), room=game_id)
-            emit_game_state(game_id)
-            return
-
         game_obj.status = 'playing'
+        start_turn_timer(game_obj.game_id, game_obj.current_player)
         emit('pass_turn', {'player': skipper_name, 'next_player': game_obj.current_player, 'game_status': game_obj.status}, room=game_obj.game_id)
-        start_inactive_timer(game_id, game_obj.current_player)
         if game_obj.game_type == 'pictionary':
             game_obj.clear_canvas()
             emit('clear_canvas', room=game_obj.game_id)
-        sid = get_player_sid(game_id, game_obj.current_player)
+        sid = get_player_sid(game_obj.current_player)
         if sid: emit('new_item', game_obj.current_item, room=sid)
     else:
         # Trivia forced next
         game_obj.next_round()
-        if game_obj.status == 'ended':
-            emit('game_ended', game_obj.to_dict(include_sensitive=True), room=game_id)
-            emit_game_state(game_id)
-            return
-
         emit('pass_turn', {'player': skipper_name, 'game_status': game_obj.status}, room=game_obj.game_id)
         emit('timer_start', {'duration': game_obj.settings.get('time_limit', 30)}, room=game_obj.game_id)
         
     emit_game_state(game_obj.game_id)
-
-def start_hint_timers(game_id):
-    if game_id in hint_timers:
-        for t in hint_timers[game_id]: t.cancel()
-
-    hint_timers[game_id] = []
-
-    def send_hint(elapsed):
-        game_obj = game_rooms.get(game_id)
-        if game_obj and game_obj.game_type == 'pictionary' and game_obj.status == 'round_active':
-            hints = game_obj.get_hints(elapsed)
-            if hints:
-                emit('item_hint', {'hint': hints[-1]}, room=game_id)
-
-    hint_timers[game_id].append(eventlet.spawn_after(30, lambda: send_hint(30)))
-    hint_timers[game_id].append(eventlet.spawn_after(60, lambda: send_hint(60)))
-
-def start_inactive_timer(game_id, player_name):
-    # Cancel old timer if exists
-    if game_id in inactive_timers and player_name in inactive_timers[game_id]:
-        inactive_timers[game_id][player_name].cancel()
-
-    if game_id not in inactive_timers:
-        inactive_timers[game_id] = {}
-
-    def auto_skip():
-        game_obj = game_rooms.get(game_id)
-        if game_obj and game_obj.current_player == player_name and game_obj.status == 'playing':
-            handle_turn_skip(game_obj, f"النظام (عدم استجابة {player_name})")
-
-    inactive_timers[game_id][player_name] = eventlet.spawn_after(30, auto_skip)
 
 @socketio.on('draw')
 def handle_draw(data):
@@ -480,7 +363,7 @@ def handle_verify_game(data):
         game_obj = game_rooms[gid]
         if any(p['name'] == pname for p in game_obj.players):
             join_room(gid)
-            player_sids[f"{gid}_{pname}"] = request.sid
+            player_sids[pname] = request.sid
             emit_game_state(gid)
             if game_obj.game_type == 'trivia' and game_obj.status == 'round_active':
                 # Start timer for the person who just joined/refreshed
@@ -521,6 +404,59 @@ def handle_leave(data):
             emit_game_state(rid)
         leave_room(rid)
 
+@socketio.on('pause_game')
+def handle_pause_game(data):
+    game_id = str(data.get('game_id'))
+    game_obj = game_rooms.get(game_id)
+    if game_obj and game_obj.host == session.get('player_name'):
+        if game_obj.pause_game():
+            emit('game_paused', {'paused_by': game_obj.host}, room=game_id)
+            emit_game_state(game_id)
+
+@socketio.on('resume_game')
+def handle_resume_game(data):
+    game_id = str(data.get('game_id'))
+    game_obj = game_rooms.get(game_id)
+    if game_obj and game_obj.host == session.get('player_name'):
+        if game_obj.resume_game():
+            emit('game_resumed', room=game_id)
+            # Send updated timer
+            elapsed = (datetime.now() - game_obj.round_start_time).total_seconds()
+            limit = game_obj.settings.get('time_limit', 90)
+            remaining = max(0, int(limit - elapsed))
+            emit('timer_start', {'duration': remaining}, room=game_id)
+            emit_game_state(game_id)
+
+@socketio.on('finish_game')
+def handle_finish_game(data):
+    game_id = str(data.get('game_id'))
+    game_obj = game_rooms.get(game_id)
+    if game_obj and game_obj.host == session.get('player_name'):
+        # Sort players by score
+        sorted_players = sorted(game_obj.players, key=lambda p: game_obj.scores.get(p['name'], 0), reverse=True)
+
+        # Determine highlights
+        highlights = []
+        if sorted_players:
+            winner = sorted_players[0]['name']
+            highlights.append({'title': '👑 الملك', 'player': winner, 'desc': 'أعلى سكور في اللعبة'})
+
+        summary_data = {
+            'scores': game_obj.scores,
+            'team_scores': game_obj.team_scores,
+            'players': game_obj.players,
+            'highlights': highlights
+        }
+        emit('game_ended', summary_data, room=game_id)
+
+@socketio.on('player_reaction')
+def handle_reaction(data):
+    game_id = str(data.get('game_id'))
+    reaction = data.get('reaction')
+    player_name = session.get('player_name')
+    if game_id and reaction:
+        emit('new_reaction', {'player': player_name, 'reaction': reaction}, room=game_id)
+
 @socketio.on('close_room')
 def handle_close(data):
     room_id = str(data.get('roomId'))
@@ -531,6 +467,46 @@ def handle_close(data):
             game_rooms[room_id].data_service.cleanup_room(room_id)
         del game_rooms[room_id]
         socketio.emit('room_closed', {'message': 'تم إغلاق الغرفة من قبل المضيف'}, room=room_id)
+
+def auto_skip_player(game_id, player_name):
+    game_obj = game_rooms.get(game_id)
+    if game_obj and game_obj.current_player == player_name and game_obj.status == 'playing':
+        logger.info(f"Auto-skipping inactive player {player_name} in room {game_id}")
+        handle_turn_skip(game_obj, f"النظام (عدم استجابة {player_name})")
+        socketio.emit('player_inactive', {'player': player_name}, room=game_id)
+
+def start_turn_timer(game_id, player_name):
+    cancel_turn_timer(game_id)
+    timer = eventlet.spawn_after(30, auto_skip_player, game_id, player_name)
+    turn_timers[game_id] = timer
+
+def cancel_turn_timer(game_id):
+    if game_id in turn_timers:
+        turn_timers[game_id].cancel()
+        del turn_timers[game_id]
+
+def send_hint(game_id, hint_number):
+    game_obj = game_rooms.get(game_id)
+    if game_obj and game_obj.status == 'round_active' and not game_obj.paused:
+        hint = game_obj.get_hint(hint_number)
+        if hint:
+            logger.info(f"Sending hint {hint_number} for game {game_id}")
+            socketio.emit('new_hint', {'hint': hint, 'number': hint_number}, room=game_id)
+
+def start_hint_cycle(game_id):
+    cancel_hint_timers(game_id)
+    timers = []
+    # Hint 1 at 30s, Hint 2 at 60s, Hint 3 at 90s
+    for i, delay in enumerate([30, 60, 90], 1):
+        t = eventlet.spawn_after(delay, send_hint, game_id, i)
+        timers.append(t)
+    hint_timers[game_id] = timers
+
+def cancel_hint_timers(game_id):
+    if game_id in hint_timers:
+        for t in hint_timers[game_id]:
+            t.cancel()
+        del hint_timers[game_id]
 
 def emit_game_state(gid):
     if gid in game_rooms:
