@@ -707,6 +707,8 @@ class GameEngine {
                 player_name: this.playerName,
                 transfer_id: this.transferId
             });
+            // Ensure pause overlay is hidden on connect
+            document.getElementById('pause-overlay').classList.add('u-hidden');
         });
         this.setupSocketListeners();
     }
