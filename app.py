@@ -386,6 +386,48 @@ def handle_close(data):
         del game_rooms[room_id]
         socketio.emit('room_closed', {'message': 'تم إغلاق الغرفة من قبل المضيف'}, room=room_id)
 
+@socketio.on('player_reaction')
+def handle_player_reaction(data):
+    """Handle player reaction emoji"""
+    game_id = str(data.get('game_id'))
+    reaction = data.get('reaction')
+    player_name = session.get('player_name')
+    
+    if game_id in game_rooms and reaction:
+        # Broadcast reaction to all players in the room
+        emit('player_reaction', {
+            'player': player_name,
+            'reaction': reaction
+        }, room=game_id)
+
+@socketio.on('finish_game')
+def handle_finish_game(data):
+    """Handle finish game request from host"""
+    game_id = str(data.get('game_id'))
+    player_name = session.get('player_name')
+    
+    if game_id not in game_rooms:
+        return
+    
+    game_obj = game_rooms[game_id]
+    
+    # Only host can finish the game
+    if player_name != game_obj.host:
+        emit('error', {'message': 'فقط المضيف يمكنه إنهاء اللعبة'})
+        return
+    
+    # Set game status to finished
+    game_obj.status = 'finished'
+    
+    # Emit final results to all players
+    emit('game_finished', {
+        'scores': game_obj.scores,
+        'team_scores': game_obj.team_scores if hasattr(game_obj, 'team_scores') else {},
+        'message': 'انتهت اللعبة!'
+    }, room=game_id)
+    
+    emit_game_state(game_id)
+
 def emit_game_state(gid):
     if gid in game_rooms:
         game_obj = game_rooms[gid]

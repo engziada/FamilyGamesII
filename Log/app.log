@@ -589,3 +589,20 @@ AttributeError: 'str' object has no attribute 'append'
 2026-02-01 14:04:00,521 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
 2026-02-01 14:04:01,694 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
 2026-02-01 14:04:02,566 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 14:20:18,400 INFO:  * Restarting with stat
+2026-02-01 14:20:20,088 WARNING:  * Debugger is active!
+2026-02-01 14:20:20,104 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 14:20:38,047 DEBUG: Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2026-02-01 14:20:39,142 DEBUG: https://raw.githubusercontent.com:443 "GET /rn0x/IslamicQuizAPI/main/questions_ar.json HTTP/1.1" 404 14
+2026-02-01 14:20:39,181 DEBUG: Starting new HTTPS connection (1): opentdb.com:443
+2026-02-01 14:20:40,521 DEBUG: https://opentdb.com:443 "GET /api.php?amount=6&type=multiple HTTP/1.1" 200 None
+2026-02-01 14:20:40,526 DEBUG: Starting new HTTPS connection (1): api.groq.com:443
+2026-02-01 14:20:41,688 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 14:20:41,776 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 14:20:42,799 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 14:20:43,901 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 14:20:44,822 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 14:20:45,820 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 15:09:44,032 INFO:  * Restarting with stat
+2026-02-01 15:09:45,955 WARNING:  * Debugger is active!
+2026-02-01 15:09:45,976 INFO:  * Debugger PIN: 109-781-019

@@ -852,7 +852,11 @@ class GameEngine {
             this.showGameSummary(data);
         });
 
-        this.socket.on('new_reaction', (data) => {
+        this.socket.on('game_finished', (data) => {
+            this.showGameSummary(data);
+        });
+
+        this.socket.on('player_reaction', (data) => {
             this.showFloatingReaction(data.reaction);
         });
 
