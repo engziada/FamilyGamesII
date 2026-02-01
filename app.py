@@ -201,8 +201,11 @@ def handle_start_game(data):
             # Send the item to the current player for charades/pictionary
             if game_obj.game_type in ['charades', 'pictionary'] and game_obj.current_item:
                 sid = get_player_sid(game_obj.current_player)
+                logger.info(f"Game start - Sending new_item to {game_obj.current_player}, SID: {sid}, Item: {game_obj.current_item}")
                 if sid:
                     socketio.emit('new_item', game_obj.current_item, to=sid)
+                else:
+                    logger.warning(f"Game start - No SID found for player {game_obj.current_player}")
             
             # Start turn timer for non-trivia games
             if game_obj.game_type != 'trivia':

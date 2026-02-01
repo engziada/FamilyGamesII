@@ -790,9 +790,12 @@ class GameEngine {
         });
 
         this.socket.on('new_item', (data) => {
+            console.log('Received new_item event:', data);
             if (data && data.item) {
                 this.currentItemCategory = data.category;
                 this.displayItem(data.category, data.item);
+            } else {
+                console.warn('new_item event missing item property:', data);
             }
         });
 
