@@ -198,6 +198,12 @@ def handle_start_game(data):
                 'transfer_id': str(uuid.uuid4())
             }, room=game_id)
             
+            # Send the item to the current player for charades/pictionary
+            if game_obj.game_type in ['charades', 'pictionary'] and game_obj.current_item:
+                sid = get_player_sid(game_obj.current_player)
+                if sid:
+                    socketio.emit('new_item', game_obj.current_item, to=sid)
+            
             # Start turn timer for non-trivia games
             if game_obj.game_type != 'trivia':
                 timer_manager.start_turn_timer(
