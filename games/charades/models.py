@@ -10,14 +10,11 @@ class CharadesGame:
         self.players = [{'name': host, 'isHost': True, 'team': 1, 'avatar': avatar}]
         self.game_type = 'charades'
         self.status = 'waiting'
-        self.ready_players = set()
         self.scores = {} # {player_name: score}
         self.team_scores = {'1': 0, '2': 0}
         self.current_player = ''
         self.current_item = None
         self.round_start_time = None
-        self.paused = False  # Fix Bug #3: Add paused attribute
-        self.ready_players = set()  # Fix Bug #9: Add ready_players attribute
         
         # Settings: {teams: bool, difficulty: str, custom_words: str, time_limit: int}
         self.settings = settings or {
@@ -109,12 +106,11 @@ class CharadesGame:
     def start_game(self):
         if len(self.players) < 2:
             raise ValueError("عدد اللاعبين غير كافي")
-        self.ready_players.clear()  # Fix Bug #9: Clear ready players on game start
         self.status = 'playing'
         self.current_player = self.players[0]['name']
         self.current_item = None
         self.round_start_time = None
-
+        
     def set_current_item(self, item):
         """Set the current item for the player's turn"""
         self.current_item = item
@@ -127,8 +123,6 @@ class CharadesGame:
         if not self.players:
             raise ValueError("لا يوجد لاعبين")
         
-        self.ready_players.clear()
-
         # Find next player
         current_idx = next((i for i, p in enumerate(self.players) if p['name'] == self.current_player), 0)
         next_idx = (current_idx + 1) % len(self.players)
@@ -175,7 +169,6 @@ class CharadesGame:
             'players': self.players,
             'game_type': self.game_type,
             'status': self.status,
-            'ready_players': list(self.ready_players),
             'scores': self.scores,
             'team_scores': self.team_scores,
             'settings': self.settings,
@@ -183,19 +176,6 @@ class CharadesGame:
             'current_item': current_item_data,
             'round_start_time': self.round_start_time.isoformat() if self.round_start_time else None
         }
-
-    def get_hint(self, hint_number):
-        if not self.current_item: return None
-        item_text = self.current_item.get('item', '')
-        if hint_number == 1:
-            return f"أول حرف: {item_text[0]}"
-        elif hint_number == 2:
-            # Masked word: "____"
-            masked = " ".join(["_" if c != " " else "  " for c in item_text])
-            return f"عدد الحروف: {masked} ({len(item_text.replace(' ', ''))} حرف)"
-        elif hint_number == 3:
-            return f"الفئة: {self.current_item.get('category')}"
-        return None
 
     def get_item(self):
         """Get an item based on game settings using data service"""
@@ -258,35 +238,6 @@ class CharadesGame:
         except Exception as e:
             print(f"Error loading charades items: {e}")
             return None
-
-    def get_hint(self, hint_number):
-        """
-        Get hint for pictionary game.
-        
-        Args:
-            hint_number: Hint number (1, 2, or 3)
-            
-        Returns:
-            Hint string or None if no hint available
-        """
-        if not self.current_item:
-            return None
-        
-        item_text = self.current_item.get('item', '')
-        
-        # Fix Bug #6: Add null check for empty item text
-        if not item_text:
-            return None
-        
-        if hint_number == 1:
-            return f"أول حرف: {item_text[0]}"
-        elif hint_number == 2:
-            return f"عدد الحروف: {len(item_text)}"
-        elif hint_number == 3:
-            # Last letter hint
-            return f"آخر حرف: {item_text[-1]}"
-        
-        return None
 
     @classmethod
     def from_dict(cls, game_id, data):

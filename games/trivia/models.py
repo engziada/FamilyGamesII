@@ -10,7 +10,6 @@ class TriviaGame:
         self.players = [{'name': host, 'isHost': True, 'team': 1, 'avatar': avatar}]
         self.game_type = 'trivia'
         self.status = 'waiting'
-        self.ready_players = set()
         self.scores = {}
         self.team_scores = {'1': 0, '2': 0}
         self.current_player = '' # Trivia won't use this as much now
@@ -47,9 +46,9 @@ class TriviaGame:
 
     def add_player(self, player_name, avatar='🐶'):
         if len(self.players) >= 8:
-            raise ValueError("الجمهور ممتلئ")
+            raise ValueError("الغرفة ممتلئة")
         if any(p['name'] == player_name for p in self.players):
-            raise ValueError("الاسم مستخدم بالفعل")
+            raise ValueError("اللاعب موجود بالفعل")
 
         team = 1
         if self.settings.get('teams'):
@@ -67,7 +66,6 @@ class TriviaGame:
             self.players[0]['isHost'] = True
 
     def start_game(self):
-        self.ready_players.clear()  # Fix Bug #9: Clear ready players on game start
         self.status = 'round_active' # Automatically start the round
         self.current_question = self.get_question()
         self.question_active = True
@@ -78,7 +76,6 @@ class TriviaGame:
     def next_round(self):
         self.current_question = self.get_question()
         self.status = 'round_active'
-        self.ready_players.clear()
         self.question_active = True
         self.round_start_time = datetime.now()
         self.players_answered = set()
@@ -143,7 +140,6 @@ class TriviaGame:
             'players': self.players,
             'game_type': self.game_type,
             'status': self.status,
-            'ready_players': list(self.ready_players),
             'scores': self.scores,
             'team_scores': self.team_scores,
             'current_player': self.current_player,

@@ -8,7 +8,7 @@ const AudioManager = {
 
     init() {
         this.sounds.guessed = new Audio('/static/sounds/guessed.mp3');
-        this.sounds.timeout = new Audio('/static/sounds/guessed.mp3'); // Using guessed sound temporarily - more pleasant than buzz
+        this.sounds.timeout = new Audio('/static/sounds/timeout.mp3');
         // Pre-load sounds
         Object.values(this.sounds).forEach(s => s.load());
     },
@@ -295,10 +295,12 @@ const Lobby = {
 
                 li.innerHTML = `<span class="player-avatar">${avatar}</span><span>${name} ${isHost ? '👑' : ''}</span>`;
 
-                const statusSpan = document.createElement('span');
-                statusSpan.className = `ready-status ${isReady ? 'ready' : 'waiting'}`;
-                statusSpan.innerHTML = isReady ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-hourglass-start"></i>';
-                li.appendChild(statusSpan);
+                if (isReady) {
+                    const statusSpan = document.createElement('span');
+                    statusSpan.className = 'ready-status ready';
+                    statusSpan.innerHTML = '<i class="fas fa-check-circle"></i>';
+                    li.appendChild(statusSpan);
+                }
 
                 if (isHost) li.classList.add('host');
                 list.appendChild(li);
@@ -654,7 +656,6 @@ const Utils = {
     },
 
     showMessage(message, type = 'info') {
-        ToastManager.show(message, type);
         const statusElement = document.getElementById('game-status');
         if (statusElement) {
             statusElement.textContent = message;
@@ -688,6 +689,7 @@ class GameEngine {
         this.lastScores = {};
         this.lastReactionTime = 0;
         this.skipInterval = null;
+        this.playersData = [];
         
         this.isDrawing = false;
         this.lastPos = { x: 0, y: 0 };
@@ -790,12 +792,9 @@ class GameEngine {
         });
 
         this.socket.on('new_item', (data) => {
-            console.log('Received new_item event:', data);
             if (data && data.item) {
                 this.currentItemCategory = data.category;
                 this.displayItem(data.category, data.item);
-            } else {
-                console.warn('new_item event missing item property:', data);
             }
         });
 
@@ -1134,13 +1133,26 @@ class GameEngine {
             this.startSkipTimer();
         }
         const el = document.getElementById('current-turn');
+        const avatarEl = document.getElementById('current-turn-avatar');
+        
         if (el) {
             if (this.gameType === 'trivia') {
                 el.textContent = 'الكل!';
+                if (avatarEl) avatarEl.textContent = '🎯';
             } else if (player) {
                 el.textContent = player;
+                // Find player avatar from stored players data
+                if (avatarEl) {
+                    const playerData = this.playersData.find(p => {
+                        const name = typeof p === 'object' ? p.name : p;
+                        return name === player;
+                    });
+                    const avatar = playerData && typeof playerData === 'object' ? (playerData.avatar || '🐶') : '🐶';
+                    avatarEl.textContent = avatar;
+                }
             } else {
                 el.textContent = '...';
+                if (avatarEl) avatarEl.textContent = '';
             }
         }
 
@@ -1328,6 +1340,7 @@ class GameEngine {
 
     updatePlayersList(players, readyPlayers = []) {
         console.log("GameEngine updating players with avatars:", players);
+        this.playersData = players; // Store players data for avatar lookup
         const listEl = document.getElementById('players-list');
         if (!listEl) return;
         
@@ -1350,12 +1363,14 @@ class GameEngine {
                 html += `<span class="badge badge-team-${team}">فريق ${team}</span>`;
             }
 
-            const statusSpan = document.createElement('span');
-            statusSpan.className = `ready-status ${isReady ? 'ready' : 'waiting'}`;
-            statusSpan.innerHTML = isReady ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-hourglass-start"></i>';
-
             li.innerHTML = html;
-            li.appendChild(statusSpan);
+            
+            if (isReady) {
+                const statusSpan = document.createElement('span');
+                statusSpan.className = 'ready-status ready';
+                statusSpan.innerHTML = '<i class="fas fa-check-circle"></i>';
+                li.appendChild(statusSpan);
+            }
             ul.appendChild(li);
         });
         listEl.appendChild(ul);

@@ -28,3 +28,564 @@
 2026-01-31 22:40:20,577 INFO:  * Restarting with stat
 2026-01-31 22:40:22,332 WARNING:  * Debugger is active!
 2026-01-31 22:40:22,356 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 00:35:51,985 INFO:  * Restarting with stat
+2026-02-01 00:35:53,702 WARNING:  * Debugger is active!
+2026-02-01 00:35:53,720 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 00:35:53,926 DEBUG: Player p1 connected with SID J5plZ9QnlKuaq-x3AAAB
+2026-02-01 00:35:57,014 DEBUG: Player x connected with SID EJ3hIBt16cZ41a7XAAAD
+2026-02-01 00:36:50,427 DEBUG: Player p1 connected with SID btf2nfgJIeDdqugjAAAF
+2026-02-01 00:37:32,247 DEBUG: Player x connected with SID Ons8gAZdZFPmepdcAAAH
+2026-02-01 00:37:40,896 DEBUG: Started turn timer for game 7682, player p1, timeout 30s
+2026-02-01 00:37:41,642 DEBUG: Player p1 connected with SID esez8-_gte7-CaiNAAAJ
+2026-02-01 00:37:42,356 DEBUG: Player 7755 connected with SID 8t5uWYi-vUD6sPW6AAAL
+2026-02-01 00:38:10,893 INFO: Auto-skipping inactive player p1 in room 7682
+2026-02-01 00:38:43,949 DEBUG: Started turn timer for game 7682, player 7755, timeout 30s
+2026-02-01 00:38:48,207 ERROR: message handler error
+Traceback (most recent call last):
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\flask_socketio\__init__.py", line 831, in _handle_event
+    ret = handler(auth)
+          ^^^^^^^^^^^^^
+TypeError: handle_connect() takes 0 positional arguments but 1 was given
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\engineio\server.py", line 450, in run_handler
+    return self.handlers[event](*args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\socketio\server.py", line 652, in _handle_eio_message
+    self._handle_connect(eio_sid, pkt.namespace, pkt.data)
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\socketio\server.py", line 538, in _handle_connect
+    success = self._trigger_event(
+              ^^^^^^^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\socketio\server.py", line 617, in _trigger_event
+    return handler(*args)
+           ^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\flask_socketio\__init__.py", line 292, in _handler
+    return self._handle_event(handler, message, real_ns, sid,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\flask_socketio\__init__.py", line 833, in _handle_event
+    ret = handler()
+          ^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\app.py", line 127, in handle_connect
+    player_sids[player_name].append(request.sid)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'append'
+2026-02-01 00:39:09,009 ERROR: message handler error
+Traceback (most recent call last):
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\flask_socketio\__init__.py", line 831, in _handle_event
+    ret = handler(auth)
+          ^^^^^^^^^^^^^
+TypeError: handle_connect() takes 0 positional arguments but 1 was given
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\engineio\server.py", line 450, in run_handler
+    return self.handlers[event](*args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\socketio\server.py", line 652, in _handle_eio_message
+    self._handle_connect(eio_sid, pkt.namespace, pkt.data)
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\socketio\server.py", line 538, in _handle_connect
+    success = self._trigger_event(
+              ^^^^^^^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\socketio\server.py", line 617, in _trigger_event
+    return handler(*args)
+           ^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\flask_socketio\__init__.py", line 292, in _handler
+    return self._handle_event(handler, message, real_ns, sid,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\flask_socketio\__init__.py", line 833, in _handle_event
+    ret = handler()
+          ^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\app.py", line 127, in handle_connect
+    player_sids[player_name].append(request.sid)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'append'
+2026-02-01 00:39:13,964 INFO: Auto-skipping inactive player 7755 in room 7682
+2026-02-01 00:39:45,303 ERROR: message handler error
+Traceback (most recent call last):
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\flask_socketio\__init__.py", line 831, in _handle_event
+    ret = handler(auth)
+          ^^^^^^^^^^^^^
+TypeError: handle_connect() takes 0 positional arguments but 1 was given
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\engineio\server.py", line 450, in run_handler
+    return self.handlers[event](*args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\socketio\server.py", line 652, in _handle_eio_message
+    self._handle_connect(eio_sid, pkt.namespace, pkt.data)
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\socketio\server.py", line 538, in _handle_connect
+    success = self._trigger_event(
+              ^^^^^^^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\socketio\server.py", line 617, in _trigger_event
+    return handler(*args)
+           ^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\flask_socketio\__init__.py", line 292, in _handler
+    return self._handle_event(handler, message, real_ns, sid,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\flask_socketio\__init__.py", line 833, in _handle_event
+    ret = handler()
+          ^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\app.py", line 127, in handle_connect
+    player_sids[player_name].append(request.sid)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'append'
+2026-02-01 00:39:55,124 DEBUG: Started turn timer for game 7682, player p1, timeout 30s
+2026-02-01 00:40:02,422 ERROR: message handler error
+Traceback (most recent call last):
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\flask_socketio\__init__.py", line 831, in _handle_event
+    ret = handler(auth)
+          ^^^^^^^^^^^^^
+TypeError: handle_connect() takes 0 positional arguments but 1 was given
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\engineio\server.py", line 450, in run_handler
+    return self.handlers[event](*args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\socketio\server.py", line 652, in _handle_eio_message
+    self._handle_connect(eio_sid, pkt.namespace, pkt.data)
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\socketio\server.py", line 538, in _handle_connect
+    success = self._trigger_event(
+              ^^^^^^^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\socketio\server.py", line 617, in _trigger_event
+    return handler(*args)
+           ^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\flask_socketio\__init__.py", line 292, in _handler
+    return self._handle_event(handler, message, real_ns, sid,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\flask_socketio\__init__.py", line 833, in _handle_event
+    ret = handler()
+          ^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\app.py", line 127, in handle_connect
+    player_sids[player_name].append(request.sid)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'append'
+2026-02-01 00:40:10,002 ERROR: message handler error
+Traceback (most recent call last):
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\flask_socketio\__init__.py", line 831, in _handle_event
+    ret = handler(auth)
+          ^^^^^^^^^^^^^
+TypeError: handle_connect() takes 0 positional arguments but 1 was given
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\engineio\server.py", line 450, in run_handler
+    return self.handlers[event](*args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\socketio\server.py", line 652, in _handle_eio_message
+    self._handle_connect(eio_sid, pkt.namespace, pkt.data)
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\socketio\server.py", line 538, in _handle_connect
+    success = self._trigger_event(
+              ^^^^^^^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\socketio\server.py", line 617, in _trigger_event
+    return handler(*args)
+           ^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\flask_socketio\__init__.py", line 292, in _handler
+    return self._handle_event(handler, message, real_ns, sid,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\flask_socketio\__init__.py", line 833, in _handle_event
+    ret = handler()
+          ^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\app.py", line 127, in handle_connect
+    player_sids[player_name].append(request.sid)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'append'
+2026-02-01 00:40:25,134 INFO: Auto-skipping inactive player p1 in room 7682
+2026-02-01 00:40:34,461 ERROR: message handler error
+Traceback (most recent call last):
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\flask_socketio\__init__.py", line 831, in _handle_event
+    ret = handler(auth)
+          ^^^^^^^^^^^^^
+TypeError: handle_connect() takes 0 positional arguments but 1 was given
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\engineio\server.py", line 450, in run_handler
+    return self.handlers[event](*args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\socketio\server.py", line 652, in _handle_eio_message
+    self._handle_connect(eio_sid, pkt.namespace, pkt.data)
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\socketio\server.py", line 538, in _handle_connect
+    success = self._trigger_event(
+              ^^^^^^^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\socketio\server.py", line 617, in _trigger_event
+    return handler(*args)
+           ^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\flask_socketio\__init__.py", line 292, in _handler
+    return self._handle_event(handler, message, real_ns, sid,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\flask_socketio\__init__.py", line 833, in _handle_event
+    ret = handler()
+          ^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\app.py", line 127, in handle_connect
+    player_sids[player_name].append(request.sid)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'append'
+2026-02-01 00:41:38,486 ERROR: message handler error
+Traceback (most recent call last):
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\flask_socketio\__init__.py", line 831, in _handle_event
+    ret = handler(auth)
+          ^^^^^^^^^^^^^
+TypeError: handle_connect() takes 0 positional arguments but 1 was given
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\engineio\server.py", line 450, in run_handler
+    return self.handlers[event](*args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\socketio\server.py", line 652, in _handle_eio_message
+    self._handle_connect(eio_sid, pkt.namespace, pkt.data)
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\socketio\server.py", line 538, in _handle_connect
+    success = self._trigger_event(
+              ^^^^^^^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\socketio\server.py", line 617, in _trigger_event
+    return handler(*args)
+           ^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\flask_socketio\__init__.py", line 292, in _handler
+    return self._handle_event(handler, message, real_ns, sid,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\.venv\Lib\site-packages\flask_socketio\__init__.py", line 833, in _handle_event
+    ret = handler()
+          ^^^^^^^^^
+  File "F:\PythonII\FamilyGamesII\app.py", line 127, in handle_connect
+    player_sids[player_name].append(request.sid)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'append'
+2026-02-01 00:44:02,554 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
+2026-02-01 00:44:02,926 INFO:  * Restarting with stat
+2026-02-01 00:44:04,883 WARNING:  * Debugger is active!
+2026-02-01 00:44:04,902 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 00:44:05,235 DEBUG: Player p1 connected with SID mMACQnMZbddFtkHMAAAB
+2026-02-01 00:44:05,402 DEBUG: Player 7755 connected with SID wZ1mO7eppT79j5ofAAAD
+2026-02-01 00:45:28,367 INFO:  * Restarting with stat
+2026-02-01 00:45:29,507 WARNING:  * Debugger is active!
+2026-02-01 00:45:29,518 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 00:45:29,656 DEBUG: Player 7755 connected with SID HHaJu5eBXE6nUOkgAAAB
+2026-02-01 00:45:30,939 DEBUG: Player p1 connected with SID P9tNySjZBEi9we6zAAAD
+2026-02-01 00:46:29,012 DEBUG: Player 7755 connected with SID bj25jl0it7bdG6uHAAAF
+2026-02-01 00:46:58,994 DEBUG: Player p1 connected with SID jV5tZ_Y6shG1kopwAAAH
+2026-02-01 00:47:02,514 DEBUG: Started turn timer for game 6647, player z, timeout 30s
+2026-02-01 00:47:03,267 DEBUG: Player z connected with SID ZOCuHU_mCqZsWUFcAAAK
+2026-02-01 00:47:03,417 DEBUG: Player 6647 connected with SID _5ij_tRrywu6zpsdAAAL
+2026-02-01 00:47:32,547 INFO: Auto-skipping inactive player z in room 6647
+2026-02-01 00:47:46,282 DEBUG: Started turn timer for game 6647, player 6647, timeout 30s
+2026-02-01 00:48:11,182 DEBUG: Cancelled turn timer for game 6647
+2026-02-01 00:48:17,414 DEBUG: Started turn timer for game 6647, player z, timeout 30s
+2026-02-01 00:48:47,428 INFO: Auto-skipping inactive player z in room 6647
+2026-02-01 00:49:45,381 INFO: Only 1 player left in room 6647, force closing room
+2026-02-01 00:49:45,396 INFO: Cleaned up all timers for game 6647
+2026-02-01 00:49:45,396 INFO: Room 6647 cleaned up successfully
+2026-02-01 00:50:57,584 DEBUG: Player 6647 connected with SID Iop92faO6mqmAPMvAAAN
+2026-02-01 00:51:30,693 DEBUG: Player z connected with SID mXHll0-ApH6t0rIqAAAP
+2026-02-01 00:51:36,727 DEBUG: Started turn timer for game 4059, player Ziada, timeout 30s
+2026-02-01 00:51:37,342 DEBUG: Player Ziada connected with SID ADyr8TV639grUN8XAAAR
+2026-02-01 00:51:37,776 DEBUG: Player z connected with SID sRhTR0RXHdg2bc1qAAAT
+2026-02-01 00:51:44,385 DEBUG: Cancelled turn timer for game 4059
+2026-02-01 00:51:44,386 DEBUG: Started hint cycle for game 4059 with delays [30, 60, 90]
+2026-02-01 00:51:50,876 DEBUG: Cancelled hint timers for game 4059
+2026-02-01 00:51:50,894 DEBUG: Started turn timer for game 4059, player z, timeout 30s
+2026-02-01 00:52:00,190 DEBUG: Cancelled turn timer for game 4059
+2026-02-01 00:52:00,190 DEBUG: Started hint cycle for game 4059 with delays [30, 60, 90]
+2026-02-01 00:52:06,308 DEBUG: Cancelled hint timers for game 4059
+2026-02-01 00:52:06,352 DEBUG: Started turn timer for game 4059, player Ziada, timeout 30s
+2026-02-01 00:52:36,351 INFO: Auto-skipping inactive player Ziada in room 4059
+2026-02-01 00:53:16,232 INFO: Closing room 4059
+2026-02-01 00:53:16,256 INFO: Cleaned up all timers for game 4059
+2026-02-01 00:53:16,262 INFO: Room 4059 cleaned up successfully
+2026-02-01 00:54:35,213 DEBUG: Player Ziada connected with SID BCX60Uk6RbW5xzTUAAAV
+2026-02-01 00:54:35,318 DEBUG: Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2026-02-01 00:54:36,426 DEBUG: https://raw.githubusercontent.com:443 "GET /rn0x/IslamicQuizAPI/main/questions_ar.json HTTP/1.1" 404 14
+2026-02-01 00:54:36,432 DEBUG: Starting new HTTPS connection (1): opentdb.com:443
+2026-02-01 00:54:37,897 DEBUG: https://opentdb.com:443 "GET /api.php?amount=6&type=multiple HTTP/1.1" 200 None
+2026-02-01 00:54:37,900 DEBUG: Starting new HTTPS connection (1): api.groq.com:443
+2026-02-01 00:54:38,764 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:54:38,980 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:54:40,000 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:54:41,015 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:54:42,032 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:54:43,114 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:54:59,768 DEBUG: Player z connected with SID TmWrnuyLi2ewAglFAAAX
+2026-02-01 00:55:03,894 DEBUG: https://raw.githubusercontent.com:443 "GET /rn0x/IslamicQuizAPI/main/questions_ar.json HTTP/1.1" 404 14
+2026-02-01 00:55:04,858 DEBUG: Resetting dropped connection: opentdb.com
+2026-02-01 00:55:05,694 DEBUG: https://opentdb.com:443 "GET /api.php?amount=6&type=multiple HTTP/1.1" 200 None
+2026-02-01 00:55:05,932 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:55:06,952 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:55:07,962 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:55:08,986 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:55:09,993 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:55:10,991 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:55:11,527 DEBUG: Player Ziada connected with SID MTn5X2z_8n6I0EDNAAAZ
+2026-02-01 00:55:12,036 DEBUG: Player z connected with SID luQ6lWHKfP0KUHpOAAAb
+2026-02-01 00:56:01,987 DEBUG: https://raw.githubusercontent.com:443 "GET /rn0x/IslamicQuizAPI/main/questions_ar.json HTTP/1.1" 404 14
+2026-02-01 00:56:02,838 DEBUG: Resetting dropped connection: opentdb.com
+2026-02-01 00:56:04,461 DEBUG: https://opentdb.com:443 "GET /api.php?amount=6&type=multiple HTTP/1.1" 200 None
+2026-02-01 00:56:04,533 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:56:05,544 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:56:06,557 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:56:07,605 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:56:08,741 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:56:09,843 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:56:23,142 DEBUG: https://raw.githubusercontent.com:443 "GET /rn0x/IslamicQuizAPI/main/questions_ar.json HTTP/1.1" 404 14
+2026-02-01 00:56:24,090 DEBUG: Resetting dropped connection: opentdb.com
+2026-02-01 00:56:25,991 DEBUG: https://opentdb.com:443 "GET /api.php?amount=6&type=multiple HTTP/1.1" 200 None
+2026-02-01 00:56:26,065 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:56:27,080 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:56:28,078 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:56:29,097 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:56:30,106 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:56:31,151 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:58:35,243 DEBUG: https://raw.githubusercontent.com:443 "GET /rn0x/IslamicQuizAPI/main/questions_ar.json HTTP/1.1" 404 14
+2026-02-01 00:58:36,071 DEBUG: Resetting dropped connection: opentdb.com
+2026-02-01 00:58:41,243 DEBUG: https://raw.githubusercontent.com:443 "GET /rn0x/IslamicQuizAPI/main/questions_ar.json HTTP/1.1" 404 14
+2026-02-01 00:58:41,372 DEBUG: https://opentdb.com:443 "GET /api.php?amount=6&type=multiple HTTP/1.1" 200 None
+2026-02-01 00:58:42,257 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:58:42,328 DEBUG: https://opentdb.com:443 "GET /api.php?amount=6&type=multiple HTTP/1.1" 429 None
+2026-02-01 00:58:43,347 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:58:44,433 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:58:45,505 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:58:46,538 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 00:58:47,469 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 01:00:52,716 DEBUG: https://raw.githubusercontent.com:443 "GET /rn0x/IslamicQuizAPI/main/questions_ar.json HTTP/1.1" 404 14
+2026-02-01 01:00:53,551 DEBUG: Resetting dropped connection: opentdb.com
+2026-02-01 01:00:54,890 DEBUG: https://opentdb.com:443 "GET /api.php?amount=6&type=multiple HTTP/1.1" 200 None
+2026-02-01 01:00:54,961 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 01:00:56,638 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 01:00:57,021 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 01:00:58,077 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 01:00:59,054 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 01:01:00,343 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 01:03:00,590 DEBUG: https://raw.githubusercontent.com:443 "GET /rn0x/IslamicQuizAPI/main/questions_ar.json HTTP/1.1" 404 14
+2026-02-01 01:03:01,430 DEBUG: Resetting dropped connection: opentdb.com
+2026-02-01 01:03:04,242 DEBUG: https://opentdb.com:443 "GET /api.php?amount=6&type=multiple HTTP/1.1" 200 None
+2026-02-01 01:03:04,314 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 01:03:05,356 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 01:03:06,354 DEBUG: https://raw.githubusercontent.com:443 "GET /rn0x/IslamicQuizAPI/main/questions_ar.json HTTP/1.1" 404 14
+2026-02-01 01:03:06,358 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 01:03:07,365 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 01:03:07,620 DEBUG: https://opentdb.com:443 "GET /api.php?amount=6&type=multiple HTTP/1.1" 429 None
+2026-02-01 01:03:08,406 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 01:03:09,465 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 01:07:47,532 INFO:  * Restarting with stat
+2026-02-01 01:07:49,033 WARNING:  * Debugger is active!
+2026-02-01 01:07:49,049 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 01:07:52,818 DEBUG: Player z connected with SID ZMe0ia4klnlI6-lrAAAB
+2026-02-01 01:07:52,928 DEBUG: Player Ziada connected with SID nafcxKTyYCRaakw-AAAD
+2026-02-01 01:08:34,093 DEBUG: Player z connected with SID 9nwSmCnyfNLGYZlKAAAF
+2026-02-01 01:09:00,470 DEBUG: Player Ziada connected with SID ssXZp-oy23GKxya3AAAH
+2026-02-01 01:09:05,945 DEBUG: Started turn timer for game 9912, player z, timeout 30s
+2026-02-01 01:09:06,871 DEBUG: Player Ziada connected with SID EZE-sXMyUDfiqZtRAAAK
+2026-02-01 01:09:06,886 DEBUG: Player z connected with SID kv2XfPnlzLlPqlYhAAAL
+2026-02-01 01:09:35,950 INFO: Auto-skipping inactive player z in room 9912
+2026-02-01 01:09:47,416 DEBUG: Started turn timer for game 9912, player Ziada, timeout 30s
+2026-02-01 01:10:17,418 INFO: Auto-skipping inactive player Ziada in room 9912
+2026-02-01 01:11:45,747 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
+2026-02-01 01:11:46,059 INFO:  * Restarting with stat
+2026-02-01 01:11:48,165 WARNING:  * Debugger is active!
+2026-02-01 01:11:48,199 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 01:11:48,397 DEBUG: Player Ziada connected with SID nnmatKeMvcGlWNCwAAAB
+2026-02-01 01:11:48,522 DEBUG: Player z connected with SID sxAeXJs2ogdHdLuSAAAD
+2026-02-01 01:12:04,563 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
+2026-02-01 01:12:04,808 INFO:  * Restarting with stat
+2026-02-01 01:12:06,887 WARNING:  * Debugger is active!
+2026-02-01 01:12:06,919 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 01:12:07,083 DEBUG: Player Ziada connected with SID n3-ikhjlgyOsBgymAAAB
+2026-02-01 01:12:07,118 DEBUG: Player z connected with SID zCNLlv5ZsA0GtTsQAAAD
+2026-02-01 01:14:08,965 INFO:  * Restarting with stat
+2026-02-01 01:14:10,326 WARNING:  * Debugger is active!
+2026-02-01 01:14:10,338 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 01:14:12,928 DEBUG: Player Ziada connected with SID 1sFtoz4bq_dpOj5dAAAB
+2026-02-01 01:14:14,507 DEBUG: Player z connected with SID _tlWdEnSYMkOE37iAAAD
+2026-02-01 01:14:46,554 DEBUG: Player Ziada connected with SID 4EWoBbM0t4B45NwPAAAF
+2026-02-01 01:15:10,777 DEBUG: Player z connected with SID suSL6cK1_aET9D7XAAAH
+2026-02-01 01:15:15,355 DEBUG: Started turn timer for game 4235, player Ziada, timeout 30s
+2026-02-01 01:15:16,048 DEBUG: Player Ziada connected with SID dJXXgAZSV5IXlj0zAAAJ
+2026-02-01 01:15:16,576 DEBUG: Player z connected with SID 7pIHNXRQjZrSl-gFAAAL
+2026-02-01 01:15:45,370 INFO: Auto-skipping inactive player Ziada in room 4235
+2026-02-01 01:15:45,387 DEBUG: Cancelled turn timer for game 4235
+2026-02-01 01:15:45,388 DEBUG: Started turn timer for game 4235, player z, timeout 30s
+2026-02-01 01:16:15,408 INFO: Auto-skipping inactive player z in room 4235
+2026-02-01 01:16:15,425 DEBUG: Started turn timer for game 4235, player Ziada, timeout 30s
+2026-02-01 01:16:45,424 INFO: Auto-skipping inactive player Ziada in room 4235
+2026-02-01 01:16:45,440 DEBUG: Started turn timer for game 4235, player z, timeout 30s
+2026-02-01 01:17:15,449 INFO: Auto-skipping inactive player z in room 4235
+2026-02-01 01:17:15,463 DEBUG: Started turn timer for game 4235, player Ziada, timeout 30s
+2026-02-01 01:17:45,478 INFO: Auto-skipping inactive player Ziada in room 4235
+2026-02-01 01:17:45,494 DEBUG: Started turn timer for game 4235, player z, timeout 30s
+2026-02-01 01:18:15,498 INFO: Auto-skipping inactive player z in room 4235
+2026-02-01 01:18:15,513 DEBUG: Started turn timer for game 4235, player Ziada, timeout 30s
+2026-02-01 01:18:45,518 INFO: Auto-skipping inactive player Ziada in room 4235
+2026-02-01 01:18:45,538 DEBUG: Started turn timer for game 4235, player z, timeout 30s
+2026-02-01 01:19:15,531 INFO: Auto-skipping inactive player z in room 4235
+2026-02-01 01:19:15,555 DEBUG: Started turn timer for game 4235, player Ziada, timeout 30s
+2026-02-01 01:19:45,562 INFO: Auto-skipping inactive player Ziada in room 4235
+2026-02-01 01:19:45,576 DEBUG: Started turn timer for game 4235, player z, timeout 30s
+2026-02-01 01:20:15,581 INFO: Auto-skipping inactive player z in room 4235
+2026-02-01 01:20:15,595 DEBUG: Started turn timer for game 4235, player Ziada, timeout 30s
+2026-02-01 11:45:27,238 INFO:  * Restarting with stat
+2026-02-01 11:45:29,197 WARNING:  * Debugger is active!
+2026-02-01 11:45:29,217 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 11:46:26,930 DEBUG: Started turn timer for game 2050, player Ziada, timeout 30s
+2026-02-01 11:46:28,021 DEBUG: Player Ziada connected with SID BeqiGOWjDInaA8-pAAAF
+2026-02-01 11:46:28,811 DEBUG: Player z connected with SID c_txZX_U4p2-250cAAAH
+2026-02-01 11:46:44,555 DEBUG: Cancelled turn timer for game 2050
+2026-02-01 11:46:53,646 DEBUG: Started turn timer for game 2050, player z, timeout 30s
+2026-02-01 11:47:23,654 INFO: Auto-skipping inactive player z in room 2050
+2026-02-01 11:47:23,684 DEBUG: Cancelled turn timer for game 2050
+2026-02-01 11:47:23,685 DEBUG: Started turn timer for game 2050, player Ziada, timeout 30s
+2026-02-01 11:47:53,693 INFO: Auto-skipping inactive player Ziada in room 2050
+2026-02-01 11:47:53,711 DEBUG: Started turn timer for game 2050, player z, timeout 30s
+2026-02-01 11:48:23,708 INFO: Auto-skipping inactive player z in room 2050
+2026-02-01 11:48:23,743 DEBUG: Started turn timer for game 2050, player Ziada, timeout 30s
+2026-02-01 11:48:53,748 INFO: Auto-skipping inactive player Ziada in room 2050
+2026-02-01 11:48:53,774 DEBUG: Started turn timer for game 2050, player z, timeout 30s
+2026-02-01 11:49:23,778 INFO: Auto-skipping inactive player z in room 2050
+2026-02-01 11:49:23,802 DEBUG: Started turn timer for game 2050, player Ziada, timeout 30s
+2026-02-01 11:49:53,799 INFO: Auto-skipping inactive player Ziada in room 2050
+2026-02-01 11:49:53,824 DEBUG: Started turn timer for game 2050, player z, timeout 30s
+2026-02-01 11:50:23,836 INFO: Auto-skipping inactive player z in room 2050
+2026-02-01 11:50:23,868 DEBUG: Started turn timer for game 2050, player Ziada, timeout 30s
+2026-02-01 11:50:53,870 INFO: Auto-skipping inactive player Ziada in room 2050
+2026-02-01 11:50:53,900 DEBUG: Started turn timer for game 2050, player z, timeout 30s
+2026-02-01 11:51:05,484 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
+2026-02-01 11:51:05,860 INFO:  * Restarting with stat
+2026-02-01 11:51:09,556 WARNING:  * Debugger is active!
+2026-02-01 11:51:09,601 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 11:51:09,935 DEBUG: Player z connected with SID QUDO_3Aie-YzvHZsAAAB
+2026-02-01 11:51:10,470 DEBUG: Player Ziada connected with SID 8ZDwuCzMtd7BnjkKAAAD
+2026-02-01 11:52:53,044 INFO:  * Restarting with stat
+2026-02-01 11:52:54,844 WARNING:  * Debugger is active!
+2026-02-01 11:52:54,861 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 11:52:57,697 DEBUG: Player z connected with SID euQmOmuIsIYl_ID_AAAB
+2026-02-01 11:53:08,138 DEBUG: Player Ziada connected with SID 2LZpDK_0jCuVXhCjAAAD
+2026-02-01 11:53:21,462 DEBUG: Player z connected with SID _zsnAFP3-7v8ZQ-nAAAF
+2026-02-01 11:53:27,327 DEBUG: Started turn timer for game 2001, player Ziada, timeout 30s
+2026-02-01 11:53:28,409 DEBUG: Player Ziada connected with SID znlqOqV2sj5p14y1AAAH
+2026-02-01 11:53:29,125 DEBUG: Player z connected with SID Vuqunx6a8wrAinWPAAAJ
+2026-02-01 11:53:35,814 DEBUG: Cancelled turn timer for game 2001
+2026-02-01 11:53:40,335 DEBUG: Started turn timer for game 2001, player z, timeout 30s
+2026-02-01 11:54:10,339 INFO: Auto-skipping inactive player z in room 2001
+2026-02-01 11:54:10,362 DEBUG: Cancelled turn timer for game 2001
+2026-02-01 11:54:10,363 DEBUG: Started turn timer for game 2001, player Ziada, timeout 30s
+2026-02-01 11:54:40,375 INFO: Auto-skipping inactive player Ziada in room 2001
+2026-02-01 11:54:40,436 DEBUG: Started turn timer for game 2001, player z, timeout 30s
+2026-02-01 11:54:46,403 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
+2026-02-01 11:54:46,767 INFO:  * Restarting with stat
+2026-02-01 11:54:49,470 WARNING:  * Debugger is active!
+2026-02-01 11:54:49,489 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 11:54:49,737 DEBUG: Player Ziada connected with SID GUTHRwYl1wIbeF_2AAAB
+2026-02-01 11:54:49,800 DEBUG: Player z connected with SID -wYdqubVCdesXVoZAAAD
+2026-02-01 11:56:23,592 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
+2026-02-01 11:56:24,098 INFO:  * Restarting with stat
+2026-02-01 11:56:29,063 WARNING:  * Debugger is active!
+2026-02-01 11:56:29,103 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 11:56:29,358 DEBUG: Player z connected with SID bKkBPc_Y0ZPDRAEeAAAB
+2026-02-01 11:56:30,460 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
+2026-02-01 11:56:31,153 INFO:  * Restarting with stat
+2026-02-01 11:56:35,498 WARNING:  * Debugger is active!
+2026-02-01 11:56:35,525 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 11:56:35,905 DEBUG: Player z connected with SID inb3CAYmS35vKZa8AAAB
+2026-02-01 11:56:36,974 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
+2026-02-01 11:56:37,398 INFO:  * Restarting with stat
+2026-02-01 11:56:42,090 WARNING:  * Debugger is active!
+2026-02-01 11:56:42,124 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 11:56:42,518 DEBUG: Player z connected with SID XPN1kU-5vLqz4Oi9AAAB
+2026-02-01 11:56:43,616 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\games\\charades\\models.py', reloading
+2026-02-01 11:56:43,988 INFO:  * Restarting with stat
+2026-02-01 11:56:49,394 WARNING:  * Debugger is active!
+2026-02-01 11:56:49,427 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 11:56:50,233 DEBUG: Player Ziada connected with SID M9n2eEsY7zsdQoijAAAC
+2026-02-01 11:56:50,252 DEBUG: Player z connected with SID SeSesGYaP29fLRPfAAAD
+2026-02-01 11:56:52,566 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
+2026-02-01 11:56:53,246 INFO:  * Restarting with stat
+2026-02-01 11:56:57,864 WARNING:  * Debugger is active!
+2026-02-01 11:56:57,899 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 11:56:58,223 DEBUG: Player Ziada connected with SID nRjT9r0O4FColz0IAAAB
+2026-02-01 11:56:58,933 DEBUG: Player z connected with SID f8UfXDzclGreUhV-AAAD
+2026-02-01 11:56:59,345 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
+2026-02-01 11:57:00,018 INFO:  * Restarting with stat
+2026-02-01 11:57:04,449 WARNING:  * Debugger is active!
+2026-02-01 11:57:04,479 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 11:57:05,402 ERROR: Invalid session W9V0TErkbU1LLYDDAAAC (further occurrences of this error will be logged with level INFO)
+2026-02-01 11:57:05,825 DEBUG: Player z connected with SID aLAuV-XADrNUZLZGAAAB
+2026-02-01 11:57:06,528 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
+2026-02-01 11:57:07,082 INFO:  * Restarting with stat
+2026-02-01 11:57:11,716 WARNING:  * Debugger is active!
+2026-02-01 11:57:11,744 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 12:00:07,950 INFO:  * Restarting with stat
+2026-02-01 12:00:09,824 WARNING:  * Debugger is active!
+2026-02-01 12:00:09,848 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 13:00:24,069 INFO:  * Restarting with stat
+2026-02-01 13:00:26,015 WARNING:  * Debugger is active!
+2026-02-01 13:00:26,035 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 13:15:58,737 INFO:  * Restarting with stat
+2026-02-01 13:16:00,751 WARNING:  * Debugger is active!
+2026-02-01 13:16:00,771 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 13:18:13,994 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\games\\charades\\models.py', reloading
+2026-02-01 13:18:14,316 INFO:  * Restarting with stat
+2026-02-01 13:18:17,639 WARNING:  * Debugger is active!
+2026-02-01 13:18:17,672 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 13:18:25,758 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\games\\charades\\models.py', reloading
+2026-02-01 13:18:26,015 INFO:  * Restarting with stat
+2026-02-01 13:18:28,243 WARNING:  * Debugger is active!
+2026-02-01 13:18:28,272 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 13:18:44,090 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
+2026-02-01 13:18:44,492 INFO:  * Restarting with stat
+2026-02-01 13:18:47,600 WARNING:  * Debugger is active!
+2026-02-01 13:18:47,621 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 13:19:07,971 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\games\\trivia\\models.py', reloading
+2026-02-01 13:19:08,211 INFO:  * Restarting with stat
+2026-02-01 13:19:10,460 WARNING:  * Debugger is active!
+2026-02-01 13:19:10,494 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 13:19:35,956 INFO:  * Restarting with stat
+2026-02-01 13:19:37,930 WARNING:  * Debugger is active!
+2026-02-01 13:19:37,950 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 13:21:34,010 INFO: Closing room 9484
+2026-02-01 13:23:46,935 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\app.py', reloading
+2026-02-01 13:23:47,493 INFO:  * Restarting with stat
+2026-02-01 13:24:56,637 INFO:  * Restarting with stat
+2026-02-01 13:24:58,652 WARNING:  * Debugger is active!
+2026-02-01 13:24:58,674 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 13:26:37,180 INFO:  * Restarting with stat
+2026-02-01 13:26:39,216 WARNING:  * Debugger is active!
+2026-02-01 13:26:39,237 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 13:31:38,576 INFO:  * Restarting with stat
+2026-02-01 13:31:40,364 WARNING:  * Debugger is active!
+2026-02-01 13:31:40,383 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 13:42:56,413 INFO:  * Restarting with stat
+2026-02-01 13:42:58,232 WARNING:  * Debugger is active!
+2026-02-01 13:42:58,249 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 13:51:18,493 INFO:  * Restarting with stat
+2026-02-01 13:51:20,978 WARNING:  * Debugger is active!
+2026-02-01 13:51:21,006 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 13:53:49,071 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\games\\charades\\models.py', reloading
+2026-02-01 13:53:49,671 INFO:  * Restarting with stat
+2026-02-01 13:53:56,135 WARNING:  * Debugger is active!
+2026-02-01 13:53:56,167 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 13:54:13,425 INFO:  * Detected change in 'F:\\PythonII\\FamilyGamesII\\games\\trivia\\models.py', reloading
+2026-02-01 13:54:13,850 INFO:  * Restarting with stat
+2026-02-01 13:54:16,319 WARNING:  * Debugger is active!
+2026-02-01 13:54:16,341 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 13:54:48,826 INFO:  * Restarting with stat
+2026-02-01 13:54:50,603 WARNING:  * Debugger is active!
+2026-02-01 13:54:50,625 INFO:  * Debugger PIN: 109-781-019
+2026-02-01 14:03:21,958 INFO: Closing room 6805
+2026-02-01 14:03:54,916 DEBUG: Starting new HTTPS connection (1): raw.githubusercontent.com:443
+2026-02-01 14:03:56,116 DEBUG: https://raw.githubusercontent.com:443 "GET /rn0x/IslamicQuizAPI/main/questions_ar.json HTTP/1.1" 404 14
+2026-02-01 14:03:56,119 DEBUG: Starting new HTTPS connection (1): opentdb.com:443
+2026-02-01 14:03:57,316 DEBUG: https://opentdb.com:443 "GET /api.php?amount=6&type=multiple HTTP/1.1" 200 None
+2026-02-01 14:03:57,321 DEBUG: Starting new HTTPS connection (1): api.groq.com:443
+2026-02-01 14:03:58,262 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 14:03:58,407 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 14:03:59,421 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 14:04:00,521 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 14:04:01,694 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
+2026-02-01 14:04:02,566 DEBUG: https://api.groq.com:443 "POST /openai/v1/chat/completions HTTP/1.1" 400 279
