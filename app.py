@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from games.charades.models import CharadesGame
 from games.trivia.models import TriviaGame
 from games.pictionary.models import PictionaryGame
+from games.bus_complete.models import BusCompleteGame
 import time
 import uuid
 from dotenv import load_dotenv
@@ -112,7 +113,9 @@ def handle_create_game(data):
         if not game_id or not player_name:
             raise ValueError("معلومات ناقصة")
             
-        if game_type == 'trivia':
+        if game_type == 'bus_complete':
+            game_obj = BusCompleteGame(game_id, player_name, settings)
+        elif game_type == 'trivia':
             game_obj = TriviaGame(game_id, player_name, settings)
         elif game_type == 'pictionary':
             game_obj = PictionaryGame(game_id, player_name, settings)
@@ -323,6 +326,40 @@ def handle_clear_canvas(data):
     if game_obj and game_obj.game_type == 'pictionary' and game_obj.current_player == session.get('player_name'):
         game_obj.clear_canvas()
         emit('clear_canvas', room=rid)
+
+@socketio.on('submit_bus_answers')
+def handle_submit_bus_answers(data):
+    game_id = str(data.get('game_id'))
+    answers = data.get('answers')
+    player_name = session.get('player_name')
+    if game_id in game_rooms:
+        game_obj = game_rooms[game_id]
+        if game_obj.game_type == 'bus_complete' and game_obj.status == 'round_active':
+            game_obj.submit_answers(player_name, answers)
+            emit_game_state(game_id)
+
+@socketio.on('stop_bus')
+def handle_stop_bus(data):
+    game_id = str(data.get('game_id'))
+    player_name = session.get('player_name')
+    if game_id in game_rooms:
+        game_obj = game_rooms[game_id]
+        if game_obj.game_type == 'bus_complete' and game_obj.status == 'round_active':
+            if 'answers' in data:
+                game_obj.submit_answers(player_name, data['answers'])
+            game_obj.stop_bus(player_name)
+            emit('bus_stopped', {'player': player_name}, room=game_id)
+            emit_game_state(game_id)
+
+@socketio.on('confirm_bus_scores')
+def handle_confirm_bus_scores(data):
+    game_id = str(data.get('game_id'))
+    player_name = session.get('player_name')
+    if game_id in game_rooms:
+        game_obj = game_rooms[game_id]
+        if game_obj.game_type == 'bus_complete' and game_obj.host == player_name:
+            game_obj.next_round()
+            emit_game_state(game_id)
 
 @socketio.on('verify_game')
 def handle_verify_game(data):

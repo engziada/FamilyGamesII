@@ -448,6 +448,11 @@ class GameEngine {
         });
 
         this.socket.on('reveal_item', (data) => this.showRevealMessage(data));
+        this.socket.on('bus_stopped', (data) => {
+            this.stopTimer();
+            AudioManager.play('timeout');
+            Utils.showMessage(`أتوبيس كومبليت! تم إيقاف الجولة بواسطة ${data.player}`, 'info');
+        });
 
         this.socket.on('host_transferred', (data) => {
             if (data.gameState) this.updateGameState(data.gameState);
@@ -480,6 +485,18 @@ class GameEngine {
         
         if (data.current_question) {
             this.displayQuestion(data.current_question);
+        } else if (this.gameType === 'bus_complete') {
+            if (data.current_letter) {
+                const letterEl = document.getElementById('current-letter');
+                if (letterEl) letterEl.textContent = data.current_letter;
+                const resLetterEl = document.getElementById('result-letter');
+                if (resLetterEl) resLetterEl.textContent = data.current_letter;
+            }
+            if (data.status === 'scoring') {
+                this.displayBusResults(data);
+            } else if (data.status === 'round_active') {
+                this.displayBusBoard();
+            }
         } else if (data.current_item) {
             this.currentItemCategory = data.current_item.category;
             // Only call displayItem if we have the full item (drawer player)
@@ -555,7 +572,7 @@ class GameEngine {
     updateCurrentPlayer(player) {
         const el = document.getElementById('current-turn');
         if (el) {
-            if (this.gameType === 'trivia') {
+            if (this.gameType === 'trivia' || this.gameType === 'bus_complete') {
                 el.textContent = 'الكل!';
             } else if (player) {
                 el.textContent = player;
@@ -858,6 +875,7 @@ class GameEngine {
         msg.style.display = 'block';
         setTimeout(() => msg.style.display = 'none', 5000);
     }
+displayBusBoard() {        document.getElementById('item-display').classList.add('u-hidden');        document.getElementById('pictionary-area').classList.add('u-hidden');        document.getElementById('waiting-area').style.display = 'none';        document.getElementById('bus-results-area').classList.add('u-hidden');        document.getElementById('bus-area').classList.remove('u-hidden');                if (this.gameStatus === 'round_active' && !this.busInputsInitialized) {            document.querySelectorAll('.bus-input').forEach(input => input.value = '');            this.busInputsInitialized = true;        }    }    stopBus() {        const answers = {};        document.querySelectorAll('.bus-input').forEach(input => {            answers[input.getAttribute('data-category')] = input.value;        });        this.socket.emit('stop_bus', { game_id: this.gameId, answers: answers });    }    displayBusResults(data) {        document.getElementById('bus-area').classList.add('u-hidden');        document.getElementById('bus-results-area').classList.remove('u-hidden');        this.busInputsInitialized = false;        const headerRow = document.getElementById('results-header');        while (headerRow.children.length > 2) {            headerRow.removeChild(headerRow.children[1]);        }        data.categories.forEach(cat => {            const th = document.createElement('th');            th.textContent = cat;            th.style.padding = '1rem';            headerRow.insertBefore(th, headerRow.lastElementChild);        });        const tbody = document.getElementById('results-body');        tbody.innerHTML = '';        data.players.forEach(player => {            const tr = document.createElement('tr');            tr.style.background = 'var(--surface)';            tr.style.borderRadius = '15px';                        const tdName = document.createElement('td');            tdName.textContent = player.name;            tdName.style.padding = '1rem';            tdName.style.fontWeight = 'bold';            tr.appendChild(tdName);            data.categories.forEach(cat => {                const td = document.createElement('td');                const ans = (data.player_submissions[player.name] || {})[cat] || '-';                const pts = (data.round_scores[player.name] || {})[cat] || 0;                td.innerHTML = `<div>${ans}</div><small class="badge ${pts > 0 ? 'badge-team-2' : 'badge-team-1'}" style="font-size: 0.7rem; color: white; padding: 2px 6px; border-radius: 10px;">${pts}</small>`;                td.style.padding = '1rem';                td.style.textAlign = 'center';                tr.appendChild(td);            });            const tdTotal = document.createElement('td');            const total = Object.values(data.round_scores[player.name] || {}).reduce((a, b) => a + b, 0);            tdTotal.innerHTML = `<strong style="color: var(--primary); font-size: 1.2rem;">${total}</strong>`;            tdTotal.style.padding = '1rem';            tdTotal.style.textAlign = 'center';            tr.appendChild(tdTotal);            tbody.appendChild(tr);        });        if (this.isHost) {            document.getElementById('host-bus-actions').classList.remove('u-hidden');        }    }    confirmBusScores() {        this.socket.emit('confirm_bus_scores', { game_id: this.gameId });    }
 }
 
 // --- Initialization ---
