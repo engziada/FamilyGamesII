@@ -29,8 +29,27 @@ class BusCompleteGame(CharadesGame):
     def submit_answers(self, player_name, answers):
         if self.status != 'round_active':
             return False
-        # Normalize answers (trim whitespace)
-        self.player_submissions[player_name] = {k: v.strip() for k, v in answers.items()}
+
+        if not isinstance(answers, dict):
+            return False
+
+        normalized_answers = {}
+        for k, v in answers.items():
+            if k is None:
+                continue
+            key = str(k)
+
+            if v is None:
+                value = ''
+            elif isinstance(v, str):
+                value = v.strip()
+            else:
+                value = str(v).strip()
+
+            normalized_answers[key] = value
+
+        # Normalize answers (trim whitespace and coerce values safely)
+        self.player_submissions[player_name] = normalized_answers
         return True
 
     def stop_bus(self, player_name):
