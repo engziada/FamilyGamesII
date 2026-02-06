@@ -2,7 +2,7 @@ from games.bus_complete.models import BusCompleteGame
 
 
 def make_game():
-    game = BusCompleteGame('g1', 'host', {'teams': False, 'validate_answers': False})
+    game = BusCompleteGame('g1', 'host', {'teams': False, 'validate_answers': False, 'use_online_validation': False})
     game.add_player('player2')
     game.start_game()
     game.current_letter = 'ا'
@@ -32,7 +32,12 @@ def test_submit_answers_flags_invalid_words_with_dictionary():
         'اسم': ['أحمد'],
         'حيوان': ['قطه']
     }
-    game = BusCompleteGame('g2', 'host', {'teams': False, 'answer_dictionary': dictionary, 'validate_answers': True})
+    game = BusCompleteGame('g2', 'host', {
+        'teams': False,
+        'answer_dictionary': dictionary,
+        'validate_answers': True,
+        'use_online_validation': False
+    })
     game.add_player('player2')
     game.start_game()
 

@@ -2,6 +2,7 @@ from datetime import datetime
 import json
 import os
 import random
+import requests
 from games.charades.models import CharadesGame
 
 class BusCompleteGame(CharadesGame):
@@ -17,6 +18,17 @@ class BusCompleteGame(CharadesGame):
         self.invalid_answers = {}  # {player_name: {category: answer}}
         self.answer_dictionary = self._load_answer_dictionary()
         self.validate_answers = self.settings.get('validate_answers', bool(self.answer_dictionary))
+        self.use_online_validation = self.settings.get('use_online_validation', True)
+        self.validation_cache = {}
+        self.category_keywords = self.settings.get('category_keywords', {
+            'اسم': ['أسماء', 'اسم', 'أعلام', 'شخصيات', 'مواليد'],
+            'حيوان': ['حيوانات', 'ثدييات', 'طيور', 'زواحف', 'أسماك', 'حشرات'],
+            'نبات': ['نباتات', 'أشجار', 'محاصيل', 'زهور', 'أعشاب'],
+            'جماد': ['أدوات', 'أجهزة', 'مكونات', 'معدات', 'أشياء'],
+            'بلاد': ['دول', 'بلدان', 'مدن', 'عواصم', 'جغرافيا'],
+            'أكلة': ['أطعمة', 'مأكولات', 'أطباق', 'حلويات', 'مطبخ'],
+            'مهنة': ['مهن', 'وظائف', 'أعمال', 'حرف']
+        })
 
     def start_game(self):
         if len(self.players) < 2:
@@ -179,8 +191,68 @@ class BusCompleteGame(CharadesGame):
 
         normalized_answer = self._normalize_text(answer)
         normalized_category = str(category)
+
+        if self.use_online_validation:
+            online_result = self._validate_online(normalized_category, normalized_answer)
+            if online_result is not None:
+                return online_result
+
         allowed_words = self.answer_dictionary.get(normalized_category)
         if not allowed_words:
             return True
 
         return normalized_answer in allowed_words
+
+    def _validate_online(self, category, normalized_answer):
+        cache_key = (category, normalized_answer)
+        if cache_key in self.validation_cache:
+            return self.validation_cache[cache_key]
+
+        params = {
+            'action': 'query',
+            'titles': normalized_answer,
+            'prop': 'categories',
+            'format': 'json',
+            'cllimit': 50
+        }
+
+        try:
+            response = requests.get(
+                'https://ar.wikipedia.org/w/api.php',
+                params=params,
+                timeout=self.settings.get('validation_timeout', 2)
+            )
+            response.raise_for_status()
+            data = response.json()
+        except Exception:
+            self.validation_cache[cache_key] = None
+            return None
+
+        pages = data.get('query', {}).get('pages', {})
+        if not pages:
+            self.validation_cache[cache_key] = False
+            return False
+
+        page = next(iter(pages.values()))
+        if 'missing' in page:
+            self.validation_cache[cache_key] = False
+            return False
+
+        if category not in self.category_keywords:
+            self.validation_cache[cache_key] = True
+            return True
+
+        keywords = self.category_keywords.get(category, [])
+        if not keywords:
+            self.validation_cache[cache_key] = True
+            return True
+
+        categories = page.get('categories', [])
+        for cat in categories:
+            title = cat.get('title', '')
+            if any(keyword in title for keyword in keywords):
+                self.validation_cache[cache_key] = True
+                return True
+
+        self.validation_cache[cache_key] = False
+        return False
