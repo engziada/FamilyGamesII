@@ -322,6 +322,8 @@ class GameEngine {
         this.timerInterval = null;
         this.gameSettings = {};
         this.currentItemCategory = null;
+        this.currentLetter = null;
+        this.busInputsInitialized = false;
         
         this.isDrawing = false;
         this.lastPos = { x: 0, y: 0 };
@@ -493,6 +495,7 @@ class GameEngine {
             this.displayQuestion(data.current_question);
         } else if (this.gameType === 'bus_complete') {
             if (data.current_letter) {
+                this.currentLetter = data.current_letter;
                 const letterEl = document.getElementById('current-letter');
                 if (letterEl) letterEl.textContent = data.current_letter;
                 const resLetterEl = document.getElementById('result-letter');
@@ -881,7 +884,163 @@ class GameEngine {
         msg.style.display = 'block';
         setTimeout(() => msg.style.display = 'none', 5000);
     }
-displayBusBoard() {        document.getElementById('item-display').classList.add('u-hidden');        document.getElementById('pictionary-area').classList.add('u-hidden');        document.getElementById('waiting-area').style.display = 'none';        document.getElementById('bus-results-area').classList.add('u-hidden');        document.getElementById('bus-area').classList.remove('u-hidden');                if (this.gameStatus === 'round_active' && !this.busInputsInitialized) {            document.querySelectorAll('.bus-input').forEach(input => input.value = '');            this.busInputsInitialized = true;        }    }    stopBus() {        const answers = {};        document.querySelectorAll('.bus-input').forEach(input => {            answers[input.getAttribute('data-category')] = input.value;        });        this.socket.emit('stop_bus', { game_id: this.gameId, answers: answers });    }    displayBusResults(data) {        document.getElementById('bus-area').classList.add('u-hidden');        document.getElementById('bus-results-area').classList.remove('u-hidden');        this.busInputsInitialized = false;        const headerRow = document.getElementById('results-header');        while (headerRow.children.length > 2) {            headerRow.removeChild(headerRow.children[1]);        }        data.categories.forEach(cat => {            const th = document.createElement('th');            th.textContent = cat;            th.style.padding = '1rem';            headerRow.insertBefore(th, headerRow.lastElementChild);        });        const tbody = document.getElementById('results-body');        tbody.innerHTML = '';        data.players.forEach(player => {            const tr = document.createElement('tr');            tr.style.background = 'var(--surface)';            tr.style.borderRadius = '15px';                        const tdName = document.createElement('td');            tdName.textContent = player.name;            tdName.style.padding = '1rem';            tdName.style.fontWeight = 'bold';            tr.appendChild(tdName);            data.categories.forEach(cat => {                const td = document.createElement('td');                const ans = (data.player_submissions[player.name] || {})[cat] || '-';                const pts = (data.round_scores[player.name] || {})[cat] || 0;                td.innerHTML = `<div>${ans}</div><small class="badge ${pts > 0 ? 'badge-team-2' : 'badge-team-1'}" style="font-size: 0.7rem; color: white; padding: 2px 6px; border-radius: 10px;">${pts}</small>`;                td.style.padding = '1rem';                td.style.textAlign = 'center';                tr.appendChild(td);            });            const tdTotal = document.createElement('td');            const total = Object.values(data.round_scores[player.name] || {}).reduce((a, b) => a + b, 0);            tdTotal.innerHTML = `<strong style="color: var(--primary); font-size: 1.2rem;">${total}</strong>`;            tdTotal.style.padding = '1rem';            tdTotal.style.textAlign = 'center';            tr.appendChild(tdTotal);            tbody.appendChild(tr);        });        if (this.isHost) {            document.getElementById('host-bus-actions').classList.remove('u-hidden');        }    }    confirmBusScores() {        this.socket.emit('confirm_bus_scores', { game_id: this.gameId });    }
+    /**
+     * Normalize Arabic letter for comparison (hamza variants -> alef, taa marbuta -> haa, etc.)
+     * @param {string} char - Arabic character to normalize
+     * @returns {string} Normalized character
+     */
+    normalizeArabicChar(char) {
+        if (!char) return '';
+        let c = char.trim();
+        c = c.replace(/[أإآ]/g, 'ا');
+        c = c.replace(/ة/g, 'ه');
+        c = c.replace(/ى/g, 'ي');
+        c = c.replace(/ئ/g, 'ي');
+        c = c.replace(/ؤ/g, 'و');
+        return c;
+    }
+
+    /**
+     * Check if a value starts with the current round letter (client-side).
+     * @param {string} value - The answer text
+     * @returns {boolean}
+     */
+    startsWithCurrentLetter(value) {
+        if (!value || !this.currentLetter) return false;
+        const normValue = this.normalizeArabicChar(value.trim());
+        const normLetter = this.normalizeArabicChar(this.currentLetter);
+        return normValue.startsWith(normLetter);
+    }
+
+    /**
+     * Attach real-time validation listeners to bus inputs.
+     */
+    attachBusInputValidation() {
+        const inputs = document.querySelectorAll('.bus-input');
+        inputs.forEach(input => {
+            input.addEventListener('input', () => {
+                const val = input.value.trim();
+                input.classList.remove('bus-input-valid', 'bus-input-invalid');
+                if (!val) return;
+                if (this.startsWithCurrentLetter(val)) {
+                    input.classList.add('bus-input-valid');
+                } else {
+                    input.classList.add('bus-input-invalid');
+                }
+            });
+        });
+    }
+
+    displayBusBoard() {
+        document.getElementById('item-display').classList.add('u-hidden');
+        document.getElementById('pictionary-area').classList.add('u-hidden');
+        document.getElementById('waiting-area').style.display = 'none';
+        document.getElementById('bus-results-area').classList.add('u-hidden');
+        document.getElementById('bus-area').classList.remove('u-hidden');
+
+        if (this.gameStatus === 'round_active' && !this.busInputsInitialized) {
+            document.querySelectorAll('.bus-input').forEach(input => {
+                input.value = '';
+                input.classList.remove('bus-input-valid', 'bus-input-invalid');
+            });
+            this.attachBusInputValidation();
+            this.busInputsInitialized = true;
+        }
+    }
+
+    stopBus() {
+        const answers = {};
+        let hasInvalid = false;
+        document.querySelectorAll('.bus-input').forEach(input => {
+            const val = input.value.trim();
+            const cat = input.getAttribute('data-category');
+            answers[cat] = val;
+            // Client-side letter check with visual feedback
+            input.classList.remove('bus-input-valid', 'bus-input-invalid');
+            if (val && !this.startsWithCurrentLetter(val)) {
+                input.classList.add('bus-input-invalid');
+                hasInvalid = true;
+            }
+        });
+
+        if (hasInvalid) {
+            Utils.showMessage('بعض الإجابات لا تبدأ بالحرف المطلوب! سيتم تجاهلها.', 'error');
+        }
+
+        this.socket.emit('stop_bus', { game_id: this.gameId, answers: answers });
+    }
+
+    displayBusResults(data) {
+        document.getElementById('bus-area').classList.add('u-hidden');
+        document.getElementById('bus-results-area').classList.remove('u-hidden');
+        this.busInputsInitialized = false;
+
+        const headerRow = document.getElementById('results-header');
+        while (headerRow.children.length > 2) {
+            headerRow.removeChild(headerRow.children[1]);
+        }
+        data.categories.forEach(cat => {
+            const th = document.createElement('th');
+            th.textContent = cat;
+            th.style.padding = '1rem';
+            headerRow.insertBefore(th, headerRow.lastElementChild);
+        });
+
+        const tbody = document.getElementById('results-body');
+        tbody.innerHTML = '';
+
+        data.players.forEach(player => {
+            const tr = document.createElement('tr');
+            tr.style.background = 'var(--surface)';
+            tr.style.borderRadius = '15px';
+
+            const tdName = document.createElement('td');
+            tdName.textContent = player.name;
+            tdName.style.padding = '1rem';
+            tdName.style.fontWeight = 'bold';
+            tr.appendChild(tdName);
+
+            data.categories.forEach(cat => {
+                const td = document.createElement('td');
+                const ans = (data.player_submissions[player.name] || {})[cat] || '';
+                const pts = (data.round_scores[player.name] || {})[cat] || 0;
+                const wrongLetter = (data.wrong_letter_answers || {})[player.name]?.[cat];
+                const invalidWord = (data.invalid_answers || {})[player.name]?.[cat];
+
+                let displayAns = ans || '-';
+                let extraInfo = '';
+
+                if (wrongLetter) {
+                    displayAns = `<s style="color:var(--danger);">${wrongLetter}</s>`;
+                    extraInfo = '<small style="color:var(--danger);display:block;">حرف خاطئ</small>';
+                } else if (invalidWord) {
+                    displayAns = `<s style="color:var(--warning,orange);">${invalidWord}</s>`;
+                    extraInfo = '<small style="color:var(--warning,orange);display:block;">كلمة غير صحيحة</small>';
+                }
+
+                td.innerHTML = `<div>${displayAns}</div>${extraInfo}<small class="badge ${pts > 0 ? 'badge-team-2' : 'badge-team-1'}" style="font-size: 0.7rem; color: white; padding: 2px 6px; border-radius: 10px;">${pts}</small>`;
+                td.style.padding = '1rem';
+                td.style.textAlign = 'center';
+                tr.appendChild(td);
+            });
+
+            const tdTotal = document.createElement('td');
+            const total = Object.values(data.round_scores[player.name] || {}).reduce((a, b) => a + b, 0);
+            tdTotal.innerHTML = `<strong style="color: var(--primary); font-size: 1.2rem;">${total}</strong>`;
+            tdTotal.style.padding = '1rem';
+            tdTotal.style.textAlign = 'center';
+            tr.appendChild(tdTotal);
+            tbody.appendChild(tr);
+        });
+
+        if (this.isHost) {
+            document.getElementById('host-bus-actions').classList.remove('u-hidden');
+        }
+    }
+
+    confirmBusScores() {
+        this.socket.emit('confirm_bus_scores', { game_id: this.gameId });
+    }
 }
 
 // --- Initialization ---

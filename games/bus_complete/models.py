@@ -18,7 +18,8 @@ class BusCompleteGame(CharadesGame):
         self.invalid_answers = {}  # {player_name: {category: answer}}
         self.answer_dictionary = self._load_answer_dictionary()
         self.validate_answers = self.settings.get('validate_answers', bool(self.answer_dictionary))
-        self.use_online_validation = self.settings.get('use_online_validation', True)
+        self.use_online_validation = self.settings.get('use_online_validation', False)
+        self.wrong_letter_answers = {}  # {player_name: {category: answer}}
         self.validation_cache = {}
         self.category_keywords = self.settings.get('category_keywords', {
             'اسم': ['أسماء', 'اسم', 'أعلام', 'شخصيات', 'مواليد'],
@@ -41,9 +42,18 @@ class BusCompleteGame(CharadesGame):
         self.player_submissions = {}
         self.round_scores = {}
         self.stopped_by = None
+        self.invalid_answers = {}
+        self.wrong_letter_answers = {}
         self.round_start_time = datetime.now()
 
     def submit_answers(self, player_name, answers):
+        """Validate and store player answers. Returns True on success.
+        
+        Checks:
+        1. Answer starts with the current letter
+        2. Answer passes dictionary/online validation (if enabled)
+        Invalid answers are tracked separately for frontend feedback.
+        """
         if self.status != 'round_active':
             return False
 
@@ -52,6 +62,8 @@ class BusCompleteGame(CharadesGame):
 
         normalized_answers = {}
         invalid_answers = {}
+        wrong_letter = {}
+
         for k, v in answers.items():
             if k is None:
                 continue
@@ -64,15 +76,26 @@ class BusCompleteGame(CharadesGame):
             else:
                 value = str(v).strip()
 
+            if not value:
+                normalized_answers[key] = ''
+                continue
+
+            # Check 1: Must start with the current letter
+            if not self._starts_with_letter(value):
+                wrong_letter[key] = value
+                normalized_answers[key] = ''
+                continue
+
+            # Check 2: Dictionary / online validation
             if value and not self._is_valid_answer(key, value):
                 invalid_answers[key] = value
                 normalized_answers[key] = ''
             else:
                 normalized_answers[key] = value
 
-        # Normalize answers (trim whitespace and coerce values safely)
         self.player_submissions[player_name] = normalized_answers
         self.invalid_answers[player_name] = invalid_answers
+        self.wrong_letter_answers[player_name] = wrong_letter
         return True
 
     def stop_bus(self, player_name):
@@ -139,6 +162,8 @@ class BusCompleteGame(CharadesGame):
         if self.status == 'scoring':
             d['player_submissions'] = self.player_submissions
             d['round_scores'] = self.round_scores
+            d['invalid_answers'] = self.invalid_answers
+            d['wrong_letter_answers'] = self.wrong_letter_answers
         else:
             d['submitted_players'] = list(self.player_submissions.keys())
             d.pop('current_item', None) # Not used in bus complete
@@ -184,6 +209,14 @@ class BusCompleteGame(CharadesGame):
         normalized = normalized.replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا')
         normalized = normalized.replace('ة', 'ه').replace('ى', 'ي').replace('ئ', 'ي').replace('ؤ', 'و')
         return normalized
+
+    def _starts_with_letter(self, answer):
+        """Check if the answer starts with the current round letter."""
+        if not self.current_letter or not answer:
+            return False
+        norm_answer = self._normalize_text(answer)
+        norm_letter = self._normalize_text(self.current_letter)
+        return norm_answer.startswith(norm_letter)
 
     def _is_valid_answer(self, category, answer):
         if not self.validate_answers:
