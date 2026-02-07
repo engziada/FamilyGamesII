@@ -1,5 +1,8 @@
 from datetime import datetime
+import json
+import os
 import random
+import requests
 from games.charades.models import CharadesGame
 
 class BusCompleteGame(CharadesGame):
@@ -12,6 +15,20 @@ class BusCompleteGame(CharadesGame):
         self.player_submissions = {}  # {player_name: {category: answer}}
         self.round_scores = {} # {player_name: {category: points}}
         self.stopped_by = None
+        self.invalid_answers = {}  # {player_name: {category: answer}}
+        self.answer_dictionary = self._load_answer_dictionary()
+        self.validate_answers = self.settings.get('validate_answers', bool(self.answer_dictionary))
+        self.use_online_validation = self.settings.get('use_online_validation', True)
+        self.validation_cache = {}
+        self.category_keywords = self.settings.get('category_keywords', {
+            'اسم': ['أسماء', 'اسم', 'أعلام', 'شخصيات', 'مواليد'],
+            'حيوان': ['حيوانات', 'ثدييات', 'طيور', 'زواحف', 'أسماك', 'حشرات'],
+            'نبات': ['نباتات', 'أشجار', 'محاصيل', 'زهور', 'أعشاب'],
+            'جماد': ['أدوات', 'أجهزة', 'مكونات', 'معدات', 'أشياء'],
+            'بلاد': ['دول', 'بلدان', 'مدن', 'عواصم', 'جغرافيا'],
+            'أكلة': ['أطعمة', 'مأكولات', 'أطباق', 'حلويات', 'مطبخ'],
+            'مهنة': ['مهن', 'وظائف', 'أعمال', 'حرف']
+        })
 
     def start_game(self):
         if len(self.players) < 2:
@@ -29,8 +46,33 @@ class BusCompleteGame(CharadesGame):
     def submit_answers(self, player_name, answers):
         if self.status != 'round_active':
             return False
-        # Normalize answers (trim whitespace)
-        self.player_submissions[player_name] = {k: v.strip() for k, v in answers.items()}
+
+        if not isinstance(answers, dict):
+            return False
+
+        normalized_answers = {}
+        invalid_answers = {}
+        for k, v in answers.items():
+            if k is None:
+                continue
+            key = str(k)
+
+            if v is None:
+                value = ''
+            elif isinstance(v, str):
+                value = v.strip()
+            else:
+                value = str(v).strip()
+
+            if value and not self._is_valid_answer(key, value):
+                invalid_answers[key] = value
+                normalized_answers[key] = ''
+            else:
+                normalized_answers[key] = value
+
+        # Normalize answers (trim whitespace and coerce values safely)
+        self.player_submissions[player_name] = normalized_answers
+        self.invalid_answers[player_name] = invalid_answers
         return True
 
     def stop_bus(self, player_name):
@@ -56,11 +98,10 @@ class BusCompleteGame(CharadesGame):
                     continue
 
                 # Normalization for comparison
-                norm_ans = raw_ans.replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا')
-                norm_ans = norm_ans.replace('ة', 'ه').replace('ى', 'ي').replace('ئ', 'ي').replace('ؤ', 'و')
+                norm_ans = self._normalize_text(raw_ans)
 
                 # Check if it starts with the current letter (also normalized)
-                norm_letter = self.current_letter.replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا')
+                norm_letter = self._normalize_text(self.current_letter)
 
                 if norm_ans.startswith(norm_letter):
                     if norm_ans not in answers_map:
@@ -103,3 +144,115 @@ class BusCompleteGame(CharadesGame):
             d.pop('current_item', None) # Not used in bus complete
 
         return d
+
+    def _load_answer_dictionary(self):
+        if isinstance(self.settings, dict) and self.settings.get('answer_dictionary'):
+            return self._normalize_dictionary(self.settings['answer_dictionary'])
+
+        dictionary_path = self.settings.get('answer_dictionary_path', 'static/data/bus_complete_dictionary.json')
+        if not os.path.exists(dictionary_path):
+            return {}
+
+        try:
+            with open(dictionary_path, 'r', encoding='utf-8') as handle:
+                data = json.load(handle)
+                return self._normalize_dictionary(data)
+        except (OSError, json.JSONDecodeError):
+            return {}
+
+    def _normalize_dictionary(self, data):
+        normalized = {}
+        if not isinstance(data, dict):
+            return normalized
+
+        for category, words in data.items():
+            if not isinstance(words, list):
+                continue
+            normalized_words = set()
+            for word in words:
+                if not word:
+                    continue
+                normalized_words.add(self._normalize_text(str(word)))
+            normalized[str(category)] = normalized_words
+
+        return normalized
+
+    def _normalize_text(self, text):
+        if text is None:
+            return ''
+        normalized = str(text).strip()
+        normalized = normalized.replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا')
+        normalized = normalized.replace('ة', 'ه').replace('ى', 'ي').replace('ئ', 'ي').replace('ؤ', 'و')
+        return normalized
+
+    def _is_valid_answer(self, category, answer):
+        if not self.validate_answers:
+            return True
+
+        normalized_answer = self._normalize_text(answer)
+        normalized_category = str(category)
+
+        if self.use_online_validation:
+            online_result = self._validate_online(normalized_category, normalized_answer)
+            if online_result is not None:
+                return online_result
+
+        allowed_words = self.answer_dictionary.get(normalized_category)
+        if not allowed_words:
+            return True
+
+        return normalized_answer in allowed_words
+
+    def _validate_online(self, category, normalized_answer):
+        cache_key = (category, normalized_answer)
+        if cache_key in self.validation_cache:
+            return self.validation_cache[cache_key]
+
+        params = {
+            'action': 'query',
+            'titles': normalized_answer,
+            'prop': 'categories',
+            'format': 'json',
+            'cllimit': 50
+        }
+
+        try:
+            response = requests.get(
+                'https://ar.wikipedia.org/w/api.php',
+                params=params,
+                timeout=self.settings.get('validation_timeout', 2)
+            )
+            response.raise_for_status()
+            data = response.json()
+        except Exception:
+            self.validation_cache[cache_key] = None
+            return None
+
+        pages = data.get('query', {}).get('pages', {})
+        if not pages:
+            self.validation_cache[cache_key] = False
+            return False
+
+        page = next(iter(pages.values()))
+        if 'missing' in page:
+            self.validation_cache[cache_key] = False
+            return False
+
+        if category not in self.category_keywords:
+            self.validation_cache[cache_key] = True
+            return True
+
+        keywords = self.category_keywords.get(category, [])
+        if not keywords:
+            self.validation_cache[cache_key] = True
+            return True
+
+        categories = page.get('categories', [])
+        for cat in categories:
+            title = cat.get('title', '')
+            if any(keyword in title for keyword in keywords):
+                self.validation_cache[cache_key] = True
+                return True
+
+        self.validation_cache[cache_key] = False
+        return False
