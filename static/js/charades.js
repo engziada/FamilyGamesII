@@ -224,7 +224,13 @@ const Utils = {
         const modalId = action === 'create' ? 'create-game-modal' : 'join-game-modal';
         if (action === 'create') {
             document.getElementById('modal-game-type').value = gameType;
-            document.getElementById('modal-title').textContent = gameType === 'charades' ? 'إنشاء غرفة بدون كلام' : 'إنشاء غرفة بنك المعلومات';
+            const titles = {
+                charades: 'إنشاء غرفة بدون كلام',
+                trivia: 'إنشاء غرفة بنك المعلومات',
+                pictionary: 'إنشاء غرفة الرسم والتخمين',
+                bus_complete: 'إنشاء غرفة أتوبيس كومبليت'
+            };
+            document.getElementById('modal-title').textContent = titles[gameType] || 'إنشاء غرفة لعبة';
         }
         document.getElementById(modalId).style.display = 'flex';
     },

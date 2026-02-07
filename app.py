@@ -335,7 +335,9 @@ def handle_submit_bus_answers(data):
     if game_id in game_rooms:
         game_obj = game_rooms[game_id]
         if game_obj.game_type == 'bus_complete' and game_obj.status == 'round_active':
-            game_obj.submit_answers(player_name, answers)
+            if not game_obj.submit_answers(player_name, answers):
+                emit('error', {'message': 'إجابات غير صالحة'})
+                return
             emit_game_state(game_id)
 
 @socketio.on('stop_bus')
@@ -345,8 +347,9 @@ def handle_stop_bus(data):
     if game_id in game_rooms:
         game_obj = game_rooms[game_id]
         if game_obj.game_type == 'bus_complete' and game_obj.status == 'round_active':
-            if 'answers' in data:
-                game_obj.submit_answers(player_name, data['answers'])
+            if 'answers' in data and not game_obj.submit_answers(player_name, data['answers']):
+                emit('error', {'message': 'إجابات غير صالحة'})
+                return
             game_obj.stop_bus(player_name)
             emit('bus_stopped', {'player': player_name}, room=game_id)
             emit_game_state(game_id)
