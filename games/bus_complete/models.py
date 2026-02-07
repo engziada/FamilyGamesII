@@ -10,6 +10,9 @@ from games.charades.models import CharadesGame
 
 logger = logging.getLogger(__name__)
 
+WIKI_USER_AGENT = 'FamilyGamesII/1.0 (Bus Complete game validation; contact: github.com/engziada/FamilyGamesII)'
+
+
 class BusCompleteGame(CharadesGame):
     def __init__(self, game_id, host, settings=None):
         super().__init__(game_id, host, settings)
@@ -22,6 +25,7 @@ class BusCompleteGame(CharadesGame):
         self.stopped_by = None
         self.invalid_answers = {}  # {player_name: {category: answer}}
         self.answer_dictionary = self._load_answer_dictionary()
+        self.general_wordlist = self._load_general_wordlist()
         self.validate_answers = self.settings.get('validate_answers', True)
         self.use_online_validation = self.settings.get('use_online_validation', True)
         self.wrong_letter_answers = {}  # {player_name: {category: answer}}
@@ -236,6 +240,28 @@ class BusCompleteGame(CharadesGame):
 
         return normalized
 
+    def _load_general_wordlist(self):
+        """Load the general Arabic wordlist (Hans Wehr, 34K words) as a normalized set.
+        
+        This flat wordlist is used as tier-3 fallback validation to check
+        if a word exists in Arabic at all, regardless of category.
+        """
+        wordlist_path = self.settings.get('general_wordlist_path', 'static/data/arabic_wordlist.txt')
+        if not os.path.exists(wordlist_path):
+            return set()
+
+        try:
+            with open(wordlist_path, 'r', encoding='utf-8') as handle:
+                words = set()
+                for line in handle:
+                    word = line.strip()
+                    if word:
+                        words.add(self._normalize_text(word))
+                logger.info(f"Loaded general Arabic wordlist: {len(words)} words")
+                return words
+        except OSError:
+            return set()
+
     def _normalize_text(self, text):
         if text is None:
             return ''
@@ -253,7 +279,11 @@ class BusCompleteGame(CharadesGame):
         return norm_answer.startswith(norm_letter)
 
     def _is_valid_answer(self, category, answer):
-        """Validate an answer. Online (Wikipedia) is primary, local dict is fallback.
+        """Validate an answer using a 3-tier strategy.
+        
+        1. Online (Wikipedia) — primary, most comprehensive
+        2. Categorized dictionary — category-specific fallback
+        3. General wordlist (Hans Wehr 34K) — "does this word exist at all?"
         
         Returns True if the answer is valid, False otherwise.
         """
@@ -263,20 +293,27 @@ class BusCompleteGame(CharadesGame):
         normalized_answer = self._normalize_text(answer)
         normalized_category = str(category)
 
-        # Primary: online validation via Wikipedia
+        # Tier 1: Online validation via Wikipedia
         if self.use_online_validation:
             online_result = self._validate_online(normalized_category, normalized_answer)
             if online_result is not None:
                 return online_result
-            # online_result is None means Wikipedia was unreachable -> fall through to dict
+            # None means Wikipedia was unreachable -> fall through
 
-        # Fallback: local dictionary
+        # Tier 2: Categorized dictionary (category-specific)
         allowed_words = self.answer_dictionary.get(normalized_category)
-        if not allowed_words:
-            # No dictionary for this category -> accept the answer
+        if allowed_words and normalized_answer in allowed_words:
             return True
 
-        return normalized_answer in allowed_words
+        # Tier 3: General Arabic wordlist (Hans Wehr — 34K words)
+        if self.general_wordlist and normalized_answer in self.general_wordlist:
+            return True
+
+        # If we have no dictionaries at all, accept the answer
+        if not allowed_words and not self.general_wordlist:
+            return True
+
+        return False
 
     def _validate_online(self, category, normalized_answer):
         """Validate an answer against Arabic Wikipedia.
@@ -300,6 +337,7 @@ class BusCompleteGame(CharadesGame):
             response = requests.get(
                 'https://ar.wikipedia.org/w/api.php',
                 params=params,
+                headers={'User-Agent': WIKI_USER_AGENT},
                 timeout=self.settings.get('validation_timeout', 3)
             )
             response.raise_for_status()

@@ -47,8 +47,7 @@ def test_submit_answers_wrong_letter_detected():
 def test_submit_answers_flags_invalid_words_with_dictionary():
     """Dictionary validation runs during stop_bus, not submit_answers.
     
-    submit_answers only checks the letter. _validate_all_answers (called
-    by stop_bus) uses the dictionary as fallback when online is off.
+    With general_wordlist disabled, only the categorized dict is used.
     """
     dictionary = {
         'اسم': ['أحمد'],
@@ -60,6 +59,7 @@ def test_submit_answers_flags_invalid_words_with_dictionary():
         'validate_answers': True,
         'use_online_validation': False
     })
+    game.general_wordlist = set()  # disable tier-3 to isolate tier-2
     game.add_player('player2')
     game.start_game()
     game.current_letter = 'ا'
@@ -75,7 +75,7 @@ def test_submit_answers_flags_invalid_words_with_dictionary():
 
     # 'أحمد' is in dict -> still accepted
     assert game.player_submissions['host']['اسم'] == 'أحمد'
-    # 'أسد' NOT in dict -> blanked and tracked as invalid
+    # 'أسد' NOT in dict and no general wordlist -> blanked and tracked as invalid
     assert game.player_submissions['host']['حيوان'] == ''
     assert game.invalid_answers['host']['حيوان'] == 'أسد'
 
@@ -127,6 +127,7 @@ def test_submit_is_nonblocking_validation_deferred():
         'validate_answers': True,
         'use_online_validation': False
     })
+    game.general_wordlist = set()  # disable tier-3 to isolate tier-2
     game.add_player('player2')
     game.start_game()
     game.current_letter = 'ا'
@@ -142,6 +143,29 @@ def test_submit_is_nonblocking_validation_deferred():
     game.submit_answers('player2', {'اسم': 'أحمد'})
     game.stop_bus('player2')
 
-    # Now 'أمل' should be flagged as invalid
+    # Now 'أمل' should be flagged as invalid (not in dict, no general wordlist)
     assert game.player_submissions['host']['اسم'] == ''
     assert game.invalid_answers['host']['اسم'] == 'أمل'
+
+
+def test_general_wordlist_accepts_real_arabic_words():
+    """Tier 3: words not in categorized dict but in Hans Wehr should be accepted."""
+    dictionary = {'حيوان': ['أرنب']}  # tiny dict, missing أسد
+    game = BusCompleteGame('g4', 'host', {
+        'teams': False,
+        'answer_dictionary': dictionary,
+        'validate_answers': True,
+        'use_online_validation': False
+    })
+    # general_wordlist is loaded from static/data/arabic_wordlist.txt by default
+    game.add_player('player2')
+    game.start_game()
+    game.current_letter = 'ا'
+
+    game.submit_answers('host', {'حيوان': 'أسد'})
+    game.submit_answers('player2', {'حيوان': 'أرنب'})
+    game.stop_bus('host')
+
+    # 'أسد' is NOT in categorized dict but IS in Hans Wehr -> accepted via tier 3
+    if game.general_wordlist:  # only assert if wordlist was loaded
+        assert game.player_submissions['host']['حيوان'] == 'أسد'
