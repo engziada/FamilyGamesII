@@ -11,7 +11,7 @@ from games.charades.models import CharadesGame
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-GROQ_MODEL = 'llama-3.1-8b-instant'
+GROQ_MODEL = 'llama-3.3-70b-versatile'
 CATEGORIES_DESCRIPTION = {
     'اسم': 'human first name (Arabic or common)',
     'حيوان': 'animal (mammal, bird, fish, insect, reptile)',
@@ -315,51 +315,73 @@ class BusCompleteGame(CharadesGame):
             desc = CATEGORIES_DESCRIPTION.get(cat, cat)
             items_text.append(f'  "{ans}" -> category "{cat}" ({desc})')
 
-        prompt = f"""You are a validator for the Arabic word game "اتوبيس كومبليت" (Bus Complete).
-The current letter is "{self.current_letter}".
+        prompt = f"""You validate answers for the Arabic game "اتوبيس كومبليت".
+Letter: "{self.current_letter}"
 
-For each word below, respond ONLY with a JSON array. Each element:
-{{"word": "<word>", "category": "<category>", "valid": true/false}}
+STRICT RULES — a word is valid ONLY if ALL conditions are met:
+1. The word is a real, commonly known Arabic word (colloquial OK)
+2. The word ACTUALLY BELONGS to the given category — not any other category
+   - اسم = human first name ONLY (not an object, animal, place, or food name)
+   - حيوان = animal ONLY (mammal, bird, fish, insect, reptile)
+   - نبات = plant/flower/tree/fruit/vegetable ONLY
+   - جماد = inanimate physical object ONLY (not food, not a person, not an animal)
+   - بلاد = country or city ONLY
+   - أكلة = food or dish ONLY (not a country, person, or object)
+   - مهنة = job/profession title ONLY (not an object, animal, or food)
+3. A word that exists in Arabic but belongs to a DIFFERENT category must be marked false
+   Example: "بقرة" is valid for حيوان but INVALID for نبات
 
-Rules:
-- valid=true ONLY if the word genuinely belongs to that specific category
-- For اسم: must be a real human first name
-- For حيوان: must be a real animal
-- For نبات: must be a real plant/flower/tree/fruit/vegetable
-- For جماد: must be a real inanimate physical object
-- For بلاد: must be a real country or city
-- For أكلة: must be a real food or dish
-- For مهنة: must be a real job/profession title (not a shift name or abstract concept)
-- Colloquial/dialect words are acceptable if commonly understood
+For each word, think: "What category does this word ACTUALLY belong to? Does it match the given category?"
 
 Words:
 {chr(10).join(items_text)}
 
-Respond with ONLY the JSON array."""
+Return ONLY a JSON array: [{{"word":"...","category":"...","valid":true/false}}]"""
 
-        try:
-            response = client.chat.completions.create(
-                model=GROQ_MODEL,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0,
-                max_tokens=500,
-                timeout=self.settings.get('validation_timeout', 5),
-            )
-            raw = response.choices[0].message.content.strip()
-            # Strip markdown code fences if present
-            if raw.startswith('```'):
-                raw = raw.split('\n', 1)[1].rsplit('```', 1)[0].strip()
+        timeout = self.settings.get('validation_timeout', 8)
+        for attempt in range(2):
+            try:
+                response = client.chat.completions.create(
+                    model=GROQ_MODEL,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0,
+                    max_tokens=1024,
+                    timeout=timeout,
+                    response_format={"type": "json_object"},
+                )
+                raw = response.choices[0].message.content.strip()
+                # Strip markdown code fences if present
+                if raw.startswith('```'):
+                    raw = raw.split('\n', 1)[1].rsplit('```', 1)[0].strip()
 
-            results = json.loads(raw)
-            ai_map = {}
-            for r in results:
-                ai_map[(r['category'], r['word'])] = r['valid']
-            logger.info(f"AI validated {len(ai_map)} word-category pairs")
-            return ai_map
+                parsed = json.loads(raw)
+                # Handle both {"results": [...]} and [...] formats
+                if isinstance(parsed, dict):
+                    results = parsed.get('results', parsed.get('data', parsed.get('words', [])))
+                    if not results:
+                        # Try first list-valued key
+                        for v in parsed.values():
+                            if isinstance(v, list):
+                                results = v
+                                break
+                else:
+                    results = parsed
 
-        except Exception as e:
-            logger.warning(f"Groq AI validation failed: {e}, falling back to offline")
-            return {}
+                ai_map = {}
+                for r in results:
+                    ai_map[(r['category'], r['word'])] = bool(r['valid'])
+                logger.info(f"AI validated {len(ai_map)} word-category pairs")
+                return ai_map
+
+            except json.JSONDecodeError as e:
+                logger.warning(f"AI JSON parse error (attempt {attempt+1}): {e}")
+                continue
+            except Exception as e:
+                logger.warning(f"Groq AI validation failed: {e}, falling back to offline")
+                return {}
+
+        logger.warning("AI validation failed after retries, falling back to offline")
+        return {}
 
     def _is_valid_answer(self, category, answer):
         """Check validation cache or run offline fallback.
