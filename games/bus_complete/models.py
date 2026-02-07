@@ -4,13 +4,23 @@ import logging
 import os
 import random
 
-import eventlet
-import requests
+from dotenv import load_dotenv
+from groq import Groq
 from games.charades.models import CharadesGame
 
+load_dotenv()
 logger = logging.getLogger(__name__)
 
-WIKI_USER_AGENT = 'FamilyGamesII/1.0 (Bus Complete game validation; contact: github.com/engziada/FamilyGamesII)'
+GROQ_MODEL = 'llama-3.1-8b-instant'
+CATEGORIES_DESCRIPTION = {
+    'اسم': 'human first name (Arabic or common)',
+    'حيوان': 'animal (mammal, bird, fish, insect, reptile)',
+    'نبات': 'plant, flower, tree, fruit, or vegetable',
+    'جماد': 'inanimate physical object',
+    'بلاد': 'country or city',
+    'أكلة': 'food or dish',
+    'مهنة': 'job or profession title',
+}
 
 
 class BusCompleteGame(CharadesGame):
@@ -30,15 +40,7 @@ class BusCompleteGame(CharadesGame):
         self.use_online_validation = self.settings.get('use_online_validation', True)
         self.wrong_letter_answers = {}  # {player_name: {category: answer}}
         self.validation_cache = {}
-        self.category_keywords = self.settings.get('category_keywords', {
-            'اسم': ['أسماء', 'اسم', 'أعلام', 'شخصيات', 'مواليد'],
-            'حيوان': ['حيوانات', 'ثدييات', 'طيور', 'زواحف', 'أسماك', 'حشرات'],
-            'نبات': ['نباتات', 'أشجار', 'محاصيل', 'زهور', 'أعشاب'],
-            'جماد': ['أدوات', 'أجهزة', 'مكونات', 'معدات', 'أشياء'],
-            'بلاد': ['دول', 'بلدان', 'مدن', 'عواصم', 'جغرافيا'],
-            'أكلة': ['أطعمة', 'مأكولات', 'أطباق', 'حلويات', 'مطبخ'],
-            'مهنة': ['مهن', 'وظائف', 'أعمال', 'حرف']
-        })
+        self._groq_client = None  # lazy-initialized
 
     def start_game(self):
         if len(self.players) < 2:
@@ -110,10 +112,11 @@ class BusCompleteGame(CharadesGame):
         return True
 
     def _validate_all_answers(self):
-        """Run online + dictionary validation on all submitted answers.
+        """Run AI + dictionary validation on all submitted answers.
         
-        Uses eventlet to validate all answers in parallel (non-blocking).
-        Online (Wikipedia) is primary; local dictionary is fallback.
+        Tier 1: Groq AI (category-aware, batch call)
+        Tier 2: Categorized dictionary (offline fallback per-answer)
+        Tier 3: General Arabic wordlist (offline fallback per-answer)
         """
         if not self.validate_answers:
             return
@@ -128,20 +131,23 @@ class BusCompleteGame(CharadesGame):
         if not tasks:
             return
 
-        # Validate in parallel using eventlet green threads
-        pool = eventlet.GreenPool(size=min(len(tasks), 20))
-        results = []
+        # Tier 1: Try AI batch validation
+        ai_results = {}  # {(category, answer): True/False}
+        if self.use_online_validation:
+            ai_results = self._validate_ai_batch(tasks)
 
-        def validate_task(task):
-            pname, cat, ans = task
-            valid = self._is_valid_answer(cat, ans)
-            return (pname, cat, ans, valid)
+        # Apply results: AI first, then dict+wordlist fallback
+        for pname, cat, ans in tasks:
+            cache_key = (cat, ans)
 
-        for result in pool.imap(validate_task, tasks):
-            results.append(result)
+            if cache_key in ai_results:
+                valid = ai_results[cache_key]
+            else:
+                # AI didn't cover this answer -> offline fallback
+                valid = self._is_valid_offline(cat, ans)
 
-        # Apply validation results: blank invalid answers and track them
-        for pname, cat, ans, valid in results:
+            self.validation_cache[cache_key] = valid
+
             if not valid:
                 if pname not in self.invalid_answers:
                     self.invalid_answers[pname] = {}
@@ -278,27 +284,106 @@ class BusCompleteGame(CharadesGame):
         norm_letter = self._normalize_text(self.current_letter)
         return norm_answer.startswith(norm_letter)
 
+    def _get_groq_client(self):
+        """Lazy-initialize the Groq client."""
+        if self._groq_client is None:
+            api_key = os.getenv('GROQ_API_KEY', '')
+            if api_key and api_key != 'your_groq_api_key_here':
+                self._groq_client = Groq(api_key=api_key)
+        return self._groq_client
+
+    def _validate_ai_batch(self, tasks):
+        """Validate all answers in a single Groq AI call.
+        
+        Args:
+            tasks: list of (player_name, category, answer) tuples
+            
+        Returns:
+            dict of {(category, answer): True/False} for each validated pair.
+            Empty dict if AI is unavailable.
+        """
+        client = self._get_groq_client()
+        if not client:
+            logger.debug("Groq API key not configured, falling back to offline validation")
+            return {}
+
+        # Deduplicate: same word+category only needs one check
+        unique_pairs = list({(cat, ans) for _, cat, ans in tasks})
+
+        items_text = []
+        for cat, ans in unique_pairs:
+            desc = CATEGORIES_DESCRIPTION.get(cat, cat)
+            items_text.append(f'  "{ans}" -> category "{cat}" ({desc})')
+
+        prompt = f"""You are a validator for the Arabic word game "اتوبيس كومبليت" (Bus Complete).
+The current letter is "{self.current_letter}".
+
+For each word below, respond ONLY with a JSON array. Each element:
+{{"word": "<word>", "category": "<category>", "valid": true/false}}
+
+Rules:
+- valid=true ONLY if the word genuinely belongs to that specific category
+- For اسم: must be a real human first name
+- For حيوان: must be a real animal
+- For نبات: must be a real plant/flower/tree/fruit/vegetable
+- For جماد: must be a real inanimate physical object
+- For بلاد: must be a real country or city
+- For أكلة: must be a real food or dish
+- For مهنة: must be a real job/profession title (not a shift name or abstract concept)
+- Colloquial/dialect words are acceptable if commonly understood
+
+Words:
+{chr(10).join(items_text)}
+
+Respond with ONLY the JSON array."""
+
+        try:
+            response = client.chat.completions.create(
+                model=GROQ_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0,
+                max_tokens=500,
+                timeout=self.settings.get('validation_timeout', 5),
+            )
+            raw = response.choices[0].message.content.strip()
+            # Strip markdown code fences if present
+            if raw.startswith('```'):
+                raw = raw.split('\n', 1)[1].rsplit('```', 1)[0].strip()
+
+            results = json.loads(raw)
+            ai_map = {}
+            for r in results:
+                ai_map[(r['category'], r['word'])] = r['valid']
+            logger.info(f"AI validated {len(ai_map)} word-category pairs")
+            return ai_map
+
+        except Exception as e:
+            logger.warning(f"Groq AI validation failed: {e}, falling back to offline")
+            return {}
+
     def _is_valid_answer(self, category, answer):
-        """Validate an answer using a 3-tier strategy.
+        """Check validation cache or run offline fallback.
         
-        1. Online (Wikipedia) — primary, most comprehensive
-        2. Categorized dictionary — category-specific fallback
-        3. General wordlist (Hans Wehr 34K) — "does this word exist at all?"
-        
-        Returns True if the answer is valid, False otherwise.
+        This is called per-answer when AI batch didn't cover it.
         """
         if not self.validate_answers:
             return True
 
+        cache_key = (category, answer)
+        if cache_key in self.validation_cache:
+            return self.validation_cache[cache_key]
+
+        valid = self._is_valid_offline(category, answer)
+        self.validation_cache[cache_key] = valid
+        return valid
+
+    def _is_valid_offline(self, category, answer):
+        """Offline validation using categorized dict (tier 2) + Hans Wehr (tier 3).
+        
+        Returns True if the answer is valid, False otherwise.
+        """
         normalized_answer = self._normalize_text(answer)
         normalized_category = str(category)
-
-        # Tier 1: Online validation via Wikipedia
-        if self.use_online_validation:
-            online_result = self._validate_online(normalized_category, normalized_answer)
-            if online_result is not None:
-                return online_result
-            # None means Wikipedia was unreachable -> fall through
 
         # Tier 2: Categorized dictionary (category-specific)
         allowed_words = self.answer_dictionary.get(normalized_category)
@@ -314,69 +399,3 @@ class BusCompleteGame(CharadesGame):
             return True
 
         return False
-
-    def _validate_online(self, category, normalized_answer):
-        """Validate an answer against Arabic Wikipedia.
-        
-        Returns True/False if Wikipedia gives a definitive answer,
-        or None if the request fails (caller should fall back to dict).
-        """
-        cache_key = (category, normalized_answer)
-        if cache_key in self.validation_cache:
-            return self.validation_cache[cache_key]
-
-        params = {
-            'action': 'query',
-            'titles': normalized_answer,
-            'prop': 'categories',
-            'format': 'json',
-            'cllimit': 50
-        }
-
-        try:
-            response = requests.get(
-                'https://ar.wikipedia.org/w/api.php',
-                params=params,
-                headers={'User-Agent': WIKI_USER_AGENT},
-                timeout=self.settings.get('validation_timeout', 3)
-            )
-            response.raise_for_status()
-            data = response.json()
-        except Exception:
-            logger.debug(f"Wikipedia validation failed for '{normalized_answer}', falling back to dictionary")
-            self.validation_cache[cache_key] = None
-            return None
-
-        pages = data.get('query', {}).get('pages', {})
-        if not pages:
-            self.validation_cache[cache_key] = False
-            return False
-
-        page = next(iter(pages.values()))
-        if 'missing' in page:
-            self.validation_cache[cache_key] = False
-            return False
-
-        # Page exists on Wikipedia — if we have no keywords for this category,
-        # existence alone is enough to consider it valid
-        if category not in self.category_keywords:
-            self.validation_cache[cache_key] = True
-            return True
-
-        keywords = self.category_keywords.get(category, [])
-        if not keywords:
-            self.validation_cache[cache_key] = True
-            return True
-
-        # Check if any Wikipedia category matches our keywords
-        categories = page.get('categories', [])
-        for cat in categories:
-            title = cat.get('title', '')
-            if any(keyword in title for keyword in keywords):
-                self.validation_cache[cache_key] = True
-                return True
-
-        # Page exists but no category match — still accept it
-        # (Wikipedia categories are inconsistent, better to be lenient)
-        self.validation_cache[cache_key] = True
-        return True
