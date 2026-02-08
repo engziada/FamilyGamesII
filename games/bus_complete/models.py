@@ -315,28 +315,32 @@ class BusCompleteGame(CharadesGame):
             desc = CATEGORIES_DESCRIPTION.get(cat, cat)
             items_text.append(f'  "{ans}" -> category "{cat}" ({desc})')
 
-        prompt = f"""You validate answers for the Arabic game "اتوبيس كومبليت".
-Letter: "{self.current_letter}"
+        prompt = f"""You are a judge for the Arabic word game "اتوبيس كومبليت" (Bus Complete).
+Players write one word per category, all starting with the same letter.
 
-STRICT RULES — a word is valid ONLY if ALL conditions are met:
-1. The word is a real, commonly known Arabic word (colloquial OK)
-2. The word ACTUALLY BELONGS to the given category — not any other category
-   - اسم = human first name ONLY (not an object, animal, place, or food name)
-   - حيوان = animal ONLY (mammal, bird, fish, insect, reptile)
-   - نبات = plant/flower/tree/fruit/vegetable ONLY
-   - جماد = inanimate physical object ONLY (not food, not a person, not an animal)
-   - بلاد = country or city ONLY
-   - أكلة = food or dish ONLY (not a country, person, or object)
-   - مهنة = job/profession title ONLY (not an object, animal, or food)
-3. A word that exists in Arabic but belongs to a DIFFERENT category must be marked false
-   Example: "بقرة" is valid for حيوان but INVALID for نبات
+Your job: check if each word reasonably fits its category.
 
-For each word, think: "What category does this word ACTUALLY belong to? Does it match the given category?"
+CATEGORIES:
+- اسم = Any real human first name (Arabic, foreign, or dialect names all count)
+- حيوان = Any animal (mammal, bird, fish, insect, reptile)
+- نبات = Any plant, flower, tree, fruit, or vegetable
+- جماد = Any inanimate physical object (tool, furniture, device, etc.)
+- بلاد = Any country, city, island, or region. Accept variant spellings.
+- أكلة = Any food, dish, dessert, or snack (including regional/dialect foods)
+- مهنة = Any job, profession, occupation, or field of work (e.g. زراعة = agriculture/farming counts as مهنة)
 
-Words:
+KEY RULES:
+- BE LENIENT: if a word can reasonably fit the category, accept it
+- Dialect/colloquial words are VALID (e.g. زلومة is a real Levantine food)
+- Names that also have other meanings still count as names (e.g. زيادة is both a name and a word)
+- Fields of work count as مهنة (زراعة = farming, تجارة = trade, هندسة = engineering)
+- ONLY reject if the word clearly belongs to a completely different category
+  Example: زرافة (giraffe) is حيوان, so it's INVALID for نبات
+
+Words to validate (letter "{self.current_letter}"):
 {chr(10).join(items_text)}
 
-Return ONLY a JSON array: [{{"word":"...","category":"...","valid":true/false}}]"""
+Return JSON: {{"results": [{{"word":"...","category":"...","valid":true/false}}]}}"""
 
         timeout = self.settings.get('validation_timeout', 8)
         for attempt in range(2):
