@@ -503,6 +503,7 @@ header h1 {
 }
 
 /* --- Utilities --- */
+.u-hidden { display: none !important; }
 .u-flex-center { display: flex; justify-content: center; align-items: center; gap: 1rem; }
 .u-full-width { width: 100%; }
 .u-margin-top { margin-top: 1.5rem; }

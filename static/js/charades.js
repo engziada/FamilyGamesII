@@ -597,35 +597,48 @@ class GameEngine {
         if (itemDisplay) {
             // In Trivia, everyone sees the question. In others, only the performer (isMe) sees it.
             if (this.gameType === 'trivia' || isMe) {
+                itemDisplay.classList.remove('u-hidden');
                 itemDisplay.style.display = 'block';
-                // Don't add .visible here if we're about to call displayQuestion/displayItem
             } else if (this.gameType === 'pictionary' && !isMe && this.currentItemCategory) {
                 // Show category hint for non-drawing players in easy/medium difficulty
                 const difficulty = this.gameSettings.difficulty || 'medium';
                 if (difficulty === 'easy' || difficulty === 'medium') {
+                    itemDisplay.classList.remove('u-hidden');
                     itemDisplay.style.display = 'block';
                     itemDisplay.innerHTML = `<div class="item-category" style="font-size: 1.8rem;">${this.currentItemCategory}</div>`;
                     itemDisplay.classList.add('visible');
                 } else {
-                    itemDisplay.style.display = 'none';
-                    itemDisplay.classList.remove('visible');
-                    console.log('Hard difficulty - no category hint');
+                    itemDisplay.classList.add('u-hidden');
                 }
             } else {
-                itemDisplay.style.display = 'none';
-                itemDisplay.classList.remove('visible');
+                itemDisplay.classList.add('u-hidden');
             }
         }
 
         if (pictionaryArea) {
             if (this.gameType === 'pictionary' && this.gameStatus === 'round_active') {
+                pictionaryArea.classList.remove('u-hidden');
                 pictionaryArea.style.display = 'block';
                 this.initCanvas();
                 // Show controls only to the drawer
                 document.querySelector('.canvas-controls').style.display = isMe ? 'flex' : 'none';
             } else {
-                pictionaryArea.style.display = 'none';
+                pictionaryArea.classList.add('u-hidden');
             }
+        }
+
+        // Handle Bus Complete areas
+        const busArea = document.getElementById('bus-area');
+        const busResultsArea = document.getElementById('bus-results-area');
+        
+        if (this.gameType !== 'bus_complete') {
+            if (busArea) busArea.classList.add('u-hidden');
+            if (busResultsArea) busResultsArea.classList.add('u-hidden');
+        } else {
+            // Bus Complete specific logic is handled in displayBusBoard and displayBusResults
+            // But we should hide them if the status isn't active/scoring
+            if (this.gameStatus !== 'round_active' && busArea) busArea.classList.add('u-hidden');
+            if (this.gameStatus !== 'scoring' && busResultsArea) busResultsArea.classList.add('u-hidden');
         }
 
         this.updateButtonVisibility();
@@ -634,6 +647,7 @@ class GameEngine {
     displayItem(category, itemData) {
         const el = document.getElementById('item-display');
         if (el) {
+            el.classList.remove('u-hidden');
             el.style.display = 'block';
             const item = typeof itemData === 'object' ? itemData.item : itemData;
             const year = itemData.year ? `<div class="item-meta">سنة الإنتاج: ${itemData.year}</div>` : '';
@@ -653,6 +667,7 @@ class GameEngine {
     displayQuestion(data) {
         const el = document.getElementById('item-display');
         if (el) {
+            el.classList.remove('u-hidden');
             el.style.display = 'block';
             let html = `<div class="item-category">${data.category}</div>`;
             html += `<div class="item-name" style="font-size: 1.8rem;">${data.question}</div>`;
