@@ -18,7 +18,7 @@ const AudioManager = {
         const sound = this.sounds[name];
         if (sound) {
             sound.currentTime = 0;
-            sound.play().catch(e => {});
+            sound.play().catch(e => { });
         }
     }
 };
@@ -28,7 +28,7 @@ const AudioManager = {
 const Lobby = {
     socket: null,
     gameType: 'charades',
-    
+
     init() {
         if (!this.socket) {
             this.socket = io();
@@ -44,8 +44,8 @@ const Lobby = {
 
         this.socket.on('join_success', (data) => {
             console.log('Join success:', data);
-            document.getElementById('join-form').style.display = 'none';
-            document.getElementById('join-lobby').style.display = 'block';
+            document.getElementById('join-form').classList.add('u-hidden');
+            document.getElementById('join-lobby').classList.remove('u-hidden');
             document.getElementById('join-room-id').textContent = document.getElementById('room-code').value;
             this.updatePlayerList(data.players, data.host);
         });
@@ -116,8 +116,8 @@ const Lobby = {
         });
 
         document.getElementById('room-id').textContent = gameId;
-        document.getElementById('room-info').style.display = 'block';
-        document.querySelector('.players-list').style.display = 'block';
+        document.getElementById('room-info').classList.remove('u-hidden');
+        document.querySelector('#create-game-modal .players-list').classList.remove('u-hidden');
 
         const buttonsDiv = document.querySelector('#create-game-modal .buttons');
         buttonsDiv.innerHTML = `
@@ -157,9 +157,9 @@ const Lobby = {
     startGame() {
         const gameId = document.getElementById('room-id').textContent;
         const startButton = document.getElementById('start-game-btn');
-        
+
         if (startButton && startButton.disabled) return;
-        
+
         if (this.socket) {
             if (startButton) {
                 startButton.disabled = true;
@@ -188,7 +188,7 @@ const Lobby = {
                 list.appendChild(li);
             });
         });
-        
+
         const startButton = document.getElementById('start-game-btn');
         const minPlayersMsg = document.getElementById('min-players-msg');
 
@@ -239,8 +239,9 @@ const Utils = {
         document.getElementById(modalId).style.display = 'none';
         if (modalId === 'create-game-modal') {
             document.getElementById('host-name').value = '';
-            document.getElementById('room-info').style.display = 'none';
+            document.getElementById('room-info').classList.add('u-hidden');
             document.getElementById('host-players-list').innerHTML = '';
+            document.querySelector('#create-game-modal .players-list').classList.add('u-hidden');
             const buttonsDiv = document.querySelector('#create-game-modal .buttons');
             buttonsDiv.innerHTML = `
                 <button class="btn btn-primary" onclick="Lobby.createGame()">أوضة جديدة</button>
@@ -249,8 +250,8 @@ const Utils = {
         } else if (modalId === 'join-game-modal') {
             document.getElementById('player-name').value = '';
             document.getElementById('room-code').value = '';
-            document.getElementById('join-form').style.display = 'block';
-            document.getElementById('join-lobby').style.display = 'none';
+            document.getElementById('join-form').classList.remove('u-hidden');
+            document.getElementById('join-lobby').classList.add('u-hidden');
             document.getElementById('join-players-list').innerHTML = '';
         }
     },
@@ -259,7 +260,7 @@ const Utils = {
         // Check if join modal is active
         const joinModal = document.getElementById('join-game-modal');
         const createModal = document.getElementById('create-game-modal');
-        
+
         if (joinModal && joinModal.style.display === 'flex') {
             const joinErrorDiv = document.getElementById('join-error-message');
             if (joinErrorDiv) {
@@ -269,7 +270,7 @@ const Utils = {
                 return;
             }
         }
-        
+
         if (createModal && createModal.style.display === 'flex') {
             const createErrorDiv = document.getElementById('create-error-message');
             if (createErrorDiv) {
@@ -279,7 +280,7 @@ const Utils = {
                 return;
             }
         }
-        
+
         // Fallback to game error message or alert
         const errorDiv = document.getElementById('error-message');
         if (errorDiv) {
@@ -324,7 +325,7 @@ class GameEngine {
         this.currentItemCategory = null;
         this.currentLetter = null;
         this.busInputsInitialized = false;
-        
+
         this.isDrawing = false;
         this.lastPos = { x: 0, y: 0 };
         this.ctx = null;
@@ -393,14 +394,14 @@ class GameEngine {
             AudioManager.play('guessed');
             Utils.showMessage(`${data.guesser} عرف الإجابة!`);
         });
-        
+
         this.socket.on('round_timeout', (data) => {
             this.stopTimer();
             this.playTimeoutTwice();
             if (data.game_status) this.setGameStatus(data.game_status);
             if (data.next_player) this.updateCurrentPlayer(data.next_player);
         });
-        
+
         this.socket.on('force_reset_timer', (data) => {
             this.stopTimer();
             if (data.game_status) this.setGameStatus(data.game_status);
@@ -483,14 +484,14 @@ class GameEngine {
     updateGameState(data) {
         if (!data) return;
         console.log("Game state update:", data);
-        
+
         if (data.settings) this.gameSettings = data.settings;
         if (data.status) this.setGameStatus(data.status);
         if (data.message) Utils.showMessage(data.message);
         if (data.players) this.updatePlayersList(data.players);
         if (data.current_player !== undefined) this.updateCurrentPlayer(data.current_player);
         if (data.scores || data.team_scores) this.updateScores(data);
-        
+
         if (data.current_question) {
             this.displayQuestion(data.current_question);
         } else if (this.gameType === 'bus_complete') {
@@ -514,14 +515,14 @@ class GameEngine {
                 this.displayItem(data.current_item.category, data.current_item);
             }
         }
-        
+
         this.updateButtonVisibility();
     }
 
     setGameStatus(status) {
         if (this.gameStatus !== status) {
             this.gameStatus = status;
-            
+
             // Clear item display when transitioning to 'playing' (waiting for next round)
             if (status === 'playing') {
                 const itemDisplay = document.getElementById('item-display');
@@ -533,7 +534,7 @@ class GameEngine {
                 // Clear the stored category
                 this.currentItemCategory = null;
             }
-            
+
             this.updateButtonVisibility();
         }
     }
@@ -550,7 +551,7 @@ class GameEngine {
 
         const waitingArea = document.getElementById('waiting-area');
 
-        Object.values(btns).forEach(b => { if(b) b.style.display = 'none'; });
+        Object.values(btns).forEach(b => { if (b) b.style.display = 'none'; });
 
         const currentPlayer = document.getElementById('current-turn').textContent;
 
@@ -630,7 +631,7 @@ class GameEngine {
         // Handle Bus Complete areas
         const busArea = document.getElementById('bus-area');
         const busResultsArea = document.getElementById('bus-results-area');
-        
+
         if (this.gameType !== 'bus_complete') {
             if (busArea) busArea.classList.add('u-hidden');
             if (busResultsArea) busResultsArea.classList.add('u-hidden');
@@ -671,13 +672,13 @@ class GameEngine {
             el.style.display = 'block';
             let html = `<div class="item-category">${data.category}</div>`;
             html += `<div class="item-name" style="font-size: 1.8rem;">${data.question}</div>`;
-            
+
             html += `<div class="options-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; width: 100%; margin-top: 1.5rem;">`;
             data.options.forEach((opt, i) => {
                 html += `<button class="btn btn-outline" onclick="window.gameInstance.submitAnswer(${i})">${opt}</button>`;
             });
             html += `</div>`;
-            
+
             el.innerHTML = html;
             setTimeout(() => el.classList.add('visible'), 100);
         }
@@ -776,11 +777,11 @@ class GameEngine {
     updatePlayersList(players) {
         const listEl = document.getElementById('players-list');
         if (!listEl) return;
-        
+
         listEl.innerHTML = '';
         const ul = document.createElement('ul');
         ul.classList.add('players-ul');
-        
+
         players.forEach(p => {
             const name = typeof p === 'object' ? p.name : p;
             const isHost = typeof p === 'object' ? p.isHost : false;
@@ -803,9 +804,9 @@ class GameEngine {
     updateScores(data) {
         const el = document.getElementById('scores');
         if (!el) return;
-        
+
         let html = '';
-        
+
         // Show team scores if they exist and are non-zero
         if (data.team_scores && (data.team_scores['1'] > 0 || data.team_scores['2'] > 0)) {
             html += '<div class="team-scores-container">';
@@ -813,7 +814,7 @@ class GameEngine {
             html += `<div class="score-item">فريق 2: <span class="score-val">${data.team_scores['2']}</span></div>`;
             html += '</div>';
         }
-        
+
         // Show individual scores
         const scores = data.scores || data;
         html += Object.entries(scores)
@@ -828,13 +829,13 @@ class GameEngine {
         const timerEl = document.getElementById('timer');
         const timerText = timerEl ? timerEl.querySelector('span') : null;
         if (!timerEl || !timerText) return;
-        
+
         this.setGameStatus('round_active');
         let timeLeft = duration;
         timerEl.style.display = 'flex';
         timerEl.classList.remove('warning', 'danger');
 
-        const format = (s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2, '0')}`;
+        const format = (s) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
         timerText.textContent = format(timeLeft);
 
         this.timerInterval = setInterval(() => {
@@ -1063,7 +1064,7 @@ class GameEngine {
 document.addEventListener('DOMContentLoaded', () => {
     AudioManager.init();
     const isGamePage = window.location.pathname.includes('/game/');
-    
+
     if (isGamePage) {
         const gameData = JSON.parse(sessionStorage.getItem('gameData') || '{}');
         const urlParams = new URLSearchParams(window.location.search);
