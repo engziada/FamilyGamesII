@@ -15,6 +15,8 @@ from games.bus_complete.models import BusCompleteGame
 import time
 import uuid
 from dotenv import load_dotenv
+import signal
+import sys
 
 # Load environment variables
 load_dotenv()
@@ -432,4 +434,20 @@ def emit_game_state(gid):
         emit('game_state', state, room=gid)
 
 if __name__ == '__main__':
-    socketio.run(app, host='127.0.0.1', port=5005, debug=False)
+    # Handle Ctrl+C gracefully with eventlet
+    def signal_handler(sig, frame):
+        logger.info('\nShutting down server...')
+        sys.exit(0)
+    
+    signal.signal(signal.SIGINT, signal_handler)
+    
+    logger.info('='*50)
+    logger.info('Family Games II Server Starting...')
+    logger.info('Running on http://127.0.0.1:5005')
+    logger.info('Press Ctrl+C to stop')
+    logger.info('='*50)
+    
+    try:
+        socketio.run(app, host='127.0.0.1', port=5005, debug=False)
+    except (KeyboardInterrupt, SystemExit):
+        logger.info('Server stopped.')
