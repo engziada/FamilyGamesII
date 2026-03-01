@@ -115,7 +115,11 @@
             </select>
         </div>
         <div id="room-info" class="card u-hidden u-full-width u-margin-bottom" style="padding: 1.5rem;">
-            <p>رقم الغرفة: <span id="room-id" style="font-weight: 800; color: var(--primary); font-size: 1.5rem;"></span></p>
+            <p>رقم الغرفة: <span id="room-id" style="font-weight: 800; color: var(--primary); font-size: 1.5rem;"></span>
+                <button id="copy-room-id-lobby" class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; margin-right: 0.5rem;" onclick="const roomId = document.getElementById('room-id').textContent; navigator.clipboard.writeText(roomId).then(() => Utils.showMessage('تم نسخ رقم الغرفة', 'info'))">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </p>
             <p style="font-size: 0.9rem; color: var(--text-light);">شارك هذا الرقم مع أصدقائك للإنضمام</p>
         </div>
         <div class="players-list u-hidden u-full-width">
