@@ -434,17 +434,6 @@ def emit_game_state(gid):
         emit('game_state', state, room=gid)
 
 if __name__ == '__main__':
-    # Handle Ctrl+C gracefully with eventlet
-    def shutdown_server():
-        logger.info('\nShutting down server...')
-        import os
-        os._exit(0)
-    
-    # Use eventlet's signal handling after monkey_patch
-    import eventlet
-    eventlet.signal(signal.SIGINT, shutdown_server)
-    eventlet.signal(signal.SIGTERM, shutdown_server)
-    
     logger.info('='*50)
     logger.info('Family Games II Server Starting...')
     logger.info('Running on http://127.0.0.1:5005')
@@ -453,5 +442,6 @@ if __name__ == '__main__':
     
     try:
         socketio.run(app, host='127.0.0.1', port=5005, debug=False)
-    except (KeyboardInterrupt, SystemExit):
-        logger.info('Server stopped.')
+    except KeyboardInterrupt:
+        logger.info('\nShutting down server...')
+        sys.exit(0)
