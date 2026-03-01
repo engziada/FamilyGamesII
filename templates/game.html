@@ -16,7 +16,10 @@
             </div>
             <div id="timer" class="timer-box">
                 <i class="fas fa-clock"></i>
-                <span>02:00</span>
+                <span>--:--</span>
+                <div class="timer-progress-container">
+                    <div id="timer-progress" class="timer-progress-bar" style="width: 100%;"></div>
+                </div>
             </div>
         </div>
 
@@ -71,7 +74,7 @@
                     </div>
                 </div>
                 <div class="u-flex-center u-margin-top">
-                    <button id="stopBusButton" class="btn btn-primary btn-large u-full-width animate-pulse" onclick="window.gameInstance.stopBus()">
+                    <button type="button" id="stopBusButton" class="btn btn-primary btn-large u-full-width animate-pulse" onclick="window.gameInstance.stopBus()">
                         <i class="fas fa-hand-paper"></i> أتوبيس كومبليت!
                     </button>
                 </div>
@@ -95,7 +98,7 @@
                     </table>
                 </div>
                 <div id="host-bus-actions" class="u-hidden u-flex-center u-margin-top">
-                    <button class="btn btn-primary" onclick="window.gameInstance.confirmBusScores()">
+                    <button type="button" class="btn btn-primary" onclick="window.gameInstance.confirmBusScores()">
                         الجولة التالية <i class="fas fa-chevron-left"></i>
                     </button>
                 </div>
@@ -107,31 +110,31 @@
             </div>
 
             <div class="game-actions u-flex-center u-full-width u-margin-top">
-                <button id="readyButton" class="btn btn-primary u-hidden">
+                <button type="button" id="readyButton" class="btn btn-primary u-hidden">
                     <i class="fas fa-play"></i> أنا جاهز!
                 </button>
-                <button id="passButton" class="btn btn-outline u-hidden">
+                <button type="button" id="passButton" class="btn btn-outline u-hidden">
                     <i class="fas fa-forward"></i> تخطي
                 </button>
-                <button id="guessButton" class="btn btn-secondary u-hidden">
+                <button type="button" id="guessButton" class="btn btn-secondary u-hidden">
                     <i class="fas fa-check"></i> عرفتها!
                 </button>
             </div>
         </div>
 
         <div class="host-controls card u-flex-center" style="padding: 1.5rem;">
-            {% if player_type == 'host' %}
-            <button id="startButton" class="btn btn-primary" style="display: none;">
+            {% if is_host %}
+            <button type="button" id="startButton" class="btn btn-primary" style="display: none;">
                 <i class="fas fa-play-circle"></i> ابدأ اللعبة
             </button>
-            <button id="nextButton" class="btn btn-secondary" style="display: none;">
+            <button type="button" id="nextButton" class="btn btn-secondary" style="display: none;">
                 <i class="fas fa-step-forward"></i> الجولة التالية
             </button>
-            <button id="close-room" class="btn btn-outline" style="color: white; background-color: var(--danger);">
+            <button type="button" id="close-room" class="btn btn-outline" style="color: white; background-color: var(--danger);">
                 <i class="fas fa-times-circle"></i> إنهاء اللعبة
             </button>
             {% else %}
-            <button id="leaveButton" class="btn btn-outline">
+            <button type="button" id="leaveButton" class="btn btn-outline">
                 <i class="fas fa-sign-out-alt"></i> انسحاب
             </button>
             {% endif %}
@@ -154,9 +157,26 @@
         </div>
 
         <div class="card info-card" style="padding: 1.2rem; font-size: 0.9rem; color: var(--text-light); text-align: center;">
-            <p>رقم الغرفة: <strong style="color: var(--primary);">{{ game_id }}</strong></p>
+            <p>رقم الغرفة: <strong style="color: var(--primary);">{{ game_id }}</strong>
+                <button id="copy-room-id" class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; margin-right: 0.5rem;" onclick="navigator.clipboard.writeText('{{ game_id }}').then(() => Utils.showMessage('تم نسخ رقم الغرفة', 'info'))">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </p>
             <p>أنت تلعب بصفتك: <strong style="color: var(--secondary);">{{ player_name }}</strong></p>
+            <div id="round-indicator" class="u-hidden" style="margin-top: 0.5rem; font-weight: 700; color: var(--primary);"></div>
         </div>
+        
+        <!-- Sound Toggle -->
+        <div class="card" style="padding: 1rem; text-align: center;">
+            <button id="sound-toggle" class="btn btn-outline" onclick="window.gameInstance?.toggleSound()">
+                <i class="fas fa-volume-up" id="sound-icon"></i>
+            </button>
+        </div>
+        
+        <!-- Back to Home -->
+        <a href="/" class="btn btn-outline u-full-width" style="text-align: center; margin-top: 1rem;">
+            <i class="fas fa-home"></i> العودة للرئيسية
+        </a>
     </div>
 </div>
 

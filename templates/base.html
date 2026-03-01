@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ألعاب العيلة - متعة مع العائلة</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Changa:wght@300;400;600;800&family=Lemonada:wght@300;400;700&display=swap" rel="stylesheet">
@@ -13,7 +14,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 </head>
 <body>
+    <a href="#main-content" class="skip-link">تخطي إلى المحتوى الرئيسي</a>
+    <main id="main-content">
     {% block content %}{% endblock %}
+    </main>
     {% block scripts %}{% endblock %}
 </body>
 </html>

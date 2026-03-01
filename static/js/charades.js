@@ -7,10 +7,24 @@ const AudioManager = {
     enabled: true,
 
     init() {
-        this.sounds.guessed = new Audio('/static/sounds/guessed.mp3');
-        this.sounds.timeout = new Audio('/static/sounds/timeout.mp3');
-        // Pre-load sounds
-        Object.values(this.sounds).forEach(s => s.load());
+        // Load sounds with error handling for missing files
+        const soundFiles = {
+            guessed: '/static/sounds/guessed.mp3',
+            timeout: '/static/sounds/timeout.mp3'
+        };
+        
+        Object.entries(soundFiles).forEach(([name, path]) => {
+            try {
+                const audio = new Audio(path);
+                audio.addEventListener('error', () => {
+                    console.warn(`Sound file not found: ${path}`);
+                });
+                this.sounds[name] = audio;
+                audio.load();
+            } catch (e) {
+                console.warn(`Failed to load sound: ${name}`, e);
+            }
+        });
     },
 
     play(name) {
@@ -30,20 +44,47 @@ const Lobby = {
     gameType: 'charades',
 
     init() {
+        // Show connecting overlay
+        this.showConnectingOverlay();
+        
         if (!this.socket) {
             this.socket = io();
             this.setupListeners();
         }
     },
 
+    showConnectingOverlay() {
+        let overlay = document.getElementById('connecting-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'connecting-overlay';
+            overlay.className = 'connecting-overlay';
+            overlay.innerHTML = `
+                <div class="connecting-content">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p>جاري الاتصال...</p>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+        overlay.classList.remove('u-hidden');
+    },
+
+    hideConnectingOverlay() {
+        const overlay = document.getElementById('connecting-overlay');
+        if (overlay) overlay.classList.add('u-hidden');
+    },
+
     setupListeners() {
+        this.socket.on('connect', () => {
+            this.hideConnectingOverlay();
+        });
+        
         this.socket.on('game_created', (data) => {
-            console.log('Game created:', data);
             this.updatePlayerList(data.players);
         });
 
         this.socket.on('join_success', (data) => {
-            console.log('Join success:', data);
             document.getElementById('join-form').classList.add('u-hidden');
             document.getElementById('join-lobby').classList.remove('u-hidden');
             document.getElementById('join-room-id').textContent = document.getElementById('room-code').value;
@@ -51,13 +92,11 @@ const Lobby = {
         });
 
         this.socket.on('player_joined', (data) => {
-            console.log('Player joined:', data);
             this.updatePlayerList(data.players);
             AudioManager.play('guessed');
         });
 
         this.socket.on('player_left', (data) => {
-            console.log('Player left:', data);
             this.updatePlayerList(data.players);
             AudioManager.play('timeout');
             Utils.showMessage(`${data.player_name} انسحب من اللعبة`, 'error');
@@ -65,7 +104,6 @@ const Lobby = {
 
         this.socket.on('game_started', (data) => {
             AudioManager.play('guessed');
-            console.log('Game started:', data);
             const playerName = document.getElementById('player-name')?.value || document.getElementById('host-name')?.value;
 
             sessionStorage.setItem('gameData', JSON.stringify({
@@ -86,7 +124,7 @@ const Lobby = {
     createGame() {
         const hostName = document.getElementById('host-name').value.trim();
         if (!hostName) {
-            alert('من فضلك اكتب اسمك');
+            Utils.showError('من فضلك اكتب اسمك');
             return;
         }
 
@@ -101,6 +139,14 @@ const Lobby = {
         };
 
         const gameId = Math.floor(1000 + Math.random() * 9000);
+        
+        // Show loading state
+        const createBtn = document.querySelector('#create-game-modal .btn-primary');
+        if (createBtn) {
+            createBtn.disabled = true;
+            createBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإنشاء...';
+        }
+        
         this.init();
 
         this.socket.emit('create_game', {
@@ -142,8 +188,15 @@ const Lobby = {
         const roomCode = document.getElementById('room-code').value.trim();
 
         if (!playerName || !roomCode) {
-            alert('من فضلك اكتب اسمك ورقم الأوضة');
+            Utils.showError('من فضلك اكتب اسمك ورقم الأوضة');
             return;
+        }
+
+        // Show loading state
+        const joinBtn = document.querySelector('#join-form .btn-primary');
+        if (joinBtn) {
+            joinBtn.disabled = true;
+            joinBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الانضمام...';
         }
 
         this.init();
@@ -244,8 +297,8 @@ const Utils = {
             document.querySelector('#create-game-modal .players-list').classList.add('u-hidden');
             const buttonsDiv = document.querySelector('#create-game-modal .buttons');
             buttonsDiv.innerHTML = `
-                <button class="btn btn-primary" onclick="Lobby.createGame()">أوضة جديدة</button>
-                <button class="btn btn-secondary" onclick="Utils.hideModal('create-game-modal')">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="Lobby.createGame()">أوضة جديدة</button>
+                <button type="button" class="btn btn-secondary" onclick="Utils.hideModal('create-game-modal')">إلغاء</button>
             `;
         } else if (modalId === 'join-game-modal') {
             document.getElementById('player-name').value = '';
@@ -254,6 +307,21 @@ const Utils = {
             document.getElementById('join-lobby').classList.add('u-hidden');
             document.getElementById('join-players-list').innerHTML = '';
         }
+    },
+
+    // Escape key handler for modals
+    setupModalKeyboardHandler() {
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const modals = ['create-game-modal', 'join-game-modal'];
+                modals.forEach(id => {
+                    const modal = document.getElementById(id);
+                    if (modal && modal.style.display === 'flex') {
+                        this.hideModal(id);
+                    }
+                });
+            }
+        });
     },
 
     showError(message) {
@@ -325,18 +393,51 @@ class GameEngine {
         this.currentItemCategory = null;
         this.currentLetter = null;
         this.busInputsInitialized = false;
+        this.currentRound = 0;
+        this.totalRounds = 0;
 
         this.isDrawing = false;
         this.lastPos = { x: 0, y: 0 };
         this.ctx = null;
 
         this.init();
+        this.setupBeforeUnload();
+    }
+
+    setupBeforeUnload() {
+        window.addEventListener('beforeunload', (e) => {
+            if (this.gameStatus === 'round_active' || this.gameStatus === 'playing') {
+                e.preventDefault();
+                e.returnValue = 'هل أنت متأكد أنك تريد المغادرة؟ قد تفقد تقدمك في اللعبة.';
+                return e.returnValue;
+            }
+        });
+    }
+
+    toggleSound() {
+        AudioManager.enabled = !AudioManager.enabled;
+        const icon = document.getElementById('sound-icon');
+        if (icon) {
+            icon.className = AudioManager.enabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+        }
+    }
+
+    updateRoundIndicator(current, total) {
+        this.currentRound = current || this.currentRound;
+        this.totalRounds = total || this.totalRounds;
+        const el = document.getElementById('round-indicator');
+        if (el && this.currentRound > 0) {
+            el.textContent = `الجولة ${this.currentRound} من ${this.totalRounds || '?'}`;
+            el.classList.remove('u-hidden');
+        }
     }
 
     init() {
         this.socket = io();
         this.socket.on('connect', () => {
-            console.log('Game Socket connected');
+            // Hide reconnect overlay if visible
+            const overlay = document.getElementById('reconnect-overlay');
+            if (overlay) overlay.classList.add('u-hidden');
             this.setupUIListeners();
             this.socket.emit('verify_game', {
                 game_id: this.gameId,
@@ -344,7 +445,31 @@ class GameEngine {
                 transfer_id: this.transferId
             });
         });
+        
+        // Handle disconnection with reconnection UI
+        this.socket.on('disconnect', () => {
+            console.warn('Socket disconnected');
+            this.showReconnectOverlay();
+        });
+        
         this.setupSocketListeners();
+    }
+
+    showReconnectOverlay() {
+        let overlay = document.getElementById('reconnect-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'reconnect-overlay';
+            overlay.className = 'reconnect-overlay';
+            overlay.innerHTML = `
+                <div class="reconnect-content">
+                    <i class="fas fa-wifi fa-2x animate-heartbeat"></i>
+                    <p>انقطع الاتصال... جاري إعادة المحاولة</p>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+        overlay.classList.remove('u-hidden');
     }
 
     setupUIListeners() {
@@ -364,6 +489,7 @@ class GameEngine {
 
         bindClick('leave-room', () => {
             if (confirm('هل أنت متأكد أنك تريد الانسحاب؟')) {
+                sessionStorage.removeItem('gameData');
                 this.socket.emit('host_withdraw', { roomId: this.gameId, playerName: this.playerName });
                 window.location.href = '/';
             }
@@ -371,6 +497,7 @@ class GameEngine {
 
         bindClick('close-room', () => {
             if (confirm('هل أنت متأكد أنك تريد إغلاق الغرفة؟')) {
+                sessionStorage.removeItem('gameData');
                 this.socket.emit('close_room', { roomId: this.gameId, playerName: this.playerName });
                 window.location.href = '/';
             }
@@ -378,6 +505,7 @@ class GameEngine {
 
         bindClick('leaveButton', () => {
             if (confirm('هل أنت متأكد أنك تريد الانسحاب؟')) {
+                sessionStorage.removeItem('gameData');
                 this.socket.emit('leave_game', { roomId: this.gameId, playerName: this.playerName });
                 window.location.href = '/';
             }
@@ -483,7 +611,6 @@ class GameEngine {
 
     updateGameState(data) {
         if (!data) return;
-        console.log("Game state update:", data);
 
         if (data.settings) this.gameSettings = data.settings;
         if (data.status) this.setGameStatus(data.status);
@@ -545,7 +672,6 @@ class GameEngine {
             guess: document.getElementById('guessButton'),
             start: document.getElementById('startButton'),
             next: document.getElementById('nextButton'),
-            reveal: document.getElementById('revealButton'),
             pass: document.getElementById('passButton')
         };
 
@@ -554,14 +680,6 @@ class GameEngine {
         Object.values(btns).forEach(b => { if (b) b.classList.add('u-hidden'); });
 
         const currentPlayer = document.getElementById('current-turn').textContent.trim();
-
-        console.log('Button visibility check:', {
-            gameStatus: this.gameStatus,
-            gameType: this.gameType,
-            currentPlayer,
-            playerName: this.playerName,
-            isMatch: currentPlayer === this.playerName
-        });
 
         if (waitingArea) {
             waitingArea.style.display = (this.gameStatus === 'playing' || (this.gameStatus === 'waiting' && this.gameType !== 'trivia')) ? 'block' : 'none';
@@ -579,7 +697,10 @@ class GameEngine {
                 break;
             case 'round_active':
                 if (this.gameType === 'charades' || this.gameType === 'pictionary') {
-                    if (btns.guess && currentPlayer !== this.playerName) btns.guess.classList.remove('u-hidden');
+                    // Show Guess button to non-current player OR host watching others
+                    if (btns.guess && (currentPlayer !== this.playerName || this.isHost)) {
+                        btns.guess.classList.remove('u-hidden');
+                    }
                     if (btns.pass && currentPlayer === this.playerName) btns.pass.classList.remove('u-hidden');
                 }
                 if (btns.next && this.isHost) btns.next.classList.remove('u-hidden');
@@ -713,6 +834,22 @@ class GameEngine {
         const canvas = document.getElementById('game-canvas');
         if (!canvas || this.ctx) return;
 
+        // Set canvas internal dimensions to match display size
+        const resizeCanvas = () => {
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            if (this.ctx) {
+                this.ctx.scale(dpr, dpr);
+                this.ctx.lineCap = 'round';
+                this.ctx.lineJoin = 'round';
+            }
+        };
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
         this.ctx = canvas.getContext('2d');
         this.ctx.lineCap = 'round';
         this.ctx.lineJoin = 'round';
@@ -813,7 +950,20 @@ class GameEngine {
         const el = document.getElementById('scores');
         if (!el) return;
 
+        // Store previous scores for animation
+        const prevScores = this.previousScores || {};
+        this.previousScores = {};
+
         let html = '';
+
+        // Show placeholder if no scores
+        const hasScores = (data.scores && Object.values(data.scores).some(s => s > 0)) || 
+                        (data.team_scores && (data.team_scores['1'] > 0 || data.team_scores['2'] > 0));
+        
+        if (!hasScores) {
+            el.innerHTML = '<p class="u-text-center" style="color: var(--text-light);">لم تبدأ الجولات بعد</p>';
+            return;
+        }
 
         // Show team scores if they exist and are non-zero
         if (data.team_scores && (data.team_scores['1'] > 0 || data.team_scores['2'] > 0)) {
@@ -823,10 +973,14 @@ class GameEngine {
             html += '</div>';
         }
 
-        // Show individual scores
+        // Show individual scores with animation
         const scores = data.scores || data;
         html += Object.entries(scores)
-            .map(([p, s]) => `<div class="score-item ${p === this.playerName ? 'current-player' : ''}"><span>${p}</span><span class="score-val">${s}</span></div>`)
+            .map(([p, s]) => {
+                const animate = prevScores[p] && prevScores[p] < s ? 'score-animate' : '';
+                this.previousScores[p] = s;
+                return `<div class="score-item ${p === this.playerName ? 'current-player' : ''}"><span>${p}</span><span class="score-val ${animate}">${s}</span></div>`;
+            })
             .join('');
 
         el.innerHTML = html;
@@ -836,12 +990,20 @@ class GameEngine {
         this.stopTimer();
         const timerEl = document.getElementById('timer');
         const timerText = timerEl ? timerEl.querySelector('span') : null;
+        const timerProgress = document.getElementById('timer-progress');
         if (!timerEl || !timerText) return;
 
         this.setGameStatus('round_active');
+        const totalDuration = duration;
         let timeLeft = duration;
         timerEl.style.display = 'flex';
         timerEl.classList.remove('warning', 'danger');
+        
+        // Reset progress bar
+        if (timerProgress) {
+            timerProgress.style.width = '100%';
+            timerProgress.classList.remove('warning', 'danger');
+        }
 
         const format = (s) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
         timerText.textContent = format(timeLeft);
@@ -849,10 +1011,29 @@ class GameEngine {
         this.timerInterval = setInterval(() => {
             timeLeft--;
             timerText.textContent = format(timeLeft);
-            if (timeLeft <= 30) timerEl.classList.add('warning');
+            
+            // Update progress bar
+            if (timerProgress) {
+                const percent = (timeLeft / totalDuration) * 100;
+                timerProgress.style.width = `${percent}%`;
+            }
+            
+            if (timeLeft <= 30) {
+                timerEl.classList.add('warning');
+                if (timerProgress) timerProgress.classList.add('warning');
+            }
             if (timeLeft <= 10) {
                 timerEl.classList.remove('warning');
                 timerEl.classList.add('danger');
+                if (timerProgress) {
+                    timerProgress.classList.remove('warning');
+                    timerProgress.classList.add('danger');
+                }
+                // Screen pulse effect at 10s
+                if (timeLeft === 10) {
+                    document.querySelector('.display-area')?.classList.add('screen-pulse');
+                    setTimeout(() => document.querySelector('.display-area')?.classList.remove('screen-pulse'), 800);
+                }
                 // Play ticking sound for last 5 seconds
                 if (timeLeft <= 5 && timeLeft > 0) {
                     AudioManager.play('timeout');
@@ -941,7 +1122,7 @@ class GameEngine {
      */
     attachBusInputValidation() {
         const inputs = document.querySelectorAll('.bus-input');
-        inputs.forEach(input => {
+        inputs.forEach((input, index) => {
             input.addEventListener('input', () => {
                 const val = input.value.trim();
                 input.classList.remove('bus-input-valid', 'bus-input-invalid');
@@ -950,6 +1131,20 @@ class GameEngine {
                     input.classList.add('bus-input-valid');
                 } else {
                     input.classList.add('bus-input-invalid');
+                }
+            });
+            
+            // Enter key navigation - focus next input
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const nextInput = inputs[index + 1];
+                    if (nextInput) {
+                        nextInput.focus();
+                    } else {
+                        // Last input - focus first or submit
+                        inputs[0].focus();
+                    }
                 }
             });
         });
@@ -961,6 +1156,9 @@ class GameEngine {
         document.getElementById('waiting-area').style.display = 'none';
         document.getElementById('bus-results-area').classList.add('u-hidden');
         document.getElementById('bus-area').classList.remove('u-hidden');
+        
+        // Add fade-in animation
+        document.getElementById('bus-area').classList.add('fade-in');
 
         if (this.gameStatus === 'round_active' && !this.busInputsInitialized) {
             document.querySelectorAll('.bus-input').forEach(input => {
@@ -969,6 +1167,12 @@ class GameEngine {
             });
             this.attachBusInputValidation();
             this.busInputsInitialized = true;
+        }
+        
+        // Hide stop button for non-hosts
+        const stopBtn = document.getElementById('stopBusButton');
+        if (stopBtn && !this.isHost) {
+            stopBtn.classList.add('u-hidden');
         }
     }
 
@@ -1071,6 +1275,7 @@ class GameEngine {
 
 document.addEventListener('DOMContentLoaded', () => {
     AudioManager.init();
+    Utils.setupModalKeyboardHandler();
     const isGamePage = window.location.pathname.includes('/game/');
 
     if (isGamePage) {
@@ -1082,8 +1287,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const playerName = decodeURIComponent(urlPlayerName || gameData.playerName || document.getElementById('player-name')?.value || '');
         const transferId = urlParams.get('transfer_id') || gameData.transferId || document.getElementById('transfer-id')?.value || '';
         const isHost = document.getElementById('is-host')?.value === 'true';
-
-        console.log('Game init:', { gameId, playerName, transferId, isHost, urlPlayerName });
 
         if (gameId && playerName && transferId) {
             window.gameInstance = new GameEngine(gameId, playerName, transferId, isHost);
