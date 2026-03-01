@@ -490,24 +490,27 @@ class GameEngine {
         bindClick('leave-room', () => {
             if (confirm('هل أنت متأكد أنك تريد الانسحاب؟')) {
                 sessionStorage.removeItem('gameData');
-                this.socket.emit('host_withdraw', { roomId: this.gameId, playerName: this.playerName });
-                window.location.href = '/';
+                this.socket.emit('host_withdraw', { roomId: this.gameId, playerName: this.playerName }, () => {
+                    window.location.href = '/';
+                });
             }
         });
 
         bindClick('close-room', () => {
             if (confirm('هل أنت متأكد أنك تريد إغلاق الغرفة؟')) {
                 sessionStorage.removeItem('gameData');
-                this.socket.emit('close_room', { roomId: this.gameId, playerName: this.playerName });
-                window.location.href = '/';
+                this.socket.emit('close_room', { roomId: this.gameId, playerName: this.playerName }, () => {
+                    window.location.href = '/';
+                });
             }
         });
 
         bindClick('leaveButton', () => {
             if (confirm('هل أنت متأكد أنك تريد الانسحاب؟')) {
                 sessionStorage.removeItem('gameData');
-                this.socket.emit('leave_game', { roomId: this.gameId, playerName: this.playerName });
-                window.location.href = '/';
+                this.socket.emit('leave_game', { roomId: this.gameId, playerName: this.playerName }, () => {
+                    window.location.href = '/';
+                });
             }
         });
     }
