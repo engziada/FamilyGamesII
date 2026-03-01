@@ -261,8 +261,24 @@ header h1 {
     justify-content: center;
     gap: 1rem;
     font-weight: 800;
-    min-width: min(400px, 90vw);
+    min-width: auto;
+    max-width: 90vw;
+    width: auto;
     text-align: center;
+    white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+    #game-status {
+        left: 50%;
+        transform: translateX(-50%);
+        right: auto;
+        width: auto;
+        max-width: 85vw;
+        padding: 0.8rem 1.5rem;
+        font-size: 0.9rem;
+        white-space: normal;
+    }
 }
 
 #game-status.success { border-color: var(--success); color: var(--success); }
