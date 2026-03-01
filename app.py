@@ -435,11 +435,14 @@ def emit_game_state(gid):
 
 if __name__ == '__main__':
     # Handle Ctrl+C gracefully with eventlet
-    def signal_handler(sig, frame):
+    import eventlet.signal as eventlet_signal
+    
+    def shutdown_server():
         logger.info('\nShutting down server...')
         sys.exit(0)
     
-    signal.signal(signal.SIGINT, signal_handler)
+    eventlet_signal.signal(eventlet_signal.SIGTERM, shutdown_server)
+    eventlet_signal.signal(eventlet_signal.SIGINT, shutdown_server)
     
     logger.info('='*50)
     logger.info('Family Games II Server Starting...')
