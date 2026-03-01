@@ -356,7 +356,7 @@ class GameEngine {
         bindClick('startButton', () => this.socket.emit('start_game', { game_id: this.gameId }));
         bindClick('nextButton', () => this.socket.emit('force_next_turn', { game_id: this.gameId }));
         bindClick('readyButton', () => {
-            document.getElementById('readyButton').style.display = 'none';
+            document.getElementById('readyButton').classList.add('u-hidden');
             this.socket.emit('player_ready', { game_id: this.gameId });
         });
         bindClick('guessButton', () => this.socket.emit('guess_correct', { game_id: this.gameId, player_name: this.playerName }));
@@ -551,9 +551,17 @@ class GameEngine {
 
         const waitingArea = document.getElementById('waiting-area');
 
-        Object.values(btns).forEach(b => { if (b) b.style.display = 'none'; });
+        Object.values(btns).forEach(b => { if (b) b.classList.add('u-hidden'); });
 
-        const currentPlayer = document.getElementById('current-turn').textContent;
+        const currentPlayer = document.getElementById('current-turn').textContent.trim();
+
+        console.log('Button visibility check:', {
+            gameStatus: this.gameStatus,
+            gameType: this.gameType,
+            currentPlayer,
+            playerName: this.playerName,
+            isMatch: currentPlayer === this.playerName
+        });
 
         if (waitingArea) {
             waitingArea.style.display = (this.gameStatus === 'playing' || (this.gameStatus === 'waiting' && this.gameType !== 'trivia')) ? 'block' : 'none';
@@ -561,20 +569,20 @@ class GameEngine {
 
         switch (this.gameStatus) {
             case 'waiting':
-                if (btns.start && this.isHost) btns.start.style.display = 'block';
+                if (btns.start && this.isHost) btns.start.classList.remove('u-hidden');
                 break;
             case 'playing':
                 if (this.gameType !== 'trivia') {
-                    if (btns.ready && currentPlayer === this.playerName) btns.ready.style.display = 'block';
+                    if (btns.ready && currentPlayer === this.playerName) btns.ready.classList.remove('u-hidden');
                 }
-                if (btns.next && this.isHost) btns.next.style.display = 'block';
+                if (btns.next && this.isHost) btns.next.classList.remove('u-hidden');
                 break;
             case 'round_active':
                 if (this.gameType === 'charades' || this.gameType === 'pictionary') {
-                    if (btns.guess && currentPlayer !== this.playerName) btns.guess.style.display = 'block';
-                    if (btns.pass && currentPlayer === this.playerName) btns.pass.style.display = 'block';
+                    if (btns.guess && currentPlayer !== this.playerName) btns.guess.classList.remove('u-hidden');
+                    if (btns.pass && currentPlayer === this.playerName) btns.pass.classList.remove('u-hidden');
                 }
-                if (btns.next && this.isHost) btns.next.style.display = 'block';
+                if (btns.next && this.isHost) btns.next.classList.remove('u-hidden');
                 break;
         }
     }
@@ -1070,9 +1078,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
 
         const gameId = window.location.pathname.split('/').pop() || gameData.gameId;
-        const playerName = urlParams.get('player_name') || gameData.playerName;
-        const transferId = urlParams.get('transfer_id') || gameData.transferId;
+        const urlPlayerName = urlParams.get('player_name');
+        const playerName = decodeURIComponent(urlPlayerName || gameData.playerName || document.getElementById('player-name')?.value || '');
+        const transferId = urlParams.get('transfer_id') || gameData.transferId || document.getElementById('transfer-id')?.value || '';
         const isHost = document.getElementById('is-host')?.value === 'true';
+
+        console.log('Game init:', { gameId, playerName, transferId, isHost, urlPlayerName });
 
         if (gameId && playerName && transferId) {
             window.gameInstance = new GameEngine(gameId, playerName, transferId, isHost);

@@ -166,6 +166,7 @@ def handle_start_game(data):
                 'redirect_url': f'/game/{game_id}',
                 'transfer_id': str(uuid.uuid4())
             }, room=game_id)
+            emit_game_state(game_id)
     except Exception as e:
         emit('error', {'message': str(e)})
 
