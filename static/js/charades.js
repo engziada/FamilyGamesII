@@ -700,8 +700,8 @@ class GameEngine {
                 break;
             case 'round_active':
                 if (this.gameType === 'charades' || this.gameType === 'pictionary') {
-                    // Show Guess button to non-current player OR host watching others
-                    if (btns.guess && (currentPlayer !== this.playerName || this.isHost)) {
+                    // Show Guess button only to non-current player (not the performer)
+                    if (btns.guess && currentPlayer !== this.playerName) {
                         btns.guess.classList.remove('u-hidden');
                     }
                     if (btns.pass && currentPlayer === this.playerName) btns.pass.classList.remove('u-hidden');
