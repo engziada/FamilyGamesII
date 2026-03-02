@@ -6,6 +6,8 @@ from datetime import datetime
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, JSON, Index
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+import hashlib
+import json as json_module
 import os
 
 Base = declarative_base()
@@ -22,6 +24,7 @@ class GameItem(Base):
     category = Column(String(100), index=True)  # movies, series, plays, vocabulary, etc.
     item_data = Column(JSON, nullable=False)  # Stores the actual item content
     source = Column(String(200))  # API/website source
+    content_hash = Column(String(64), index=True)  # Hash for deduplication
     last_used = Column(DateTime, default=None, index=True)  # Last time this item was used
     use_count = Column(Integer, default=0)  # How many times used across all rooms
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -30,6 +33,7 @@ class GameItem(Base):
     __table_args__ = (
         Index('idx_game_type_last_used', 'game_type', 'last_used'),
         Index('idx_game_type_category', 'game_type', 'category'),
+        Index('idx_game_type_content_hash', 'game_type', 'content_hash'),
     )
     
     def __repr__(self):
@@ -61,9 +65,51 @@ engine = create_engine(f'sqlite:///{DB_PATH}', echo=False)
 SessionLocal = sessionmaker(bind=engine)
 
 def init_db():
-    """Initialize database tables"""
+    """Initialize database tables and migrate schema if needed"""
     Base.metadata.create_all(engine)
+    
+    # Migration: Add content_hash column if it doesn't exist
+    session = SessionLocal()
+    try:
+        # Check if content_hash column exists
+        result = session.execute("PRAGMA table_info(game_items)")
+        columns = [row[1] for row in result.fetchall()]
+        
+        if 'content_hash' not in columns:
+            session.execute("ALTER TABLE game_items ADD COLUMN content_hash VARCHAR(64)")
+            session.commit()
+            print("Migration: Added content_hash column to game_items table")
+    except Exception as e:
+        session.rollback()
+        print(f"Migration warning: {e}")
+    finally:
+        session.close()
 
 def get_session():
     """Get a new database session"""
     return SessionLocal()
+
+
+def compute_content_hash(game_type: str, item_data: dict) -> str:
+    """
+    Compute a SHA-256 hash from item content for deduplication.
+    
+    For trivia: uses question + correct_answer + category
+    For charades/pictionary: uses word/title + category
+    """
+    hash_parts = [game_type]
+    
+    if game_type == 'trivia':
+        # Trivia items have question, correct_answer, category
+        question = item_data.get('question', '')
+        answer = item_data.get('correct_answer', '')
+        cat = item_data.get('category', '')
+        hash_parts.extend([question, answer, cat])
+    else:
+        # Charades/Pictionary items have word/title and category
+        word = item_data.get('word', '') or item_data.get('title', '') or item_data.get('name', '')
+        cat = item_data.get('category', '')
+        hash_parts.extend([word, cat])
+    
+    content = '|'.join(str(p) for p in hash_parts)
+    return hashlib.sha256(content.encode('utf-8')).hexdigest()

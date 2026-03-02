@@ -83,19 +83,21 @@
             <!-- Bus Results Area -->
             <div id="bus-results-area" class="u-hidden u-full-width">
                 <h3 class="u-text-center u-margin-bottom">نتائج الجولة (حرف <span id="result-letter">?</span>)</h3>
-                <div class="table-responsive">
-                    <table class="bus-results-table" style="width: 100%; border-collapse: separate; border-spacing: 0 10px;">
-                        <thead>
-                            <tr id="results-header">
-                                <th style="padding: 1rem;">اللاعب</th>
-                                <!-- Category headers will be injected -->
-                                <th style="padding: 1rem;">المجموع</th>
-                            </tr>
-                        </thead>
-                        <tbody id="results-body">
-                            <!-- Rows will be injected -->
-                        </tbody>
-                    </table>
+                <div class="table-responsive-wrapper">
+                    <div class="table-responsive">
+                        <table class="bus-results-table" style="width: 100%; border-collapse: separate; border-spacing: 0 10px;">
+                            <thead>
+                                <tr id="results-header">
+                                    <th style="padding: 1rem; min-width: 80px;">اللاعب</th>
+                                    <!-- Category headers will be injected -->
+                                    <th style="padding: 1rem; min-width: 60px;">المجموع</th>
+                                </tr>
+                            </thead>
+                            <tbody id="results-body">
+                                <!-- Rows will be injected -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 <div id="host-bus-actions" class="u-hidden u-flex-center u-margin-top">
                     <button type="button" class="btn btn-primary" onclick="window.gameInstance.confirmBusScores()">

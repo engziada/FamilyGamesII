@@ -638,6 +638,65 @@ header h1 {
     transition: var(--transition);
 }
 
+/* --- Table Responsive Container --- */
+.table-responsive-wrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+    border-radius: 15px;
+    border: 2px solid var(--text-light);
+    background: var(--bg-main);
+}
+
+.table-responsive .bus-results-table {
+    min-width: 800px;
+    width: 100%;
+}
+
+/* Force table to not expand beyond container */
+#bus-results-area {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+#bus-results-area .table-responsive-wrapper {
+    width: 100%;
+    max-width: 100%;
+}
+
+#bus-results-area .table-responsive {
+    max-width: 100%;
+    margin: 0;
+    padding: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    #bus-results-area .table-responsive {
+        padding: 0.3rem;
+    }
+    .table-responsive .bus-results-table {
+        font-size: 0.85rem;
+    }
+    .table-responsive .bus-results-table th,
+    .table-responsive .bus-results-table td {
+        padding: 0.5rem 0.3rem !important;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .bus-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .btn-large {
     padding: 1.5rem 2rem;
     font-size: 1.5rem;

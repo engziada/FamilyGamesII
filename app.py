@@ -12,6 +12,7 @@ from games.charades.models import CharadesGame
 from games.trivia.models import TriviaGame
 from games.pictionary.models import PictionaryGame
 from games.bus_complete.models import BusCompleteGame
+from services.data_manager import DataManager
 import time
 import uuid
 from dotenv import load_dotenv
@@ -432,6 +433,13 @@ def emit_game_state(gid):
         game_obj = game_rooms[gid]
         state = game_obj.to_dict(include_answer=False)
         emit('game_state', state, room=gid)
+
+# Cleanup old room usage records on startup
+try:
+    DataManager().cleanup_old_room_usage(days=1)
+    logger.info("Cleaned up old room usage records")
+except Exception as e:
+    logger.warning(f"Failed to cleanup old room usage: {e}")
 
 if __name__ == '__main__':
     logger.info('='*50)

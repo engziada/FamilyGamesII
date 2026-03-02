@@ -5,7 +5,7 @@ Handles caching, pre-fetching, and item distribution for all game types.
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 from sqlalchemy import and_, or_
-from models.game_items import GameItem, RoomItemUsage, get_session, init_db
+from models.game_items import GameItem, RoomItemUsage, get_session, init_db, compute_content_hash
 import random
 
 
@@ -120,7 +120,7 @@ class DataManager:
     
     def add_items(self, game_type: str, category: str, items: List[Dict], source: str):
         """
-        Add fetched items to the cache.
+        Add fetched items to the cache with deduplication.
         
         Args:
             game_type: Type of game
@@ -130,16 +130,32 @@ class DataManager:
         """
         session = get_session()
         try:
+            added_count = 0
             for item_data in items:
+                # Compute content hash for deduplication
+                content_hash = compute_content_hash(game_type, item_data)
+                
+                # Check if item already exists
+                existing = session.query(GameItem).filter(
+                    GameItem.game_type == game_type,
+                    GameItem.content_hash == content_hash
+                ).first()
+                
+                if existing:
+                    continue  # Skip duplicate
+                
                 game_item = GameItem(
                     game_type=game_type,
                     category=category,
                     item_data=item_data,
-                    source=source
+                    source=source,
+                    content_hash=content_hash
                 )
                 session.add(game_item)
+                added_count += 1
             
             session.commit()
+            return added_count
         except Exception as e:
             session.rollback()
             raise e
