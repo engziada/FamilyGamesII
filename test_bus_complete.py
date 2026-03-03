@@ -45,9 +45,12 @@ def test_submit_answers_wrong_letter_detected():
 
 
 def test_submit_answers_flags_invalid_words_with_dictionary():
-    """Dictionary validation runs during stop_bus, not submit_answers.
+    """Dictionary validation now goes through manual validation flow.
     
-    With general_wordlist disabled, only the categorized dict is used.
+    stop_bus transitions to 'validating'. Words are NOT auto-rejected.
+    finalize_validation applies majority votes and then calculates scores.
+    With general_wordlist disabled, only the categorized dict is used for
+    offline pre-check (validation_cache), but rejection requires player votes.
     """
     dictionary = {
         'اسم': ['أحمد'],
@@ -59,7 +62,8 @@ def test_submit_answers_flags_invalid_words_with_dictionary():
         'validate_answers': True,
         'use_online_validation': False
     })
-    game.general_wordlist = set()  # disable tier-3 to isolate tier-2
+    game.general_wordlist = set()  # disable tier-4 to isolate tier-2
+    game.validated_words = {cat: set() for cat in game.categories}  # disable tier-3
     game.add_player('player2')
     game.start_game()
     game.current_letter = 'ا'
@@ -69,15 +73,19 @@ def test_submit_answers_flags_invalid_words_with_dictionary():
     assert game.player_submissions['host']['اسم'] == 'أحمد'
     assert game.player_submissions['host']['حيوان'] == 'أسد'  # accepted at submit time
 
-    # Now stop_bus triggers _validate_all_answers -> dict check
+    # stop_bus transitions to 'validating' — does NOT auto-reject
     game.submit_answers('player2', {'اسم': 'إبراهيم', 'حيوان': 'أرنب'})
     game.stop_bus('host')
+    assert game.status == 'validating'
 
-    # 'أحمد' is in dict -> still accepted
+    # Answers are still present (not blanked) — awaiting manual votes
     assert game.player_submissions['host']['اسم'] == 'أحمد'
-    # 'أسد' NOT in dict and no general wordlist -> blanked and tracked as invalid
-    assert game.player_submissions['host']['حيوان'] == ''
-    assert game.invalid_answers['host']['حيوان'] == 'أسد'
+    assert game.player_submissions['host']['حيوان'] == 'أسد'
+
+    # Offline validation cache should flag 'أسد' as invalid (not in dict)
+    assert game.validation_cache[('حيوان', 'أسد')] is False
+    # 'أحمد' is in dict -> cached as valid
+    assert game.validation_cache[('اسم', 'أحمد')] is True
 
 
 def test_starts_with_letter_normalizes_hamza():
@@ -89,18 +97,37 @@ def test_starts_with_letter_normalizes_hamza():
     assert game._starts_with_letter('باسم') is False
 
 
-def test_to_dict_includes_invalid_and_wrong_letter_in_scoring():
-    """to_dict should include invalid_answers and wrong_letter_answers during scoring."""
+def test_to_dict_includes_invalid_and_wrong_letter_in_validating():
+    """to_dict should include invalid_answers and wrong_letter_answers during validating."""
     game = make_game(letter='ب')
     game.submit_answers('host', {'اسم': 'أحمد', 'حيوان': 'بقرة'})
     game.submit_answers('player2', {'اسم': 'باسم', 'حيوان': 'بطة'})
     game.stop_bus('host')
 
     state = game.to_dict()
-    assert state['status'] == 'scoring'
+    assert state['status'] == 'validating'
     assert 'invalid_answers' in state
     assert 'wrong_letter_answers' in state
     assert state['wrong_letter_answers']['host']['اسم'] == 'أحمد'
+
+
+def test_to_dict_includes_data_after_finalize():
+    """to_dict should include scoring data after finalize_validation."""
+    game = make_game(letter='ب')
+    game.submit_answers('host', {'حيوان': 'بقرة'})
+    game.submit_answers('player2', {'حيوان': 'بطة'})
+    game.stop_bus('host')
+
+    # Vote both words valid (majority = 2/2)
+    game.submit_validation_vote('host', 'حيوان|بقره', True)
+    game.submit_validation_vote('player2', 'حيوان|بقره', True)
+    game.submit_validation_vote('host', 'حيوان|بطه', True)
+    game.submit_validation_vote('player2', 'حيوان|بطه', True)
+    game.finalize_validation()
+
+    state = game.to_dict()
+    assert state['status'] == 'scoring'
+    assert 'round_scores' in state
 
 
 def test_next_round_resets_invalid_and_wrong_letter():
@@ -118,7 +145,9 @@ def test_next_round_resets_invalid_and_wrong_letter():
 def test_submit_is_nonblocking_validation_deferred():
     """submit_answers should NOT run dictionary validation — only letter check.
     
-    Validation is deferred to stop_bus -> _validate_all_answers.
+    Validation is deferred to stop_bus -> _validate_all_answers, which now
+    only populates validation_cache without auto-rejecting. Manual votes
+    via finalize_validation determine the final outcome.
     """
     dictionary = {'اسم': ['أحمد']}
     game = BusCompleteGame('g3', 'host', {
@@ -139,13 +168,16 @@ def test_submit_is_nonblocking_validation_deferred():
     assert game.player_submissions['host']['اسم'] == 'أمل'
     assert game.invalid_answers.get('host', {}).get('اسم') is None
 
-    # After stop_bus, dictionary validation kicks in
+    # After stop_bus, status becomes 'validating' — answer still present
     game.submit_answers('player2', {'اسم': 'أحمد'})
     game.stop_bus('player2')
+    assert game.status == 'validating'
+    assert game.player_submissions['host']['اسم'] == 'أمل'
 
-    # Now 'أمل' should be flagged as invalid (not in dict, no general wordlist)
-    assert game.player_submissions['host']['اسم'] == ''
-    assert game.invalid_answers['host']['اسم'] == 'أمل'
+    # Offline cache should flag 'أمل' as invalid (not in dict)
+    assert game.validation_cache[('اسم', 'أمل')] is False
+    # 'أحمد' is in dict -> cached as valid
+    assert game.validation_cache[('اسم', 'أحمد')] is True
 
 
 def test_general_wordlist_accepts_real_arabic_words():
@@ -166,6 +198,58 @@ def test_general_wordlist_accepts_real_arabic_words():
     game.submit_answers('player2', {'حيوان': 'أرنب'})
     game.stop_bus('host')
 
-    # 'أسد' is NOT in categorized dict but IS in Hans Wehr -> accepted via tier 3
-    if game.general_wordlist:  # only assert if wordlist was loaded
-        assert game.player_submissions['host']['حيوان'] == 'أسد'
+    # Answers remain present during validating phase
+    assert game.player_submissions['host']['حيوان'] == 'أسد'
+    # 'أسد' is NOT in categorized dict but IS in Hans Wehr -> cached as valid via tier 3
+    if game.general_wordlist:
+        assert game.validation_cache[('حيوان', 'أسد')] is True
+
+
+def test_partial_submissions_merged_on_stop_bus():
+    """Both players' answers should be available after stop_bus,
+    even when only one player clicks stop."""
+    game = make_game(letter='ه')
+
+    # Player 1 (z) submits answers via real-time partial sync
+    game.submit_answers('player2', {'اسم': 'هند', 'حيوان': 'هدهد', 'بلاد': 'هولندا', 'جماد': 'هامر'})
+    # Host submits different answers via real-time partial sync
+    game.submit_answers('host', {'اسم': 'هناء', 'أكلة': 'هلام', 'بلاد': 'هولندا', 'جماد': 'هامر'})
+
+    # Player 2 stops the bus (their answers are already in partial_submissions)
+    game.stop_bus('player2')
+
+    assert game.status == 'validating'
+    # Both players' answers must be present
+    assert game.player_submissions['host']['اسم'] == 'هناء'
+    assert game.player_submissions['host']['أكلة'] == 'هلام'
+    assert game.player_submissions['player2']['اسم'] == 'هند'
+    assert game.player_submissions['player2']['حيوان'] == 'هدهد'
+    # Shared answers present for both
+    assert game.player_submissions['host']['بلاد'] == 'هولندا'
+    assert game.player_submissions['player2']['بلاد'] == 'هولندا'
+
+
+def test_shared_answers_score_5_unique_score_10():
+    """Duplicate answers between players should score 5 each, unique ones 10."""
+    game = make_game(letter='ه')
+
+    game.submit_answers('host', {'اسم': 'هناء', 'بلاد': 'هولندا', 'جماد': 'هامر'})
+    game.submit_answers('player2', {'اسم': 'هند', 'بلاد': 'هولندا', 'جماد': 'هامر'})
+    game.stop_bus('player2')
+
+    # Vote all words valid
+    statuses = game.get_all_validation_statuses()
+    for key in statuses:
+        game.submit_validation_vote('host', key, True)
+        game.submit_validation_vote('player2', key, True)
+    game.finalize_validation()
+
+    assert game.status == 'scoring'
+    # Unique answers: 10 pts each
+    assert game.round_scores['host']['اسم'] == 10   # هناء (unique)
+    assert game.round_scores['player2']['اسم'] == 10  # هند (unique)
+    # Shared answers: 5 pts each
+    assert game.round_scores['host']['بلاد'] == 5    # هولندا (shared)
+    assert game.round_scores['player2']['بلاد'] == 5  # هولندا (shared)
+    assert game.round_scores['host']['جماد'] == 5    # هامر (shared)
+    assert game.round_scores['player2']['جماد'] == 5  # هامر (shared)

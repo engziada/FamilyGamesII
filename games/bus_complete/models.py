@@ -40,6 +40,9 @@ class BusCompleteGame(CharadesGame):
         self.use_online_validation = self.settings.get('use_online_validation', True)
         self.wrong_letter_answers = {}  # {player_name: {category: answer}}
         self.validation_cache = {}
+        self.player_votes = {}  # {answer_key: {player_name: True/False}} - manual validation votes
+        self.partial_submissions = {}  # {player_name: {category: answer}} - real-time submissions
+        self.validated_words = self._load_validated_words()  # Tier 3: previously validated words
         self._groq_client = None  # lazy-initialized
 
     def start_game(self):
@@ -51,10 +54,12 @@ class BusCompleteGame(CharadesGame):
         self.status = 'round_active'
         self.current_letter = random.choice(self.alphabet)
         self.player_submissions = {}
+        self.partial_submissions = {}  # Reset partial submissions
         self.round_scores = {}
         self.stopped_by = None
         self.invalid_answers = {}
         self.wrong_letter_answers = {}
+        self.player_votes = {}  # Reset votes for new round
         self.round_start_time = datetime.now()
 
     def submit_answers(self, player_name, answers):
@@ -99,24 +104,51 @@ class BusCompleteGame(CharadesGame):
             normalized_answers[key] = value
 
         self.player_submissions[player_name] = normalized_answers
+        
+        # Merge with existing partial_submissions (keep latest non-empty answer per category)
+        if player_name not in self.partial_submissions:
+            self.partial_submissions[player_name] = {}
+        for cat, ans in normalized_answers.items():
+            if ans:  # Only update if new answer is non-empty
+                self.partial_submissions[player_name][cat] = ans
+        
         self.wrong_letter_answers[player_name] = wrong_letter
         return True
 
     def stop_bus(self, player_name):
+        """Stop the bus and transition to manual validation phase.
+
+        Any player can stop the bus. When stopped, all players' partial
+        submissions are collected and used for validation.
+        """
         if self.status != 'round_active':
             return False
-        self.status = 'scoring'
+        self.status = 'validating'
         self.stopped_by = player_name
+
+        # Merge all partial submissions into player_submissions
+        # This ensures all players' words are included, not just the one who stopped
+        for pname, answers in self.partial_submissions.items():
+            if pname not in self.player_submissions:
+                self.player_submissions[pname] = {}
+            # Merge, ALWAYS overwriting with non-empty answers from partial_submissions
+            for cat, ans in answers.items():
+                if ans:  # Only overwrite if partial submission has a value
+                    self.player_submissions[pname][cat] = ans
+
+        # Run only Tier 1 validation (letter check) and Tier 2 (dictionary) - NOT auto-scoring
         self._validate_all_answers()
-        self.calculate_scores()
         return True
 
     def _validate_all_answers(self):
-        """Run AI + dictionary validation on all submitted answers.
-        
-        Tier 1: Groq AI (category-aware, batch call)
+        """Run Tier 1 (letter) and Tier 2 (dictionary) validation only.
+
+        Tier 1: Check starting letter (already done in submit_answers)
         Tier 2: Categorized dictionary (offline fallback per-answer)
-        Tier 3: General Arabic wordlist (offline fallback per-answer)
+        Tier 3: Previously validated words (manual validation history)
+
+        Manual validation (Tier 4 by players) happens separately after this.
+        NOTE: We do NOT auto-reject words that fail Tier 2/3 - they go to manual validation.
         """
         if not self.validate_answers:
             return
@@ -131,31 +163,21 @@ class BusCompleteGame(CharadesGame):
         if not tasks:
             return
 
-        # Tier 1: Try AI batch validation
-        ai_results = {}  # {(category, answer): True/False}
-        if self.use_online_validation:
-            ai_results = self._validate_ai_batch(tasks)
-
-        # Apply results: AI first, then dict+wordlist fallback
+        # Run offline dictionary validation (Tier 2 & 3) - cache results but don't reject
         for pname, cat, ans in tasks:
             cache_key = (cat, ans)
-
-            if cache_key in ai_results:
-                valid = ai_results[cache_key]
-            else:
-                # AI didn't cover this answer -> offline fallback
-                valid = self._is_valid_offline(cat, ans)
-
+            valid = self._is_valid_offline(cat, ans)
             self.validation_cache[cache_key] = valid
-
-            if not valid:
-                if pname not in self.invalid_answers:
-                    self.invalid_answers[pname] = {}
-                self.invalid_answers[pname][cat] = ans
-                self.player_submissions[pname][cat] = ''
+            # Don't auto-reject - let manual validation decide
 
     def calculate_scores(self):
-        """Calculate round scores based on validated submissions."""
+        """Calculate round scores based on validated submissions.
+        
+        Scoring rules:
+        - Unique word (used by 1 player only): 10 points
+        - Shared word (used by 2+ players): 5 points each
+        - Single-letter words: 0 points (automatically invalid)
+        """
         self.round_scores = {p['name']: {cat: 0 for cat in self.categories} for p in self.players}
 
         for cat in self.categories:
@@ -170,30 +192,262 @@ class BusCompleteGame(CharadesGame):
                 norm_ans = self._normalize_text(raw_ans)
                 norm_letter = self._normalize_text(self.current_letter)
 
+                # Skip single-letter words (Tier 2a rejection)
+                if len(norm_ans) < 2:
+                    continue
+
+                # Only include if it starts with current letter
                 if norm_ans.startswith(norm_letter):
                     if norm_ans not in answers_map:
                         answers_map[norm_ans] = []
                     answers_map[norm_ans].append(pname)
 
-            # Assign points
-            for players in answers_map.values():
-                points = 10 if len(players) == 1 else 5
-                for pname in players:
+            # Assign points based on how many players used each word
+            for norm_ans, players_list in answers_map.items():
+                count = len(players_list)
+                points = 10 if count == 1 else 5
+                for pname in players_list:
                     self.round_scores[pname][cat] = points
                     self.add_score(pname, points)
 
-    def add_score(self, player_name, points):
-        if player_name not in self.scores:
-            self.scores[player_name] = 0
-        self.scores[player_name] += points
+    def submit_validation_vote(self, voter_name, answer_key, is_valid):
+        """Submit a player's vote for a word's validity.
 
-        if self.settings.get('teams'):
-            p = next((p for p in self.players if p['name'] == player_name), None)
-            if p:
-                team_id = str(p['team'])
-                if team_id not in self.team_scores:
-                    self.team_scores[team_id] = 0
-                self.team_scores[team_id] += points
+        Args:
+            voter_name: Name of the player casting the vote
+            answer_key: Key in format "category|normalized_word" identifying the word
+            is_valid: Boolean indicating if the voter thinks the word is valid
+
+        Returns:
+            dict with current vote counts and validity status for the word
+        """
+        if self.status != 'validating':
+            return None
+
+        if answer_key not in self.player_votes:
+            self.player_votes[answer_key] = {}
+
+        # Toggle vote: if clicking same state, remove vote
+        current_vote = self.player_votes[answer_key].get(voter_name)
+        if current_vote == is_valid:
+            del self.player_votes[answer_key][voter_name]
+        else:
+            self.player_votes[answer_key][voter_name] = is_valid
+
+        return self._get_validation_status(answer_key)
+
+    def _get_validation_status(self, answer_key):
+        """Get the current validation status for a word.
+
+        Returns dict with:
+            - valid_count: number of valid votes
+            - invalid_count: number of invalid votes
+            - total_players: total number of players
+            - is_valid: True if majority voted valid, False if majority voted invalid,
+                       None if no clear majority
+        """
+        votes = self.player_votes.get(answer_key, {})
+        valid_count = sum(1 for v in votes.values() if v)
+        invalid_count = sum(1 for v in votes.values() if not v)
+        total_players = len(self.players)
+
+        # Need majority (> 50%) to determine validity
+        if valid_count > total_players / 2:
+            is_valid = True
+        elif invalid_count > total_players / 2:
+            is_valid = False
+        else:
+            is_valid = None
+
+        return {
+            'valid_count': valid_count,
+            'invalid_count': invalid_count,
+            'total_players': total_players,
+            'is_valid': is_valid,
+            'votes': votes
+        }
+
+    def finalize_validation(self):
+        """Finalize validation and calculate scores based on majority votes.
+
+        Only the host can call this. Applies the majority votes to mark words
+        as valid/invalid, updates the validated_words dictionary, and calculates scores.
+
+        Returns:
+            True if finalized successfully, False otherwise
+        """
+        if self.status != 'validating':
+            return False
+
+        statuses = self.get_all_validation_statuses()
+        words_to_add = {cat: [] for cat in self.categories}  # Words to add to validated_words
+        words_to_remove = {cat: [] for cat in self.categories}  # Words to remove (overridden)
+
+        # Process each unique word
+        for answer_key, status in statuses.items():
+            category = status['category']
+            normalized = status['normalized']
+            players = status['players']
+            is_valid = status['is_valid']
+            previously_validated = status['previously_validated']
+
+            if is_valid is True:
+                # Word passed validation
+                if not previously_validated:
+                    # Add to validated_words dictionary
+                    words_to_add[category].append(normalized)
+                # Mark as valid for all players who used it
+                for pname in players:
+                    if pname not in self.player_submissions:
+                        self.player_submissions[pname] = {}
+                    self.player_submissions[pname][category] = status['answer']
+            elif is_valid is False:
+                # Word failed validation
+                if previously_validated:
+                    # Override: remove from validated_words
+                    words_to_remove[category].append(normalized)
+                # Mark as invalid for all players who used it
+                for pname in players:
+                    if pname not in self.invalid_answers:
+                        self.invalid_answers[pname] = {}
+                    self.invalid_answers[pname][category] = status['answer']
+                    if pname in self.player_submissions and category in self.player_submissions[pname]:
+                        del self.player_submissions[pname][category]
+            else:
+                # No majority - treat as invalid (no score)
+                for pname in players:
+                    if pname not in self.invalid_answers:
+                        self.invalid_answers[pname] = {}
+                    self.invalid_answers[pname][category] = status['answer']
+                    if pname in self.player_submissions and category in self.player_submissions[pname]:
+                        del self.player_submissions[pname][category]
+
+        # Update validated_words.json file
+        self._update_validated_words_file(words_to_add, words_to_remove)
+
+        # Calculate scores
+        self.status = 'scoring'
+        self.calculate_scores()
+        return True
+
+    def _update_validated_words_file(self, words_to_add, words_to_remove):
+        """Update the validated_words.json file with new validated words.
+
+        Args:
+            words_to_add: {category: [normalized_words]} to add
+            words_to_remove: {category: [normalized_words]} to remove (overridden)
+        """
+        validated_path = self.settings.get('validated_words_path', 'static/data/validated_words.json')
+
+        # Load current data
+        try:
+            if os.path.exists(validated_path):
+                with open(validated_path, 'r', encoding='utf-8') as handle:
+                    data = json.load(handle)
+            else:
+                data = {cat: [] for cat in self.categories}
+        except (OSError, json.JSONDecodeError):
+            data = {cat: [] for cat in self.categories}
+
+        # Update each category
+        for cat in self.categories:
+            current_words = set(data.get(cat, []))
+            # Add new validated words
+            current_words.update(words_to_add.get(cat, []))
+            # Remove overridden words
+            current_words.difference_update(words_to_remove.get(cat, []))
+            data[cat] = list(current_words)
+
+            # Update in-memory cache
+            self.validated_words[cat] = current_words
+
+        # Save to file
+        try:
+            os.makedirs(os.path.dirname(validated_path), exist_ok=True)
+            with open(validated_path, 'w', encoding='utf-8') as handle:
+                json.dump(data, handle, ensure_ascii=False, indent=2)
+            logger.info(f"Updated validated_words.json")
+        except OSError as e:
+            logger.error(f"Failed to save validated_words.json: {e}")
+
+    def get_unique_words_for_validation(self):
+        """Get unique words per category for validation (deduplicated, no player names).
+
+        Filters out single-letter words (Tier 2a rejection).
+
+        Returns dict: {category: [{word, players: [names], previously_validated: bool}]}
+        """
+        result = {cat: {} for cat in self.categories}  # {cat: {normalized_word: {word, players}}}
+
+        for pname, answers in self.player_submissions.items():
+            for cat, ans in answers.items():
+                if not ans:
+                    continue
+                # Tier 2a: Skip single-letter words (they're automatically invalid)
+                if len(self._normalize_text(ans)) < 2:
+                    continue
+                norm_ans = self._normalize_text(ans)
+                if norm_ans not in result[cat]:
+                    result[cat][norm_ans] = {
+                        'word': ans,  # Keep original spelling for display
+                        'players': []
+                    }
+                result[cat][norm_ans]['players'].append(pname)
+
+        # Convert to list format and add previously_validated flag
+        validation_data = {}
+        for cat in self.categories:
+            validation_data[cat] = []
+            for norm_word, data in result[cat].items():
+                previously_validated = norm_word in self.validated_words.get(cat, set())
+                validation_data[cat].append({
+                    'word': data['word'],
+                    'normalized': norm_word,
+                    'players': data['players'],
+                    'previously_validated': previously_validated
+                })
+
+        return validation_data
+
+    def get_all_validation_statuses(self):
+        """Get validation status for unique words per category.
+
+        Returns dict mapping answer_key (category|normalized_word) to validation status.
+        """
+        statuses = {}
+        unique_words = self.get_unique_words_for_validation()
+
+        for cat, words in unique_words.items():
+            for word_data in words:
+                # Key is category|normalized_word (no player name)
+                key = f"{cat}|{word_data['normalized']}"
+                votes = self.player_votes.get(key, {})
+                valid_count = sum(1 for v in votes.values() if v)
+                invalid_count = sum(1 for v in votes.values() if not v)
+                total_players = len(self.players)
+
+                # Determine validity
+                if valid_count > total_players / 2:
+                    is_valid = True
+                elif invalid_count > total_players / 2:
+                    is_valid = False
+                else:
+                    is_valid = None
+
+                statuses[key] = {
+                    'category': cat,
+                    'answer': word_data['word'],
+                    'normalized': word_data['normalized'],
+                    'players': word_data['players'],
+                    'previously_validated': word_data['previously_validated'],
+                    'valid_count': valid_count,
+                    'invalid_count': invalid_count,
+                    'total_players': total_players,
+                    'is_valid': is_valid,
+                    'votes': votes
+                }
+
+        return statuses
 
     def to_dict(self, **kwargs):
         d = super().to_dict(**kwargs)
@@ -208,6 +462,12 @@ class BusCompleteGame(CharadesGame):
             d['round_scores'] = self.round_scores
             d['invalid_answers'] = self.invalid_answers
             d['wrong_letter_answers'] = self.wrong_letter_answers
+        elif self.status == 'validating':
+            d['player_submissions'] = self.player_submissions
+            d['invalid_answers'] = self.invalid_answers
+            d['wrong_letter_answers'] = self.wrong_letter_answers
+            d['validation_statuses'] = self.get_all_validation_statuses()
+            d['player_votes'] = self.player_votes
         else:
             d['submitted_players'] = list(self.player_submissions.keys())
             d.pop('current_item', None) # Not used in bus complete
@@ -228,6 +488,32 @@ class BusCompleteGame(CharadesGame):
                 return self._normalize_dictionary(data)
         except (OSError, json.JSONDecodeError):
             return {}
+
+    def _load_validated_words(self):
+        """Load previously validated words from permanent storage.
+        
+        This is the Tier 3 dictionary - words that passed manual validation.
+        Returns dict: {category: set(normalized_words)}
+        """
+        validated_path = self.settings.get('validated_words_path', 'static/data/validated_words.json')
+        if not os.path.exists(validated_path):
+            return {cat: set() for cat in self.categories}
+
+        try:
+            with open(validated_path, 'r', encoding='utf-8') as handle:
+                data = json.load(handle)
+                normalized = {}
+                for cat in self.categories:
+                    words = data.get(cat, [])
+                    if isinstance(words, list):
+                        normalized[cat] = {self._normalize_text(w) for w in words if w}
+                    else:
+                        normalized[cat] = set()
+                logger.info(f"Loaded validated words dictionary")
+                return normalized
+        except (OSError, json.JSONDecodeError) as e:
+            logger.warning(f"Failed to load validated_words.json: {e}")
+            return {cat: set() for cat in self.categories}
 
     def _normalize_dictionary(self, data):
         normalized = {}
@@ -404,19 +690,29 @@ Return JSON: {{"results": [{{"word":"...","category":"...","valid":true/false}}]
         return valid
 
     def _is_valid_offline(self, category, answer):
-        """Offline validation using categorized dict (tier 2) + Hans Wehr (tier 3).
+        """Offline validation using categorized dict (tier 2) + validated_words (tier 3) + Hans Wehr (tier 4).
+        
+        Also rejects single-letter words (must be at least 2 characters).
         
         Returns True if the answer is valid, False otherwise.
         """
         normalized_answer = self._normalize_text(answer)
         normalized_category = str(category)
 
-        # Tier 2: Categorized dictionary (category-specific)
+        # Tier 2a: Reject single letters (must be at least 2 characters)
+        if len(normalized_answer) < 2:
+            return False
+
+        # Tier 2b: Categorized dictionary (category-specific)
         allowed_words = self.answer_dictionary.get(normalized_category)
         if allowed_words and normalized_answer in allowed_words:
             return True
 
-        # Tier 3: General Arabic wordlist (Hans Wehr — 34K words)
+        # Tier 3: Previously validated words (manual validation history)
+        if normalized_answer in self.validated_words.get(normalized_category, set()):
+            return True
+
+        # Tier 4: General Arabic wordlist (Hans Wehr — 34K words)
         if self.general_wordlist and normalized_answer in self.general_wordlist:
             return True
 

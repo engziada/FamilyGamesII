@@ -106,6 +106,38 @@
                 </div>
             </div>
 
+            <!-- Bus Validation Area (Tier 3: Manual validation) -->
+            <div id="bus-validation-area" class="u-hidden u-full-width">
+                <div class="validation-header">
+                    <h3 class="u-text-center u-margin-bottom">التحقق من الإجابات</h3>
+                    <p class="u-text-center" style="color: var(--text-light); font-size: 0.9rem;">
+                        اضغط على أي كلمة للتصويت: صحيحة <i class="fas fa-check" style="color: var(--success);"></i> أو خاطئة <i class="fas fa-times" style="color: var(--danger);"></i>
+                    </p>
+                    <p class="u-text-center" style="color: var(--text-light); font-size: 0.85rem;">
+                        عندما يصوت أكثر من نصف اللاعبين، تتحول الكلمة للون الأخضر (صحيحة) أو الأحمر (خاطئة)
+                    </p>
+                </div>
+
+                <div id="validation-grid" class="validation-grid">
+                    <!-- Validation cards will be injected by JS -->
+                </div>
+
+                <div id="validation-progress" class="validation-progress">
+                    <div class="progress-bar-container">
+                        <div id="validation-progress-bar" class="progress-bar" style="width: 0%;"></div>
+                    </div>
+                    <p class="u-text-center" style="font-size: 0.85rem; margin-top: 0.5rem;">
+                        تم التصويت: <span id="votes-count">0</span> / <span id="total-answers">0</span>
+                    </p>
+                </div>
+
+                <div id="host-validation-actions" class="u-hidden u-flex-center u-margin-top">
+                    <button type="button" class="btn btn-primary btn-large" onclick="window.gameInstance.finalizeValidation()">
+                        <i class="fas fa-check-double"></i> تأكيد النتائج وحساب النقاط
+                    </button>
+                </div>
+            </div>
+
             <div id="waiting-area" class="waiting-area u-text-center">
                 <i class="fas fa-hourglass-start fa-3x animate-heartbeat" style="color: var(--secondary); margin-bottom: 2rem;"></i>
                 <h3>في انتظار بدء الجولة...</h3>

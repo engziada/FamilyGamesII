@@ -3,7 +3,7 @@ Database models for tracking game items (movies, questions, vocabulary)
 with usage statistics and caching support.
 """
 from datetime import datetime
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, JSON, Index
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, JSON, Index, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import hashlib
@@ -72,11 +72,11 @@ def init_db():
     session = SessionLocal()
     try:
         # Check if content_hash column exists
-        result = session.execute("PRAGMA table_info(game_items)")
+        result = session.execute(text("PRAGMA table_info(game_items)"))
         columns = [row[1] for row in result.fetchall()]
         
         if 'content_hash' not in columns:
-            session.execute("ALTER TABLE game_items ADD COLUMN content_hash VARCHAR(64)")
+            session.execute(text("ALTER TABLE game_items ADD COLUMN content_hash VARCHAR(64)"))
             session.commit()
             print("Migration: Added content_hash column to game_items table")
     except Exception as e:

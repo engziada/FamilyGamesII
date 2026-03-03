@@ -333,6 +333,11 @@ def handle_clear_canvas(data):
 
 @socketio.on('submit_bus_answers')
 def handle_submit_bus_answers(data):
+    """Silently sync a player's current answers to the server.
+
+    This is called frequently (on blur / debounced input) so we do NOT
+    broadcast game state to avoid UI flicker for other players.
+    """
     game_id = str(data.get('game_id'))
     answers = data.get('answers')
     player_name = session.get('player_name')
@@ -341,8 +346,6 @@ def handle_submit_bus_answers(data):
         if game_obj.game_type == 'bus_complete' and game_obj.status == 'round_active':
             if not game_obj.submit_answers(player_name, answers):
                 emit('error', {'message': 'إجابات غير صالحة'})
-                return
-            emit_game_state(game_id)
 
 @socketio.on('stop_bus')
 def handle_stop_bus(data):
@@ -351,12 +354,49 @@ def handle_stop_bus(data):
     if game_id in game_rooms:
         game_obj = game_rooms[game_id]
         if game_obj.game_type == 'bus_complete' and game_obj.status == 'round_active':
-            if 'answers' in data and not game_obj.submit_answers(player_name, data['answers']):
-                emit('error', {'message': 'إجابات غير صالحة'})
-                return
+            # Capture the current player's answers when they click Stop Bus
+            # Other players' answers are already in partial_submissions via real-time updates
+            if 'answers' in data:
+                game_obj.submit_answers(player_name, data['answers'])
+            # Stop the bus (collects all players' submissions from partial_submissions)
             game_obj.stop_bus(player_name)
             emit('bus_stopped', {'player': player_name}, room=game_id)
             emit_game_state(game_id)
+
+@socketio.on('submit_validation_vote')
+def handle_submit_validation_vote(data):
+    """Handle player vote for answer validation."""
+    game_id = str(data.get('game_id'))
+    player_name = session.get('player_name')
+    answer_key = data.get('answer_key')  # format: "player_name|category"
+    is_valid = data.get('is_valid', True)
+
+    if game_id in game_rooms:
+        game_obj = game_rooms[game_id]
+        if game_obj.game_type == 'bus_complete' and game_obj.status == 'validating':
+            result = game_obj.submit_validation_vote(player_name, answer_key, is_valid)
+            if result:
+                # Emit updated validation state to all players
+                emit('validation_updated', {
+                    'answer_key': answer_key,
+                    'status': result
+                }, room=game_id)
+                emit_game_state(game_id)
+
+@socketio.on('finalize_validation')
+def handle_finalize_validation(data):
+    """Handle host finalizing the validation phase and calculating scores."""
+    game_id = str(data.get('game_id'))
+    player_name = session.get('player_name')
+
+    if game_id in game_rooms:
+        game_obj = game_rooms[game_id]
+        if (game_obj.game_type == 'bus_complete' and
+            game_obj.status == 'validating' and
+            game_obj.host == player_name):
+            if game_obj.finalize_validation():
+                emit('validation_finalized', {}, room=game_id)
+                emit_game_state(game_id)
 
 @socketio.on('confirm_bus_scores')
 def handle_confirm_bus_scores(data):

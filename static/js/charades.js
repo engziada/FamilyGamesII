@@ -594,6 +594,53 @@ class GameEngine {
             Utils.showMessage(`أتوبيس كومبليت! تم إيقاف الجولة بواسطة ${data.player}`, 'info');
         });
 
+        this.socket.on('validation_updated', (data) => {
+            // Update the validation card for this answer
+            const card = document.querySelector(`.validation-card[data-answer-key="${data.answer_key}"]`);
+            if (card) {
+                const status = data.status;
+
+                // Update card state
+                card.classList.remove('pending', 'valid', 'invalid');
+                if (status.is_valid === true) {
+                    card.classList.add('valid');
+                } else if (status.is_valid === false) {
+                    card.classList.add('invalid');
+                } else {
+                    card.classList.add('pending');
+                }
+
+                // Update vote counts
+                const voteValidSpan = card.querySelector('.vote-valid');
+                const voteInvalidSpan = card.querySelector('.vote-invalid');
+                if (voteValidSpan) voteValidSpan.innerHTML = `<i class="fas fa-check"></i> ${status.valid_count}`;
+                if (voteInvalidSpan) voteInvalidSpan.innerHTML = `<i class="fas fa-times"></i> ${status.invalid_count}`;
+
+                // Update user vote indicator
+                let indicator = card.querySelector('.user-vote-indicator');
+                const playerVote = status.votes && status.votes[this.playerName];
+
+                if (playerVote !== undefined) {
+                    if (!indicator) {
+                        indicator = document.createElement('div');
+                        indicator.className = 'user-vote-indicator';
+                        card.appendChild(indicator);
+                    }
+                    indicator.className = `user-vote-indicator ${playerVote ? 'valid' : 'invalid'}`;
+                    indicator.innerHTML = `<i class="fas fa-${playerVote ? 'check' : 'times'}"></i>`;
+                } else if (indicator) {
+                    indicator.remove();
+                }
+
+                // Update progress
+                this.updateValidationProgress();
+            }
+        });
+
+        this.socket.on('validation_finalized', () => {
+            Utils.showMessage('تم التحقق من الإجابات وجاري حساب النقاط...', 'info');
+        });
+
         this.socket.on('host_transferred', (data) => {
             if (data.gameState) this.updateGameState(data.gameState);
             Utils.showMessage(data.message);
@@ -634,6 +681,8 @@ class GameEngine {
             }
             if (data.status === 'scoring') {
                 this.displayBusResults(data);
+            } else if (data.status === 'validating') {
+                this.displayBusValidation(data);
             } else if (data.status === 'round_active') {
                 this.displayBusBoard();
             }
@@ -763,15 +812,18 @@ class GameEngine {
         // Handle Bus Complete areas
         const busArea = document.getElementById('bus-area');
         const busResultsArea = document.getElementById('bus-results-area');
+        const busValidationArea = document.getElementById('bus-validation-area');
 
         if (this.gameType !== 'bus_complete') {
             if (busArea) busArea.classList.add('u-hidden');
             if (busResultsArea) busResultsArea.classList.add('u-hidden');
+            if (busValidationArea) busValidationArea.classList.add('u-hidden');
         } else {
             // Bus Complete specific logic is handled in displayBusBoard and displayBusResults
-            // But we should hide them if the status isn't active/scoring
+            // But we should hide them if the status isn't active/scoring/validating
             if (this.gameStatus !== 'round_active' && busArea) busArea.classList.add('u-hidden');
             if (this.gameStatus !== 'scoring' && busResultsArea) busResultsArea.classList.add('u-hidden');
+            if (this.gameStatus !== 'validating' && busValidationArea) busValidationArea.classList.add('u-hidden');
         }
 
         this.updateButtonVisibility();
@@ -1122,9 +1174,29 @@ class GameEngine {
 
     /**
      * Attach real-time validation listeners to bus inputs.
+     * Also syncs answers to the server on blur and debounced input
+     * so that all players' answers are captured when the bus is stopped.
      */
     attachBusInputValidation() {
         const inputs = document.querySelectorAll('.bus-input');
+
+        // Debounced server sync — collects all inputs and emits once
+        let syncTimer = null;
+        const syncAnswersToServer = () => {
+            clearTimeout(syncTimer);
+            syncTimer = setTimeout(() => {
+                const answers = {};
+                document.querySelectorAll('.bus-input').forEach(inp => {
+                    const cat = inp.getAttribute('data-category');
+                    answers[cat] = inp.value.trim();
+                });
+                this.socket.emit('submit_bus_answers', {
+                    game_id: this.gameId,
+                    answers: answers
+                });
+            }, 400);
+        };
+
         inputs.forEach((input, index) => {
             input.addEventListener('input', () => {
                 const val = input.value.trim();
@@ -1135,6 +1207,15 @@ class GameEngine {
                 } else {
                     input.classList.add('bus-input-invalid');
                 }
+                // Update button state after input
+                this.checkAllCategoriesFilled();
+                // Sync to server (debounced)
+                syncAnswersToServer();
+            });
+
+            // Sync immediately on blur (player left the field)
+            input.addEventListener('blur', () => {
+                syncAnswersToServer();
             });
             
             // Enter key navigation - focus next input
@@ -1170,22 +1251,56 @@ class GameEngine {
             });
             this.attachBusInputValidation();
             this.busInputsInitialized = true;
+            this.checkAllCategoriesFilled(); // Check initially
         }
         
-        // Hide stop button for non-hosts
+        // Show stop button for all players (not just host)
         const stopBtn = document.getElementById('stopBusButton');
-        if (stopBtn && !this.isHost) {
-            stopBtn.classList.add('u-hidden');
+        if (stopBtn) {
+            stopBtn.classList.remove('u-hidden');
+            this.checkAllCategoriesFilled(); // Set initial state
+        }
+    }
+
+    checkAllCategoriesFilled() {
+        const stopBtn = document.getElementById('stopBusButton');
+        if (!stopBtn) return;
+
+        let allFilled = true;
+        document.querySelectorAll('.bus-input').forEach(input => {
+            if (!input.value.trim()) {
+                allFilled = false;
+            }
+        });
+
+        // Enable/disable button based on fill status
+        stopBtn.disabled = !allFilled;
+        if (allFilled) {
+            stopBtn.classList.remove('btn-disabled');
+            stopBtn.style.opacity = '1';
+            stopBtn.style.cursor = 'pointer';
+        } else {
+            stopBtn.classList.add('btn-disabled');
+            stopBtn.style.opacity = '0.5';
+            stopBtn.style.cursor = 'not-allowed';
         }
     }
 
     stopBus() {
         const answers = {};
         let hasInvalid = false;
+        let allFilled = true;
+
         document.querySelectorAll('.bus-input').forEach(input => {
             const val = input.value.trim();
             const cat = input.getAttribute('data-category');
             answers[cat] = val;
+
+            // Check if all fields are filled
+            if (!val) {
+                allFilled = false;
+            }
+
             // Client-side letter check with visual feedback
             input.classList.remove('bus-input-valid', 'bus-input-invalid');
             if (val && !this.startsWithCurrentLetter(val)) {
@@ -1193,6 +1308,12 @@ class GameEngine {
                 hasInvalid = true;
             }
         });
+
+        // Prevent stopping if not all categories are filled
+        if (!allFilled) {
+            Utils.showMessage('يجب ملء جميع الفئات قبل إيقاف الأتوبيس!', 'error');
+            return;
+        }
 
         if (hasInvalid) {
             Utils.showMessage('بعض الإجابات لا تبدأ بالحرف المطلوب! سيتم تجاهلها.', 'error');
@@ -1271,6 +1392,141 @@ class GameEngine {
 
     confirmBusScores() {
         this.socket.emit('confirm_bus_scores', { game_id: this.gameId });
+    }
+
+    displayBusValidation(data) {
+        // Hide other areas
+        document.getElementById('bus-area').classList.add('u-hidden');
+        document.getElementById('bus-results-area').classList.add('u-hidden');
+        document.getElementById('waiting-area').style.display = 'none';
+
+        // Show validation area
+        const validationArea = document.getElementById('bus-validation-area');
+        validationArea.classList.remove('u-hidden');
+
+        // Update letter display
+        if (data.current_letter) {
+            this.currentLetter = data.current_letter;
+        }
+
+        // Build validation grid - now shows unique words per category
+        const grid = document.getElementById('validation-grid');
+        grid.innerHTML = '';
+
+        const validationStatuses = data.validation_statuses || {};
+        let totalWords = 0;
+        let totalVotes = 0;
+
+        // Sort by category, then word
+        const sortedKeys = Object.keys(validationStatuses).sort((a, b) => {
+            const aData = validationStatuses[a];
+            const bData = validationStatuses[b];
+            if (aData.category !== bData.category) {
+                return aData.category.localeCompare(bData.category);
+            }
+            return aData.answer.localeCompare(bData.answer);
+        });
+
+        sortedKeys.forEach(answerKey => {
+            const status = validationStatuses[answerKey];
+            totalWords++;
+
+            const card = document.createElement('div');
+            card.className = 'validation-card valid';
+            card.dataset.answerKey = answerKey;
+
+            // Determine card state based on validation status
+            if (status.is_valid === false) {
+                card.classList.remove('valid');
+                card.classList.add('invalid');
+            } else {
+                card.classList.add('valid');
+            }
+
+            // Previously validated indicator
+            let previouslyValidatedBadge = '';
+            if (status.previously_validated) {
+                previouslyValidatedBadge = '<span class="previously-validated-badge" title="تم التحقق منها سابقاً"><i class="fas fa-check-circle"></i></span>';
+            }
+
+            // Check if current player voted
+            const playerVote = status.votes && status.votes[this.playerName];
+            let voteIndicator = '';
+            if (playerVote !== undefined) {
+                totalVotes++;
+                voteIndicator = `<div class="user-vote-indicator ${playerVote ? 'valid' : 'invalid'}">
+                    <i class="fas fa-${playerVote ? 'check' : 'times'}"></i>
+                </div>`;
+            }
+
+            // Players count indicator (how many used this word)
+            const playersCount = status.players ? status.players.length : 1;
+            const playersCountBadge = `<span class="players-count-badge" title="عدد اللاعبين الذين استخدموا هذه الكلمة">${playersCount}x</span>`;
+
+            card.innerHTML = `
+                <div class="category">${status.category}</div>
+                <div class="answer">${status.answer} ${previouslyValidatedBadge}</div>
+                <div class="players-hint">${playersCountBadge}</div>
+                <div class="vote-counts">
+                    <span class="vote-valid"><i class="fas fa-check"></i> ${status.valid_count}</span>
+                    <span class="vote-invalid"><i class="fas fa-times"></i> ${status.invalid_count}</span>
+                </div>
+                ${voteIndicator}
+            `;
+
+            // Click handler for voting
+            card.addEventListener('click', () => {
+                // Toggle vote: if already voted valid, vote invalid; if invalid, vote valid; if none, vote valid
+                let newVote = true;
+                if (playerVote === true) {
+                    newVote = false;
+                } else if (playerVote === false) {
+                    newVote = true; // toggle back to valid
+                }
+
+                this.socket.emit('submit_validation_vote', {
+                    game_id: this.gameId,
+                    answer_key: answerKey,
+                    is_valid: newVote
+                });
+            });
+
+            grid.appendChild(card);
+        });
+
+        // Update progress
+        const progressPercent = totalWords > 0 ? (totalVotes / totalWords) * 100 : 0;
+        document.getElementById('validation-progress-bar').style.width = `${progressPercent}%`;
+        document.getElementById('votes-count').textContent = totalVotes;
+        document.getElementById('total-answers').textContent = totalWords;
+
+        // Show host actions
+        if (this.isHost) {
+            document.getElementById('host-validation-actions').classList.remove('u-hidden');
+        } else {
+            document.getElementById('host-validation-actions').classList.add('u-hidden');
+        }
+    }
+
+    finalizeValidation() {
+        this.socket.emit('finalize_validation', { game_id: this.gameId });
+    }
+
+    updateValidationProgress() {
+        // Recalculate total votes from all cards
+        const cards = document.querySelectorAll('.validation-card');
+        let totalVotes = 0;
+        cards.forEach(card => {
+            const indicator = card.querySelector('.user-vote-indicator');
+            if (indicator) totalVotes++;
+        });
+
+        const totalAnswers = cards.length;
+        const progressPercent = totalAnswers > 0 ? (totalVotes / totalAnswers) * 100 : 0;
+
+        document.getElementById('validation-progress-bar').style.width = `${progressPercent}%`;
+        document.getElementById('votes-count').textContent = totalVotes;
+        document.getElementById('total-answers').textContent = totalAnswers;
     }
 }
 
