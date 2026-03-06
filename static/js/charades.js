@@ -281,7 +281,10 @@ const Utils = {
                 charades: 'إنشاء غرفة بدون كلام',
                 trivia: 'إنشاء غرفة بنك المعلومات',
                 pictionary: 'إنشاء غرفة الرسم والتخمين',
-                bus_complete: 'إنشاء غرفة أتوبيس كومبليت'
+                bus_complete: 'إنشاء غرفة أتوبيس كومبليت',
+                rapid_fire: 'إنشاء غرفة الأسئلة السريعة',
+                twenty_questions: 'إنشاء غرفة العشرين سؤال',
+                riddles: 'إنشاء غرفة الألغاز'
             };
             document.getElementById('modal-title').textContent = titles[gameType] || 'إنشاء غرفة لعبة';
         }
@@ -594,6 +597,170 @@ class GameEngine {
             Utils.showMessage(`أتوبيس كومبليت! تم إيقاف الجولة بواسطة ${data.player}`, 'info');
         });
 
+        // === Rapid Fire Events ===
+        this.socket.on('buzz_registered', (data) => {
+            this.stopTimer();
+            AudioManager.play('guessed');
+            Utils.showMessage(`${data.player} ضغط أولاً!`, 'info');
+            this.startBuzzTimer(data.time_limit);
+            this.showBuzzedPlayer(data.player);
+        });
+
+        this.socket.on('buzz_rejected', (data) => {
+            Utils.showMessage(data.message, 'error');
+        });
+
+        this.socket.on('buzz_timer_start', (data) => {
+            this.startBuzzTimer(data.duration);
+        });
+
+        this.socket.on('buzz_answer_result', (data) => {
+            this.stopBuzzTimer();
+            if (data.correct) {
+                AudioManager.play('guessed');
+                Utils.showMessage(`${data.player} جاوب صح! حصل على ${data.points} نقاط ✅`, 'info');
+            } else {
+                AudioManager.play('timeout');
+                Utils.showMessage(`${data.player} جاوب غلط ❌ الإجابة: ${data.correct_answer}`, 'error');
+            }
+            this.updateScores(data.scores);
+            this.hideBuzzedPlayer();
+        });
+
+        this.socket.on('buzz_timeout_event', (data) => {
+            this.stopBuzzTimer();
+            AudioManager.play('timeout');
+            Utils.showMessage(data.message, 'error');
+            if (data.correct_answer) {
+                Utils.showMessage(`الإجابة الصحيحة: ${data.correct_answer}`, 'info');
+            }
+            this.hideBuzzedPlayer();
+        });
+
+        this.socket.on('buzz_unlocked', (data) => {
+            Utils.showMessage(data.message, 'info');
+            this.enableBuzzButton();
+        });
+
+        this.socket.on('question_skipped', (data) => {
+            Utils.showMessage(data.message, 'info');
+        });
+
+        this.socket.on('game_ended', (data) => {
+            this.stopTimer();
+            Utils.showMessage(data.message, 'info');
+            this.showFinalScores(data.scores);
+        });
+        // === End Rapid Fire Events ===
+
+        // === Twenty Questions Events ===
+        this.socket.on('twenty_q_started', (data) => {
+            Utils.showMessage(`بدأت اللعبة! المفكر: ${data.thinker}`, 'info');
+            this.updateTwentyQPhase(data.phase);
+        });
+
+        this.socket.on('word_suggestion', (data) => {
+            const input = document.getElementById('secret-word-input');
+            if (input) input.value = data.word;
+            const catInput = document.getElementById('secret-category-input');
+            if (catInput) catInput.value = data.category || '';
+        });
+
+        this.socket.on('secret_word_set', (data) => {
+            Utils.showMessage('تم تحديد الكلمة السرية!', 'info');
+            this.updateTwentyQPhase(data.phase);
+            this.showCategoryHint(data.category_hint);
+        });
+
+        this.socket.on('question_asked', (data) => {
+            Utils.showMessage(`${data.asker}: ${data.question} (سؤال ${data.question_number})`, 'info');
+            this.addQuestionToHistory(data.question, data.asker);
+        });
+
+        this.socket.on('question_answered', (data) => {
+            const answerText = data.answer === 'yes' ? 'نعم ✓' : 
+                              data.answer === 'no' ? 'لا ✗' : 'ربما ~';
+            Utils.showMessage(`الإجابة: ${answerText}`, 'info');
+            this.updateQuestionAnswer(data.answer);
+            this.updateQuestionsRemaining(data.questions_remaining);
+            
+            if (data.phase === 'guessing') {
+                Utils.showMessage(data.message, 'info');
+                this.updateTwentyQPhase('guessing');
+            }
+        });
+
+        this.socket.on('question_rejected', (data) => {
+            Utils.showMessage(data.message, 'error');
+        });
+
+        this.socket.on('guess_result', (data) => {
+            if (data.correct) {
+                AudioManager.play('guessed');
+                Utils.showMessage(data.message, 'info');
+            } else {
+                AudioManager.play('timeout');
+                if (data.continue) {
+                    Utils.showMessage(data.message, 'error');
+                } else {
+                    Utils.showMessage(data.message, 'error');
+                }
+            }
+            this.showFinalResult(data);
+        });
+
+        this.socket.on('game_forfeited', (data) => {
+            Utils.showMessage(data.message, 'info');
+            this.showFinalResult({ secret_word: data.secret_word });
+        });
+        // === End Twenty Questions Events ===
+
+        // === Riddles Events ===
+        this.socket.on('riddle_started', (data) => {
+            Utils.showMessage(`اللغز ${data.riddle_number}: ${data.riddle}`, 'info');
+            this.showRiddle(data);
+        });
+
+        this.socket.on('riddles_buzz_registered', (data) => {
+            Utils.showMessage(data.message, 'info');
+            this.showRiddleBuzzedPlayer(data.player);
+            this.startBuzzTimer(10); // 10 seconds to answer
+        });
+
+        this.socket.on('riddles_buzz_rejected', (data) => {
+            Utils.showMessage(data.message, 'error');
+        });
+
+        this.socket.on('riddle_answer_result', (data) => {
+            this.stopBuzzTimer();
+            if (data.correct) {
+                AudioManager.play('guessed');
+                Utils.showMessage(data.message, 'info');
+                this.showRiddleAnswer(data.answer);
+            } else {
+                AudioManager.play('timeout');
+                Utils.showMessage(data.message, 'error');
+                this.hideRiddleBuzzedPlayer();
+            }
+        });
+
+        this.socket.on('riddles_buzz_unlocked', (data) => {
+            Utils.showMessage(data.message, 'info');
+            this.hideRiddleBuzzedPlayer();
+        });
+
+        this.socket.on('riddle_skipped', (data) => {
+            this.stopBuzzTimer();
+            Utils.showMessage(data.message, 'info');
+            this.showRiddleAnswer(data.answer);
+        });
+
+        this.socket.on('riddle_answer_revealed', (data) => {
+            Utils.showMessage(data.message, 'info');
+            this.showRiddleAnswer(data.answer);
+        });
+        // === End Riddles Events ===
+
         this.socket.on('validation_updated', (data) => {
             // Update the validation card for this answer
             const card = document.querySelector(`.validation-card[data-answer-key="${data.answer_key}"]`);
@@ -824,6 +991,52 @@ class GameEngine {
             if (this.gameStatus !== 'round_active' && busArea) busArea.classList.add('u-hidden');
             if (this.gameStatus !== 'scoring' && busResultsArea) busResultsArea.classList.add('u-hidden');
             if (this.gameStatus !== 'validating' && busValidationArea) busValidationArea.classList.add('u-hidden');
+        }
+
+        // Handle Rapid Fire area
+        const rapidFireArea = document.getElementById('rapid-fire-area');
+        const skipQuestionBtn = document.getElementById('skipQuestionButton');
+        
+        if (this.gameType === 'rapid_fire') {
+            if (this.gameStatus === 'round_active' || this.gameStatus === 'playing') {
+                if (rapidFireArea) rapidFireArea.classList.remove('u-hidden');
+                // Show skip button to host
+                if (skipQuestionBtn && this.isHost) skipQuestionBtn.classList.remove('u-hidden');
+            } else {
+                if (rapidFireArea) rapidFireArea.classList.add('u-hidden');
+                if (skipQuestionBtn) skipQuestionBtn.classList.add('u-hidden');
+            }
+        } else {
+            if (rapidFireArea) rapidFireArea.classList.add('u-hidden');
+            if (skipQuestionBtn) skipQuestionBtn.classList.add('u-hidden');
+        }
+
+        // Handle Twenty Questions area
+        const twentyQArea = document.getElementById('twenty-questions-area');
+        
+        if (this.gameType === 'twenty_questions') {
+            if (this.gameStatus === 'playing') {
+                if (twentyQArea) twentyQArea.classList.remove('u-hidden');
+                // Show appropriate phase UI
+                this.updateTwentyQPhase(this.gamePhase || 'setup');
+                // Update thinker indicator
+                const thinkerName = document.getElementById('thinker-name');
+                if (thinkerName) thinkerName.textContent = this.thinker || '';
+                // Show/hide answer buttons based on whether current player is thinker
+                const answerBtns = document.getElementById('answer-buttons-area');
+                const questionInput = document.getElementById('question-input-area');
+                if (this.playerName === this.thinker) {
+                    if (answerBtns) answerBtns.classList.remove('u-hidden');
+                    if (questionInput) questionInput.classList.add('u-hidden');
+                } else {
+                    if (answerBtns) answerBtns.classList.add('u-hidden');
+                    if (questionInput) questionInput.classList.remove('u-hidden');
+                }
+            } else {
+                if (twentyQArea) twentyQArea.classList.add('u-hidden');
+            }
+        } else {
+            if (twentyQArea) twentyQArea.classList.add('u-hidden');
         }
 
         this.updateButtonVisibility();
@@ -1527,6 +1740,308 @@ class GameEngine {
         document.getElementById('validation-progress-bar').style.width = `${progressPercent}%`;
         document.getElementById('votes-count').textContent = totalVotes;
         document.getElementById('total-answers').textContent = totalAnswers;
+    }
+
+    // --- Rapid Fire Methods ---
+
+    buzzTimerInterval = null;
+    buzzTimeRemaining = 0;
+
+    startBuzzTimer(duration) {
+        this.buzzTimeRemaining = duration;
+        const timerEl = document.getElementById('buzz-timer');
+        
+        if (timerEl) {
+            timerEl.textContent = this.buzzTimeRemaining;
+            timerEl.classList.remove('u-hidden');
+        }
+
+        if (this.buzzTimerInterval) clearInterval(this.buzzTimerInterval);
+
+        this.buzzTimerInterval = setInterval(() => {
+            this.buzzTimeRemaining--;
+            if (timerEl) timerEl.textContent = this.buzzTimeRemaining;
+
+            if (this.buzzTimeRemaining <= 0) {
+                this.stopBuzzTimer();
+                this.socket.emit('buzz_timeout', { game_id: this.gameId });
+            }
+        }, 1000);
+    }
+
+    stopBuzzTimer() {
+        if (this.buzzTimerInterval) {
+            clearInterval(this.buzzTimerInterval);
+            this.buzzTimerInterval = null;
+        }
+        const timerEl = document.getElementById('buzz-timer');
+        if (timerEl) timerEl.classList.add('u-hidden');
+    }
+
+    showBuzzedPlayer(playerName) {
+        const indicator = document.getElementById('buzzed-player-indicator');
+        if (indicator) {
+            indicator.textContent = `🔔 ${playerName} يفكر...`;
+            indicator.classList.remove('u-hidden');
+        }
+        // Disable buzz button for everyone
+        this.disableBuzzButton();
+    }
+
+    hideBuzzedPlayer() {
+        const indicator = document.getElementById('buzzed-player-indicator');
+        if (indicator) indicator.classList.add('u-hidden');
+        // Re-enable buzz button
+        this.enableBuzzButton();
+    }
+
+    disableBuzzButton() {
+        const btn = document.getElementById('buzzButton');
+        if (btn) {
+            btn.disabled = true;
+            btn.classList.add('disabled');
+        }
+    }
+
+    enableBuzzButton() {
+        const btn = document.getElementById('buzzButton');
+        if (btn) {
+            btn.disabled = false;
+            btn.classList.remove('disabled');
+        }
+    }
+
+    buzzIn() {
+        this.socket.emit('buzz_in', { game_id: this.gameId });
+    }
+
+    submitBuzzAnswer(idx) {
+        // Disable all option buttons
+        const optionButtons = document.querySelectorAll('.options-grid button');
+        optionButtons.forEach(btn => {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+        });
+
+        this.socket.emit('submit_buzz_answer', {
+            game_id: this.gameId,
+            answer_idx: idx
+        });
+    }
+
+    skipRapidQuestion() {
+        this.socket.emit('skip_rapid_question', { game_id: this.gameId });
+    }
+
+    updateScores(scores) {
+        if (!scores) return;
+        
+        const scoresEl = document.getElementById('scores-list');
+        if (scoresEl) {
+            const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+            scoresEl.innerHTML = sorted.map(([name, score]) => 
+                `<li><span class="player-name">${name}</span><span class="score">${score}</span></li>`
+            ).join('');
+        }
+    }
+
+    showFinalScores(scores) {
+        const sorted = Object.entries(scores || {}).sort((a, b) => b[1] - a[1]);
+        const winner = sorted[0];
+        
+        if (winner) {
+            Utils.showMessage(`🏆 الفائز: ${winner[0]} بـ ${winner[1]} نقطة!`, 'info');
+        }
+        
+        this.setGameStatus('ended');
+    }
+
+    // --- Twenty Questions Methods ---
+
+    updateTwentyQPhase(phase) {
+        const setupArea = document.getElementById('twenty-q-setup-area');
+        const askingArea = document.getElementById('twenty-q-asking-area');
+        const guessingArea = document.getElementById('twenty-q-guessing-area');
+        
+        // Hide all first
+        if (setupArea) setupArea.classList.add('u-hidden');
+        if (askingArea) askingArea.classList.add('u-hidden');
+        if (guessingArea) guessingArea.classList.add('u-hidden');
+        
+        // Show appropriate phase
+        if (phase === 'setup' && setupArea) setupArea.classList.remove('u-hidden');
+        if (phase === 'asking' && askingArea) askingArea.classList.remove('u-hidden');
+        if (phase === 'guessing' && guessingArea) guessingArea.classList.remove('u-hidden');
+    }
+
+    showCategoryHint(category) {
+        const hintEl = document.getElementById('category-hint');
+        if (hintEl && category) {
+            hintEl.textContent = `الفئة: ${category}`;
+            hintEl.classList.remove('u-hidden');
+        }
+    }
+
+    addQuestionToHistory(question, asker) {
+        const historyEl = document.getElementById('questions-history');
+        if (historyEl) {
+            const qDiv = document.createElement('div');
+            qDiv.className = 'question-item';
+            qDiv.innerHTML = `<span class="asker">${asker}:</span> ${question}`;
+            historyEl.appendChild(qDiv);
+        }
+    }
+
+    updateQuestionAnswer(answer) {
+        const historyEl = document.getElementById('questions-history');
+        if (historyEl) {
+            const lastQ = historyEl.lastElementChild;
+            if (lastQ) {
+                const answerText = answer === 'yes' ? '✓ نعم' : 
+                                  answer === 'no' ? '✗ لا' : '~ ربما';
+                lastQ.innerHTML += ` <span class="answer">${answerText}</span>`;
+            }
+        }
+    }
+
+    updateQuestionsRemaining(remaining) {
+        const counterEl = document.getElementById('questions-remaining');
+        if (counterEl) {
+            counterEl.textContent = remaining;
+        }
+    }
+
+    showFinalResult(data) {
+        const resultEl = document.getElementById('twenty-q-result');
+        if (resultEl && data.secret_word) {
+            resultEl.innerHTML = `<div class="result-reveal">الكلمة السرية: <strong>${data.secret_word}</strong></div>`;
+            resultEl.classList.remove('u-hidden');
+        }
+        this.setGameStatus('ended');
+    }
+
+    getWordSuggestion() {
+        this.socket.emit('get_word_suggestion', { game_id: this.gameId });
+    }
+
+    setSecretWord() {
+        const wordInput = document.getElementById('secret-word-input');
+        const catInput = document.getElementById('secret-category-input');
+        
+        if (wordInput && wordInput.value.trim()) {
+            this.socket.emit('set_secret_word', {
+                game_id: this.gameId,
+                word: wordInput.value.trim(),
+                category: catInput ? catInput.value.trim() : null
+            });
+        }
+    }
+
+    askTwentyQ() {
+        const input = document.getElementById('question-input');
+        if (input && input.value.trim()) {
+            this.socket.emit('ask_twenty_q', {
+                game_id: this.gameId,
+                question: input.value.trim()
+            });
+            input.value = '';
+        }
+    }
+
+    answerTwentyQ(answer) {
+        this.socket.emit('answer_twenty_q', {
+            game_id: this.gameId,
+            answer: answer
+        });
+    }
+
+    makeTwentyQGuess() {
+        const input = document.getElementById('guess-input');
+        if (input && input.value.trim()) {
+            this.socket.emit('make_twenty_q_guess', {
+                game_id: this.gameId,
+                guess: input.value.trim()
+            });
+            input.value = '';
+        }
+    }
+
+    forfeitTwentyQ() {
+        this.socket.emit('forfeit_twenty_q', { game_id: this.gameId });
+    }
+
+    // --- Riddles Methods ---
+
+    showRiddle(data) {
+        const riddleEl = document.getElementById('riddle-text');
+        const riddleNumEl = document.getElementById('riddle-number');
+        const riddleCatEl = document.getElementById('riddle-category');
+        
+        if (riddleEl) riddleEl.textContent = data.riddle;
+        if (riddleNumEl) riddleNumEl.textContent = data.riddle_number;
+        if (riddleCatEl) riddleCatEl.textContent = data.category || '';
+        
+        // Show riddle area
+        const riddlesArea = document.getElementById('riddles-area');
+        if (riddlesArea) riddlesArea.classList.remove('u-hidden');
+        
+        // Hide answer
+        const answerEl = document.getElementById('riddle-answer');
+        if (answerEl) answerEl.classList.add('u-hidden');
+        
+        // Enable buzz button
+        this.enableBuzzButton();
+    }
+
+    showRiddleBuzzedPlayer(playerName) {
+        const indicator = document.getElementById('riddle-buzzed-indicator');
+        if (indicator) {
+            indicator.textContent = `🔔 ${playerName} يفكر...`;
+            indicator.classList.remove('u-hidden');
+        }
+        this.disableBuzzButton();
+    }
+
+    hideRiddleBuzzedPlayer() {
+        const indicator = document.getElementById('riddle-buzzed-indicator');
+        if (indicator) indicator.classList.add('u-hidden');
+        this.enableBuzzButton();
+    }
+
+    showRiddleAnswer(answer) {
+        const answerEl = document.getElementById('riddle-answer');
+        if (answerEl) {
+            answerEl.innerHTML = `<strong>الإجابة:</strong> ${answer}`;
+            answerEl.classList.remove('u-hidden');
+        }
+        this.disableBuzzButton();
+    }
+
+    riddlesBuzzIn() {
+        this.socket.emit('riddles_buzz_in', { game_id: this.gameId });
+    }
+
+    submitRiddleAnswer() {
+        const input = document.getElementById('riddle-answer-input');
+        if (input && input.value.trim()) {
+            this.socket.emit('submit_riddle_answer', {
+                game_id: this.gameId,
+                answer: input.value.trim()
+            });
+            input.value = '';
+        }
+    }
+
+    skipRiddle() {
+        this.socket.emit('skip_riddle', { game_id: this.gameId });
+    }
+
+    nextRiddle() {
+        this.socket.emit('next_riddle', { game_id: this.gameId });
+    }
+
+    revealRiddleAnswer() {
+        this.socket.emit('reveal_riddle_answer', { game_id: this.gameId });
     }
 }
 
