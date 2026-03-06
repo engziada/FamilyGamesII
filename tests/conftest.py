@@ -1,216 +1,188 @@
 """
-Shared pytest fixtures for Family Games II test suite.
+Shared test fixtures for Family Games II test suite.
+Provides mock game rooms, socket clients, and sample data for all game types.
 """
-import pytest
 import sys
 import os
+import pytest
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 @pytest.fixture
-def mock_game_room():
-    """Create a mock game room dictionary for testing.
-    
-    Returns:
-        dict: A dictionary to simulate game_rooms storage
-    """
-    return {}
+def app():
+    """Create a Flask test application with SocketIO."""
+    # Patch eventlet before importing app
+    import eventlet
+    eventlet.monkey_patch()
+
+    from app import app as flask_app, socketio, game_rooms
+    flask_app.config['TESTING'] = True
+    flask_app.config['SECRET_KEY'] = 'test-secret-key'
+
+    # Clear game rooms before each test
+    game_rooms.clear()
+
+    yield flask_app
+
+    # Cleanup
+    game_rooms.clear()
 
 
 @pytest.fixture
-def sample_trivia_questions():
-    """Sample trivia questions for testing.
-    
-    Returns:
-        list: List of trivia question objects
-    """
+def client(app):
+    """Create a Flask test client."""
+    return app.test_client()
+
+
+@pytest.fixture
+def socket_client(app):
+    """Create a Flask-SocketIO test client."""
+    from app import socketio
+    return socketio.test_client(app)
+
+
+@pytest.fixture
+def game_rooms():
+    """Direct access to the game_rooms dict."""
+    from app import game_rooms as rooms
+    rooms.clear()
+    yield rooms
+    rooms.clear()
+
+
+# ── Sample Data Fixtures ──────────────────────────────────────────────
+
+
+@pytest.fixture
+def sample_trivia_questions() -> list[dict]:
+    """Sample trivia questions for testing Rapid Fire and Trivia."""
     return [
         {
             'question': 'ما هي عاصمة مصر؟',
-            'correct_answer': 'القاهرة',
-            'wrong_answers': ['الإسكندرية', 'الجيزة', 'الأقصر'],
+            'options': ['القاهرة', 'الإسكندرية', 'أسوان', 'الأقصر'],
+            'answer': 0,
             'category': 'جغرافيا',
             'difficulty': 'easy'
         },
         {
             'question': 'كم عدد أيام السنة الكبيسة؟',
-            'correct_answer': '366',
-            'wrong_answers': ['365', '364', '367'],
+            'options': ['365', '366', '364', '367'],
+            'answer': 1,
             'category': 'علوم',
             'difficulty': 'easy'
         },
         {
-            'question': 'من هو مؤلف رواية "البؤساء"؟',
-            'correct_answer': 'فيكتور هوغو',
-            'wrong_answers': ['تشارلز ديكنز', 'ليو تولستوي', 'جين أوستن'],
-            'category': 'أدب',
+            'question': 'ما هو أكبر كوكب في المجموعة الشمسية؟',
+            'options': ['زحل', 'المشتري', 'أورانوس', 'نبتون'],
+            'answer': 1,
+            'category': 'فضاء',
             'difficulty': 'medium'
-        }
+        },
     ]
 
 
 @pytest.fixture
-def sample_riddles():
-    """Sample riddles for testing.
-    
-    Returns:
-        list: List of riddle objects
-    """
+def sample_riddles() -> list[dict]:
+    """Sample riddles for testing the Riddles game."""
     return [
         {
-            'riddle': 'لي أسنان لكن لا أعض، ما أنا؟',
-            'answer': 'المشط',
-            'hints': ['تستخدمه كل يوم', 'له عدة أسنان', 'يستخدم للشعر'],
-            'category': 'جماد',
+            'riddle': 'شيء له رأس وليس له عيون، ما هو؟',
+            'answer': 'الدبوس',
+            'accepted_answers': ['دبوس', 'الدبوس'],
+            'hints': ['يُستخدم في الخياطة', 'معدني وصغير', 'يثبت القماش'],
+            'category': 'ألغاز عامة',
             'difficulty': 'easy'
         },
         {
-            'riddle': 'أمشي بلا أرجل، ولي عين واحدة، ما أنا؟',
-            'answer': 'الإبرة',
-            'hints': ['تستخدم في الخياطة', 'لها ثقب', 'معدنية صغيرة'],
-            'category': 'جماد',
-            'difficulty': 'medium'
+            'riddle': 'ما هو الشيء الذي كلما أخذت منه كبر؟',
+            'answer': 'الحفرة',
+            'accepted_answers': ['حفرة', 'الحفرة'],
+            'hints': ['موجود في الأرض', 'يُحفر بالمعول', 'عكس التل'],
+            'category': 'ألغاز عامة',
+            'difficulty': 'easy'
         },
         {
-            'riddle': 'أكون أخضر في الصيف، وأصفر في الخريف، ما أنا؟',
-            'answer': 'الشجرة',
-            'hints': ['لها أوراق', 'تتغير ألوانها', 'تعطي ظلاً'],
-            'category': 'نبات',
-            'difficulty': 'easy'
-        }
+            'riddle': 'أنا ابن الماء ولكن إن وُضعت في الماء مت، من أنا؟',
+            'answer': 'الثلج',
+            'accepted_answers': ['ثلج', 'الثلج'],
+            'hints': ['بارد جداً', 'يتكون في الشتاء', 'يذوب بالحرارة'],
+            'category': 'ألغاز عامة',
+            'difficulty': 'medium'
+        },
     ]
 
 
 @pytest.fixture
-def sample_twenty_q_words():
-    """Sample words for 20 Questions game testing.
-    
-    Returns:
-        list: List of word objects with category hints
-    """
+def sample_twenty_q_words() -> list[dict]:
+    """Sample words for 20 Questions testing."""
     return [
-        {'word': 'أسد', 'category': 'حيوان', 'difficulty': 'easy'},
-        {'word': 'تفاحة', 'category': 'فاكهة', 'difficulty': 'easy'},
-        {'word': 'القاهرة', 'category': 'مدينة', 'difficulty': 'easy'},
-        {'word': 'سيارة', 'category': 'مركبة', 'difficulty': 'easy'},
-        {'word': 'طبيب', 'category': 'مهنة', 'difficulty': 'easy'},
-        {'word': 'كرة القدم', 'category': 'رياضة', 'difficulty': 'medium'},
-        {'word': 'هرم الأهرامات', 'category': 'معلم أثري', 'difficulty': 'medium'},
-        {'word': 'نيل أرمسترونج', 'category': 'شخصية تاريخية', 'difficulty': 'hard'}
+        {'word': 'قطة', 'category': 'حيوان'},
+        {'word': 'تفاحة', 'category': 'طعام'},
+        {'word': 'سيارة', 'category': 'جماد'},
+        {'word': 'مصر', 'category': 'بلد'},
+        {'word': 'طبيب', 'category': 'مهنة'},
     ]
 
 
-@pytest.fixture
-def sample_charades_items():
-    """Sample charades items for testing.
-    
-    Returns:
-        list: List of charades item objects
-    """
-    return [
-        {'item': 'فيلم تيتانيك', 'category': 'أفلام', 'type': 'فيلم', 'year': '1997', 'starring': 'ليوناردو دي كابريو'},
-        {'item': 'مسلسل لعبة الحيتان', 'category': 'مسلسلات', 'type': 'مسلسل', 'year': '2024'},
-        {'item': 'أغنية أنا قلبي دليلي', 'category': 'أغاني', 'type': 'أغنية', 'starring': 'أم كلثوم'}
-    ]
+# ── Game Helper Fixtures ──────────────────────────────────────────────
 
 
 @pytest.fixture
-def sample_bus_complete_answers():
-    """Sample answers for Bus Complete game testing.
-    
-    Returns:
-        dict: Sample answers organized by category
-    """
-    return {
-        'اسم': ['أحمد', 'إبراهيم', 'إيمان'],
-        'حيوان': ['أسد', 'أرنب', 'أفعى'],
-        'نبات': ['أرز', 'تفاح', 'تين'],
-        'جماد': ['إبرة', 'أسورة', 'تابلوه'],
-        'بلاد': ['أمريكا', 'إيطاليا', 'ألمانيا'],
-        'أكلة': ['أرز باللبن', 'تبولة', 'تميس'],
-        'مهنة': ['أمين مكتبة', 'إداري', 'تاجر']
-    }
-
-
-@pytest.fixture
-def rapid_fire_game(mock_game_room, sample_trivia_questions):
-    """Create a RapidFireGame instance for testing.
-    
-    Returns:
-        RapidFireGame: A game instance with sample data
-    """
-    from games.rapid_fire.models import RapidFireGame
-    game = RapidFireGame('test_room', 'host_player')
-    game.add_player('player2')
-    # Pre-populate with test questions
-    game.test_questions = sample_trivia_questions
-    return game
-
-
-@pytest.fixture
-def twenty_questions_game(mock_game_room, sample_twenty_q_words):
-    """Create a TwentyQuestionsGame instance for testing.
-    
-    Returns:
-        TwentyQuestionsGame: A game instance with sample data
-    """
-    from games.twenty_questions.models import TwentyQuestionsGame
-    game = TwentyQuestionsGame('test_room', 'host_player')
-    game.add_player('player2')
-    game.test_words = sample_twenty_q_words
-    return game
-
-
-@pytest.fixture
-def riddles_game(mock_game_room, sample_riddles):
-    """Create a RiddlesGame instance for testing.
-    
-    Returns:
-        RiddlesGame: A game instance with sample data
-    """
-    from games.riddles.models import RiddlesGame
-    game = RiddlesGame('test_room', 'host_player')
-    game.add_player('player2')
-    game.test_riddles = sample_riddles
-    return game
-
-
-@pytest.fixture
-def charades_game(mock_game_room):
-    """Create a CharadesGame instance for testing.
-    
-    Returns:
-        CharadesGame: A game instance
-    """
+def make_charades_game():
+    """Factory fixture: create a CharadesGame with 2 players."""
     from games.charades.models import CharadesGame
-    game = CharadesGame('test_charades', 'host_player')
-    game.add_player('player2')
-    return game
+
+    def _make(game_id: str = 'test_room', host: str = 'host', player2: str = 'player2'):
+        game = CharadesGame(game_id, host)
+        game.add_player(player2)
+        return game
+
+    return _make
 
 
 @pytest.fixture
-def trivia_game(mock_game_room):
-    """Create a TriviaGame instance for testing.
-    
-    Returns:
-        TriviaGame: A game instance
-    """
+def make_trivia_game():
+    """Factory fixture: create a TriviaGame with 2 players."""
     from games.trivia.models import TriviaGame
-    game = TriviaGame('test_trivia', 'host_player')
-    game.add_player('player2')
-    return game
+
+    def _make(game_id: str = 'test_room', host: str = 'host', player2: str = 'player2'):
+        game = TriviaGame(game_id, host)
+        game.add_player(player2)
+        return game
+
+    return _make
 
 
 @pytest.fixture
-def bus_complete_game(mock_game_room):
-    """Create a BusCompleteGame instance for testing.
-    
-    Returns:
-        BusCompleteGame: A game instance
-    """
+def make_bus_game():
+    """Factory fixture: create a BusCompleteGame with 2 players."""
     from games.bus_complete.models import BusCompleteGame
-    game = BusCompleteGame('test_bus', 'host_player', {'validate_answers': False})
-    game.add_player('player2')
-    return game
+
+    def _make(game_id: str = 'test_room', host: str = 'host', player2: str = 'player2',
+              letter: str = 'ا'):
+        game = BusCompleteGame(game_id, host, {
+            'teams': False,
+            'validate_answers': False,
+            'use_online_validation': False,
+        })
+        game.add_player(player2)
+        game.start_game()
+        game.current_letter = letter
+        return game
+
+    return _make
+
+
+@pytest.fixture
+def make_rapid_fire_game():
+    """Factory fixture: create a RapidFireGame with 2 players."""
+    from games.rapid_fire.models import RapidFireGame
+
+    def _make(game_id: str = 'test_room', host: str = 'host', player2: str = 'player2'):
+        game = RapidFireGame(game_id, host)
+        game.add_player(player2)
+        return game
+
+    return _make

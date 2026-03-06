@@ -281,10 +281,9 @@ const Utils = {
                 charades: 'إنشاء غرفة بدون كلام',
                 trivia: 'إنشاء غرفة بنك المعلومات',
                 pictionary: 'إنشاء غرفة الرسم والتخمين',
-                bus_complete: 'إنشاء غرفة أتوبيس كومبليت',
                 rapid_fire: 'إنشاء غرفة الأسئلة السريعة',
-                twenty_questions: 'إنشاء غرفة العشرين سؤال',
-                riddles: 'إنشاء غرفة الألغاز'
+                twenty_questions: 'إنشاء غرفة عشرين سؤال',
+                bus_complete: 'إنشاء غرفة أتوبيس كومبليت'
             };
             document.getElementById('modal-title').textContent = titles[gameType] || 'إنشاء غرفة لعبة';
         }
@@ -489,6 +488,7 @@ class GameEngine {
         });
         bindClick('guessButton', () => this.socket.emit('guess_correct', { game_id: this.gameId, player_name: this.playerName }));
         bindClick('passButton', () => this.socket.emit('player_passed', { game_id: this.gameId, player_name: this.playerName }));
+        bindClick('buzzButton', () => this.buzzIn());
 
         bindClick('leave-room', () => {
             if (confirm('هل أنت متأكد أنك تريد الانسحاب؟')) {
@@ -591,175 +591,124 @@ class GameEngine {
         });
 
         this.socket.on('reveal_item', (data) => this.showRevealMessage(data));
-        this.socket.on('bus_stopped', (data) => {
-            this.stopTimer();
-            AudioManager.play('timeout');
-            Utils.showMessage(`أتوبيس كومبليت! تم إيقاف الجولة بواسطة ${data.player}`, 'info');
-        });
 
-        // === Rapid Fire Events ===
-        this.socket.on('buzz_registered', (data) => {
-            this.stopTimer();
+        // Rapid Fire events
+        this.socket.on('player_buzzed', (data) => {
             AudioManager.play('guessed');
-            Utils.showMessage(`${data.player} ضغط أولاً!`, 'info');
-            this.startBuzzTimer(data.time_limit);
-            this.showBuzzedPlayer(data.player);
+            this.handlePlayerBuzzed(data);
         });
 
         this.socket.on('buzz_rejected', (data) => {
             Utils.showMessage(data.message, 'error');
         });
 
-        this.socket.on('buzz_timer_start', (data) => {
-            this.startBuzzTimer(data.duration);
-        });
-
         this.socket.on('buzz_answer_result', (data) => {
-            this.stopBuzzTimer();
-            if (data.correct) {
+            if (data.is_correct) {
                 AudioManager.play('guessed');
-                Utils.showMessage(`${data.player} جاوب صح! حصل على ${data.points} نقاط ✅`, 'info');
+                Utils.showMessage(`${data.player} جاوب صح! ✅ الإجابة: ${data.correct_answer}`);
             } else {
                 AudioManager.play('timeout');
-                Utils.showMessage(`${data.player} جاوب غلط ❌ الإجابة: ${data.correct_answer}`, 'error');
+                Utils.showMessage(`${data.player} جاوب غلط ❌`);
             }
-            this.updateScores(data.scores);
-            this.hideBuzzedPlayer();
+            this.clearBuzzState();
         });
 
-        this.socket.on('buzz_timeout_event', (data) => {
-            this.stopBuzzTimer();
+        this.socket.on('buzz_timed_out', (data) => {
             AudioManager.play('timeout');
-            Utils.showMessage(data.message, 'error');
-            if (data.correct_answer) {
-                Utils.showMessage(`الإجابة الصحيحة: ${data.correct_answer}`, 'info');
-            }
-            this.hideBuzzedPlayer();
+            Utils.showMessage(`${data.player} لم يجب في الوقت! ⏰`);
+            this.clearBuzzState();
         });
 
-        this.socket.on('buzz_unlocked', (data) => {
-            Utils.showMessage(data.message, 'info');
-            this.enableBuzzButton();
+        this.socket.on('all_buzzed_wrong', (data) => {
+            Utils.showMessage(`${data.message} الإجابة الصحيحة: ${data.correct_answer}`);
         });
 
-        this.socket.on('question_skipped', (data) => {
-            Utils.showMessage(data.message, 'info');
-        });
-
-        this.socket.on('game_ended', (data) => {
+        this.socket.on('question_timeout', (data) => {
             this.stopTimer();
-            Utils.showMessage(data.message, 'info');
-            this.showFinalScores(data.scores);
-        });
-        // === End Rapid Fire Events ===
-
-        // === Twenty Questions Events ===
-        this.socket.on('twenty_q_started', (data) => {
-            Utils.showMessage(`بدأت اللعبة! المفكر: ${data.thinker}`, 'info');
-            this.updateTwentyQPhase(data.phase);
+            Utils.showMessage(`انتهى الوقت! الإجابة الصحيحة: ${data.correct_answer}`);
         });
 
-        this.socket.on('word_suggestion', (data) => {
-            const input = document.getElementById('secret-word-input');
-            if (input) input.value = data.word;
-            const catInput = document.getElementById('secret-category-input');
-            if (catInput) catInput.value = data.category || '';
+        // Twenty Questions events
+        this.socket.on('twenty_questions_started', (data) => {
+            Utils.showMessage(`الجولة بدأت! ${data.thinker} يفكر بكلمة...`, 'info');
+            if (data.thinker === this.playerName) {
+                Utils.showMessage(`أنت المفكر! اختر كلمة من: ${data.word_suggestion.word} (${data.word_suggestion.category})`, 'info');
+            }
+            this.handleTwentyQuestionsStarted(data);
         });
 
-        this.socket.on('secret_word_set', (data) => {
-            Utils.showMessage('تم تحديد الكلمة السرية!', 'info');
-            this.updateTwentyQPhase(data.phase);
-            this.showCategoryHint(data.category_hint);
+        this.socket.on('secret_set', (data) => {
+            Utils.showMessage(`تم تحديد الكلمة! الفئة: ${data.category}`, 'info');
+            this.handleSecretSet(data);
         });
 
         this.socket.on('question_asked', (data) => {
-            Utils.showMessage(`${data.asker}: ${data.question} (سؤال ${data.question_number})`, 'info');
-            this.addQuestionToHistory(data.question, data.asker);
+            this.handleQuestionAsked(data);
+        });
+
+        this.socket.on('waiting_for_answer', (data) => {
+            if (this.thinker === this.playerName) {
+                Utils.showMessage(`جاوب: "${data.question}"`, 'info');
+            }
         });
 
         this.socket.on('question_answered', (data) => {
-            const answerText = data.answer === 'yes' ? 'نعم ✓' : 
-                              data.answer === 'no' ? 'لا ✗' : 'ربما ~';
-            Utils.showMessage(`الإجابة: ${answerText}`, 'info');
-            this.updateQuestionAnswer(data.answer);
-            this.updateQuestionsRemaining(data.questions_remaining);
-            
-            if (data.phase === 'guessing') {
-                Utils.showMessage(data.message, 'info');
-                this.updateTwentyQPhase('guessing');
-            }
+            this.handleQuestionAnswered(data);
         });
 
-        this.socket.on('question_rejected', (data) => {
-            Utils.showMessage(data.message, 'error');
-        });
-
-        this.socket.on('guess_result', (data) => {
+        this.socket.on('guess_made', (data) => {
             if (data.correct) {
                 AudioManager.play('guessed');
-                Utils.showMessage(data.message, 'info');
+                Utils.showMessage(`${data.player} خمن صح! ${data.message}`, 'success');
             } else {
                 AudioManager.play('timeout');
-                if (data.continue) {
-                    Utils.showMessage(data.message, 'error');
-                } else {
-                    Utils.showMessage(data.message, 'error');
-                }
+                Utils.showMessage(`${data.player} خمن غلط: ${data.guess}`, 'error');
             }
-            this.showFinalResult(data);
         });
 
-        this.socket.on('game_forfeited', (data) => {
-            Utils.showMessage(data.message, 'info');
-            this.showFinalResult({ secret_word: data.secret_word });
-        });
-        // === End Twenty Questions Events ===
-
-        // === Riddles Events ===
-        this.socket.on('riddle_started', (data) => {
-            Utils.showMessage(`اللغز ${data.riddle_number}: ${data.riddle}`, 'info');
-            this.showRiddle(data);
+        this.socket.on('twenty_questions_ended', (data) => {
+            AudioManager.play('guessed');
+            Utils.showMessage(`انتهت الجولة! الفائز: ${data.winner} | الكلمة: ${data.word}`, 'info');
+            this.handleTwentyQuestionsEnded(data);
         });
 
-        this.socket.on('riddles_buzz_registered', (data) => {
-            Utils.showMessage(data.message, 'info');
-            this.showRiddleBuzzedPlayer(data.player);
-            this.startBuzzTimer(10); // 10 seconds to answer
-        });
-
-        this.socket.on('riddles_buzz_rejected', (data) => {
-            Utils.showMessage(data.message, 'error');
+        // Riddles events
+        this.socket.on('riddles_started', () => {
+            Utils.showMessage('الألغاز بدأت! اقرأ اللغز وجاوب!', 'info');
+            this.handleRiddlesStarted();
         });
 
         this.socket.on('riddle_answer_result', (data) => {
-            this.stopBuzzTimer();
             if (data.correct) {
                 AudioManager.play('guessed');
-                Utils.showMessage(data.message, 'info');
-                this.showRiddleAnswer(data.answer);
+                Utils.showMessage(`${data.player} جاوب صح! الإجابة: ${data.answer}`, 'success');
             } else {
                 AudioManager.play('timeout');
                 Utils.showMessage(data.message, 'error');
-                this.hideRiddleBuzzedPlayer();
             }
+            this.clearRiddleAnswerInput();
         });
 
-        this.socket.on('riddles_buzz_unlocked', (data) => {
-            Utils.showMessage(data.message, 'info');
-            this.hideRiddleBuzzedPlayer();
+        this.socket.on('hint_revealed', (data) => {
+            Utils.showMessage(`تلميح جديد: ${data.hint}`, 'info');
+            this.displayHint(data.hint, data.hints_remaining);
         });
 
         this.socket.on('riddle_skipped', (data) => {
-            this.stopBuzzTimer();
             Utils.showMessage(data.message, 'info');
             this.showRiddleAnswer(data.answer);
         });
 
-        this.socket.on('riddle_answer_revealed', (data) => {
-            Utils.showMessage(data.message, 'info');
-            this.showRiddleAnswer(data.answer);
+        this.socket.on('new_riddle', () => {
+            Utils.showMessage('لغز جديد!', 'info');
+            this.clearRiddleHints();
         });
-        // === End Riddles Events ===
+
+        this.socket.on('bus_stopped', (data) => {
+            this.stopTimer();
+            AudioManager.play('timeout');
+            Utils.showMessage(`أتوبيس كومبليت! تم إيقاف الجولة بواسطة ${data.player}`, 'info');
+        });
 
         this.socket.on('validation_updated', (data) => {
             // Update the validation card for this answer
@@ -836,8 +785,14 @@ class GameEngine {
         if (data.current_player !== undefined) this.updateCurrentPlayer(data.current_player);
         if (data.scores || data.team_scores) this.updateScores(data);
 
-        if (data.current_question) {
+        if (data.current_question && this.gameType === 'rapid_fire') {
+            this.displayRapidFireQuestion(data);
+        } else if (data.current_question) {
             this.displayQuestion(data.current_question);
+        } else if (this.gameType === 'riddles' && data.current_riddle) {
+            this.currentRiddle = data.current_riddle;
+            this.roundNumber = data.round_number;
+            this.updateRiddlesUI(data.current_riddle);
         } else if (this.gameType === 'bus_complete') {
             if (data.current_letter) {
                 this.currentLetter = data.current_letter;
@@ -901,7 +856,12 @@ class GameEngine {
         const currentPlayer = document.getElementById('current-turn').textContent.trim();
 
         if (waitingArea) {
-            waitingArea.style.display = (this.gameStatus === 'playing' || (this.gameStatus === 'waiting' && this.gameType !== 'trivia')) ? 'block' : 'none';
+            // Show waiting area in lobby ('waiting') or between rounds ('playing')
+            // But hide it for game types that manage their own active display
+            const selfManagedTypes = ['twenty_questions', 'riddles', 'rapid_fire'];
+            const isActive = this.gameStatus !== 'waiting';
+            const showWaiting = this.gameStatus === 'playing' || (this.gameStatus === 'waiting' && this.gameType !== 'trivia');
+            waitingArea.style.display = (showWaiting && !(isActive && selfManagedTypes.includes(this.gameType))) ? 'block' : 'none';
         }
 
         switch (this.gameStatus) {
@@ -923,14 +883,31 @@ class GameEngine {
                     if (btns.pass && currentPlayer === this.playerName) btns.pass.classList.remove('u-hidden');
                 }
                 if (btns.next && this.isHost) btns.next.classList.remove('u-hidden');
+                // Show buzz button for rapid fire
+                this.updateBuzzButton();
                 break;
+            case 'buzzed':
+                if (btns.next && this.isHost) btns.next.classList.remove('u-hidden');
+                this.updateBuzzButton();
+                break;
+        }
+
+        // Hide standard buttons for twenty_questions and riddles
+        if (this.gameType === 'twenty_questions') {
+            this.updateTwentyQButtonVisibility();
+        }
+        if (this.gameType === 'riddles') {
+            if (btns.ready) btns.ready.classList.add('u-hidden');
+            if (btns.guess) btns.guess.classList.add('u-hidden');
+            if (btns.pass) btns.pass.classList.add('u-hidden');
         }
     }
 
     updateCurrentPlayer(player) {
         const el = document.getElementById('current-turn');
         if (el) {
-            if (this.gameType === 'trivia' || this.gameType === 'bus_complete') {
+            if (this.gameType === 'trivia' || this.gameType === 'bus_complete' || this.gameType === 'rapid_fire' ||
+                this.gameType === 'twenty_questions' || this.gameType === 'riddles') {
                 el.textContent = 'الكل!';
             } else if (player) {
                 el.textContent = player;
@@ -944,8 +921,10 @@ class GameEngine {
         const pictionaryArea = document.getElementById('pictionary-area');
 
         if (itemDisplay) {
-            // In Trivia, everyone sees the question. In others, only the performer (isMe) sees it.
-            if (this.gameType === 'trivia' || isMe) {
+            // In Trivia/Rapid Fire/Twenty Questions/Riddles, everyone sees the display.
+            // In Charades/Pictionary, only the performer (isMe) sees it.
+            if (this.gameType === 'trivia' || this.gameType === 'rapid_fire' ||
+                this.gameType === 'twenty_questions' || this.gameType === 'riddles' || isMe) {
                 itemDisplay.classList.remove('u-hidden');
                 itemDisplay.style.display = 'block';
             } else if (this.gameType === 'pictionary' && !isMe && this.currentItemCategory) {
@@ -991,52 +970,6 @@ class GameEngine {
             if (this.gameStatus !== 'round_active' && busArea) busArea.classList.add('u-hidden');
             if (this.gameStatus !== 'scoring' && busResultsArea) busResultsArea.classList.add('u-hidden');
             if (this.gameStatus !== 'validating' && busValidationArea) busValidationArea.classList.add('u-hidden');
-        }
-
-        // Handle Rapid Fire area
-        const rapidFireArea = document.getElementById('rapid-fire-area');
-        const skipQuestionBtn = document.getElementById('skipQuestionButton');
-        
-        if (this.gameType === 'rapid_fire') {
-            if (this.gameStatus === 'round_active' || this.gameStatus === 'playing') {
-                if (rapidFireArea) rapidFireArea.classList.remove('u-hidden');
-                // Show skip button to host
-                if (skipQuestionBtn && this.isHost) skipQuestionBtn.classList.remove('u-hidden');
-            } else {
-                if (rapidFireArea) rapidFireArea.classList.add('u-hidden');
-                if (skipQuestionBtn) skipQuestionBtn.classList.add('u-hidden');
-            }
-        } else {
-            if (rapidFireArea) rapidFireArea.classList.add('u-hidden');
-            if (skipQuestionBtn) skipQuestionBtn.classList.add('u-hidden');
-        }
-
-        // Handle Twenty Questions area
-        const twentyQArea = document.getElementById('twenty-questions-area');
-        
-        if (this.gameType === 'twenty_questions') {
-            if (this.gameStatus === 'playing') {
-                if (twentyQArea) twentyQArea.classList.remove('u-hidden');
-                // Show appropriate phase UI
-                this.updateTwentyQPhase(this.gamePhase || 'setup');
-                // Update thinker indicator
-                const thinkerName = document.getElementById('thinker-name');
-                if (thinkerName) thinkerName.textContent = this.thinker || '';
-                // Show/hide answer buttons based on whether current player is thinker
-                const answerBtns = document.getElementById('answer-buttons-area');
-                const questionInput = document.getElementById('question-input-area');
-                if (this.playerName === this.thinker) {
-                    if (answerBtns) answerBtns.classList.remove('u-hidden');
-                    if (questionInput) questionInput.classList.add('u-hidden');
-                } else {
-                    if (answerBtns) answerBtns.classList.add('u-hidden');
-                    if (questionInput) questionInput.classList.remove('u-hidden');
-                }
-            } else {
-                if (twentyQArea) twentyQArea.classList.add('u-hidden');
-            }
-        } else {
-            if (twentyQArea) twentyQArea.classList.add('u-hidden');
         }
 
         this.updateButtonVisibility();
@@ -1725,6 +1658,470 @@ class GameEngine {
         this.socket.emit('finalize_validation', { game_id: this.gameId });
     }
 
+    // --- Rapid Fire Logic ---
+
+    displayRapidFireQuestion(data) {
+        const el = document.getElementById('item-display');
+        if (!el) return;
+
+        // Hide non-relevant areas
+        document.getElementById('waiting-area').style.display = 'none';
+        const busArea = document.getElementById('bus-area');
+        if (busArea) busArea.classList.add('u-hidden');
+
+        el.classList.remove('u-hidden');
+        el.style.display = 'block';
+
+        const q = data.current_question;
+        if (!q) return;
+
+        let html = `<div class="item-category">${q.category || 'سؤال'}</div>`;
+        html += `<div class="item-name" style="font-size: 1.8rem;">${q.question}</div>`;
+
+        // Show buzz button area
+        const buzzArea = document.getElementById('rapid-fire-area');
+        if (buzzArea) buzzArea.classList.remove('u-hidden');
+
+        // If player is the buzzed player, show answer options
+        if (data.buzzed_player === this.playerName) {
+            html += `<div class="options-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; width: 100%; margin-top: 1.5rem;">`;
+            q.options.forEach((opt, i) => {
+                html += `<button class="btn btn-outline" onclick="window.gameInstance.submitBuzzAnswer(${i})">${opt}</button>`;
+            });
+            html += `</div>`;
+        } else if (data.buzzed_player) {
+            html += `<div class="buzz-status" style="margin-top: 1.5rem; font-size: 1.2rem; color: var(--secondary); font-weight: 700;"><i class="fas fa-bell"></i> ${data.buzzed_player} ضغط الجرس!</div>`;
+        }
+
+        el.innerHTML = html;
+        setTimeout(() => el.classList.add('visible'), 100);
+
+        this.updateBuzzButton();
+    }
+
+    handlePlayerBuzzed(data) {
+        const buzzBtn = document.getElementById('buzzButton');
+        if (buzzBtn) {
+            buzzBtn.disabled = true;
+            buzzBtn.innerHTML = `<i class="fas fa-bell"></i> ${data.player} ضغط الجرس!`;
+        }
+
+        // If I'm the buzzed player, show answer options
+        if (data.player === this.playerName) {
+            // Start buzz answer timer
+            this.startBuzzTimer(data.buzz_timeout);
+        }
+    }
+
+    clearBuzzState() {
+        this.stopBuzzTimer();
+        const buzzBtn = document.getElementById('buzzButton');
+        if (buzzBtn) {
+            buzzBtn.disabled = false;
+            buzzBtn.innerHTML = '<i class="fas fa-bell"></i> اضغط الجرس!';
+        }
+    }
+
+    updateBuzzButton() {
+        const buzzBtn = document.getElementById('buzzButton');
+        if (!buzzBtn || this.gameType !== 'rapid_fire') return;
+
+        if (this.gameStatus === 'round_active') {
+            buzzBtn.classList.remove('u-hidden');
+            buzzBtn.disabled = false;
+            buzzBtn.innerHTML = '<i class="fas fa-bell"></i> اضغط الجرس!';
+        } else if (this.gameStatus === 'buzzed') {
+            buzzBtn.classList.remove('u-hidden');
+            buzzBtn.disabled = true;
+        } else {
+            buzzBtn.classList.add('u-hidden');
+        }
+    }
+
+    buzzIn() {
+        this.socket.emit('buzz_in', { game_id: this.gameId });
+        const buzzBtn = document.getElementById('buzzButton');
+        if (buzzBtn) {
+            buzzBtn.disabled = true;
+            buzzBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري...';
+        }
+    }
+
+    submitBuzzAnswer(idx) {
+        // Disable all option buttons
+        const optionButtons = document.querySelectorAll('.options-grid button');
+        optionButtons.forEach(btn => {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+        });
+
+        this.stopBuzzTimer();
+        this.socket.emit('submit_buzz_answer', {
+            game_id: this.gameId,
+            answer_idx: idx
+        });
+    }
+
+    startBuzzTimer(duration) {
+        this.stopBuzzTimer();
+        const buzzTimerEl = document.getElementById('buzz-timer');
+        if (!buzzTimerEl) return;
+
+        let timeLeft = duration;
+        buzzTimerEl.style.display = 'block';
+        buzzTimerEl.textContent = `⏱ ${timeLeft}`;
+
+        this.buzzTimerInterval = setInterval(() => {
+            timeLeft--;
+            buzzTimerEl.textContent = `⏱ ${timeLeft}`;
+            if (timeLeft <= 3) buzzTimerEl.style.color = 'var(--danger)';
+
+            if (timeLeft <= 0) {
+                this.stopBuzzTimer();
+                this.socket.emit('buzz_timeout', { game_id: this.gameId });
+            }
+        }, 1000);
+    }
+
+    stopBuzzTimer() {
+        if (this.buzzTimerInterval) {
+            clearInterval(this.buzzTimerInterval);
+            this.buzzTimerInterval = null;
+        }
+        const buzzTimerEl = document.getElementById('buzz-timer');
+        if (buzzTimerEl) {
+            buzzTimerEl.style.display = 'none';
+            buzzTimerEl.style.color = 'var(--primary)';
+        }
+    }
+
+    // --- Twenty Questions Logic ---
+
+    handleTwentyQuestionsStarted(data) {
+        this.thinker = data.thinker;
+        const isThinker = this.thinker === this.playerName;
+
+        // Hide other areas
+        document.getElementById('waiting-area').style.display = 'none';
+        document.getElementById('bus-area')?.classList.add('u-hidden');
+        document.getElementById('pictionary-area')?.classList.add('u-hidden');
+        document.getElementById('rapid-fire-area')?.classList.add('u-hidden');
+
+        const twentyQArea = document.getElementById('twenty-questions-area');
+        if (twentyQArea) twentyQArea.classList.remove('u-hidden');
+
+        const el = document.getElementById('item-display');
+        if (el) {
+            el.classList.remove('u-hidden');
+            el.style.display = 'block';
+
+            if (isThinker) {
+                // Thinker view: word input
+                let html = '<div class="item-category">أنت المفكر!</div>';
+                html += '<div style="margin: 1rem 0;">اختر كلمة للآخرين ليتخمّنوها</div>';
+                html += `<div class="word-suggestion" style="margin-bottom: 1rem; padding: 1rem; background: var(--surface); border-radius: 10px;">
+                    <strong>اقتراح:</strong> ${data.word_suggestion.word} (${data.word_suggestion.category})
+                    <button class="btn btn-outline" style="margin-right: 0.5rem;" onclick="window.gameInstance.useSuggestedWord('${data.word_suggestion.word}', '${data.word_suggestion.category}')">استخدم</button>
+                </div>`;
+                html += '<div class="input-group">';
+                html += '<input type="text" id="secret-word-input" placeholder="اكتب الكلمة السرية..." style="text-align: center; font-size: 1.2rem;">';
+                html += '<input type="text" id="secret-category-input" placeholder="الفئة (اختياري)..." style="text-align: center; margin-top: 0.5rem;">';
+                html += '</div>';
+                html += '<button class="btn btn-primary" style="margin-top: 1rem;" onclick="window.gameInstance.setSecretWord()">تم!</button>';
+                el.innerHTML = html;
+            } else {
+                // Guesser view: waiting
+                el.innerHTML = `
+                    <div class="item-category">في انتظار المفكر...</div>
+                    <div style="font-size: 1.5rem; margin-top: 1rem;">${this.thinker} يختار كلمة</div>
+                    <div class="animate-heartbeat" style="margin-top: 1rem; color: var(--secondary);"><i class="fas fa-hourglass-start"></i></div>
+                `;
+            }
+            setTimeout(() => el.classList.add('visible'), 100);
+        }
+
+        this.updateTwentyQButtonVisibility();
+    }
+
+    useSuggestedWord(word, category) {
+        document.getElementById('secret-word-input').value = word;
+        document.getElementById('secret-category-input').value = category;
+    }
+
+    setSecretWord() {
+        const word = document.getElementById('secret-word-input')?.value?.trim();
+        const category = document.getElementById('secret-category-input')?.value?.trim();
+        if (!word) {
+            Utils.showMessage('اكتب كلمة أولاً!', 'error');
+            return;
+        }
+        this.socket.emit('set_secret_word', {
+            game_id: this.gameId,
+            word: word,
+            category: category
+        });
+    }
+
+    handleSecretSet(data) {
+        const el = document.getElementById('item-display');
+        const isThinker = this.thinker === this.playerName;
+
+        if (el) {
+            if (isThinker) {
+                // Thinker sees the word and answer buttons
+                let html = '<div class="item-category">أنت المفكر</div>';
+                html += `<div class="item-name" style="font-size: 2rem;">${data.category || '???'}</div>`;
+                html += '<div style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-light);">انتظر الأسئلة واجب عليها</div>';
+                html += '<div id="answer-buttons" style="margin-top: 1rem; display: none;">';
+                html += '</div>';
+                html += '<div id="pending-question" style="margin-top: 1rem; font-style: italic; color: var(--secondary);"></div>';
+                el.innerHTML = html;
+            } else {
+                // Guessers see category and can ask questions
+                let html = `<div class="item-category">الفئة: ${data.category || '???'}</div>`;
+                html += '<div style="margin-top: 1rem;">اسأل سؤال بنعم/لا/يمكن</div>';
+                html += '<div class="input-group" style="margin-top: 1rem;">';
+                html += '<input type="text" id="question-input" placeholder="اكتب سؤالك..." style="text-align: center;">';
+                html += '</div>';
+                html += '<button class="btn btn-primary" style="margin-top: 0.5rem;" onclick="window.gameInstance.askQuestion()">اسأل</button>';
+                html += '<div style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">';
+                html += '<div class="input-group">';
+                html += '<input type="text" id="guess-input" placeholder="أو حاول التخمين المباشر..." style="text-align: center;">';
+                html += '</div>';
+                html += '<button class="btn btn-secondary" style="margin-top: 0.5rem;" onclick="window.gameInstance.makeGuess()">خمن!</button>';
+                html += '</div>';
+                html += '<div id="questions-history" style="margin-top: 1.5rem; max-height: 200px; overflow-y: auto;"></div>';
+                el.innerHTML = html;
+            }
+        }
+
+        this.updateTwentyQButtonVisibility();
+    }
+
+    askQuestion() {
+        const question = document.getElementById('question-input')?.value?.trim();
+        if (!question) {
+            Utils.showMessage('اكتب سؤالاً أولاً!', 'error');
+            return;
+        }
+        this.socket.emit('ask_question', {
+            game_id: this.gameId,
+            question: question
+        });
+        document.getElementById('question-input').value = '';
+    }
+
+    handleQuestionAsked(data) {
+        const historyEl = document.getElementById('questions-history');
+        if (historyEl) {
+            const div = document.createElement('div');
+            div.className = 'question-item';
+            div.style.cssText = 'padding: 0.5rem; border-bottom: 1px solid var(--border); text-align: right;';
+            div.innerHTML = `<strong>${data.player}:</strong> ${data.question} <span class="badge badge-team-1" style="margin-right: 0.5rem;">#${data.question_number}</span>`;
+            historyEl.appendChild(div);
+            historyEl.scrollTop = historyEl.scrollHeight;
+        }
+
+        // Show to thinker
+        if (this.thinker === this.playerName) {
+            const pendingEl = document.getElementById('pending-question');
+            const answerBtns = document.getElementById('answer-buttons');
+            if (pendingEl) pendingEl.textContent = `السؤال: "${data.question}"`;
+            if (answerBtns) {
+                answerBtns.style.display = 'flex';
+                answerBtns.style.gap = '0.5rem';
+                answerBtns.innerHTML = `
+                    <button class="btn btn-success" onclick="window.gameInstance.answerQuestion('yes')">نعم ✓</button>
+                    <button class="btn btn-danger" onclick="window.gameInstance.answerQuestion('no')">لا ✗</button>
+                    <button class="btn btn-outline" onclick="window.gameInstance.answerQuestion('maybe')">يمكن 🤔</button>
+                `;
+            }
+        }
+    }
+
+    answerQuestion(answer) {
+        this.socket.emit('answer_question', {
+            game_id: this.gameId,
+            answer: answer
+        });
+        const answerBtns = document.getElementById('answer-buttons');
+        if (answerBtns) answerBtns.style.display = 'none';
+    }
+
+    handleQuestionAnswered(data) {
+        const historyEl = document.getElementById('questions-history');
+        if (historyEl) {
+            // Find the last question and add answer
+            const items = historyEl.querySelectorAll('.question-item');
+            const lastItem = items[items.length - 1];
+            if (lastItem && !lastItem.querySelector('.answer')) {
+                const answerClass = data.answer === 'yes' ? 'badge-team-2' : (data.answer === 'no' ? 'badge-team-1' : 'badge-team-3');
+                const answerText = data.answer === 'yes' ? 'نعم' : (data.answer === 'no' ? 'لا' : 'يمكن');
+                lastItem.innerHTML += ` <span class="badge ${answerClass} answer" style="margin-right: 0.5rem;">${answerText}</span>`;
+            }
+        }
+    }
+
+    makeGuess() {
+        const guess = document.getElementById('guess-input')?.value?.trim();
+        if (!guess) {
+            Utils.showMessage('اكتب تخمينك أولاً!', 'error');
+            return;
+        }
+        this.socket.emit('make_guess', {
+            game_id: this.gameId,
+            guess: guess
+        });
+        document.getElementById('guess-input').value = '';
+    }
+
+    handleTwentyQuestionsEnded(data) {
+        const el = document.getElementById('item-display');
+        if (el) {
+            let html = `<div class="item-category">انتهت الجولة!</div>`;
+            html += `<div class="item-name" style="font-size: 2rem; color: ${data.winner === this.playerName ? 'var(--success)' : 'var(--primary)'};">الفائز: ${data.winner}</div>`;
+            html += `<div style="margin-top: 1rem;">${data.message}</div>`;
+            if (this.isHost) {
+                html += '<button class="btn btn-primary" style="margin-top: 1rem;" onclick="window.gameInstance.nextTwentyQRound()">الجولة التالية</button>';
+            }
+            el.innerHTML = html;
+        }
+        this.updateTwentyQButtonVisibility();
+    }
+
+    nextTwentyQRound() {
+        this.socket.emit('twenty_questions_next_round', { game_id: this.gameId });
+    }
+
+    updateTwentyQButtonVisibility() {
+        // Hide regular buttons during Twenty Questions
+        const btns = {
+            ready: document.getElementById('readyButton'),
+            guess: document.getElementById('guessButton'),
+            start: document.getElementById('startButton'),
+            next: document.getElementById('nextButton'),
+            pass: document.getElementById('passButton')
+        };
+
+        if (this.gameType === 'twenty_questions') {
+            Object.values(btns).forEach(b => { if (b) b.classList.add('u-hidden'); });
+        }
+    }
+
+    // --- Riddles Logic ---
+
+    handleRiddlesStarted() {
+        // Hide other areas
+        document.getElementById('waiting-area').style.display = 'none';
+        document.getElementById('bus-area')?.classList.add('u-hidden');
+        document.getElementById('pictionary-area')?.classList.add('u-hidden');
+        document.getElementById('rapid-fire-area')?.classList.add('u-hidden');
+        document.getElementById('twenty-questions-area')?.classList.add('u-hidden');
+
+        const riddlesArea = document.getElementById('riddles-area');
+        if (riddlesArea) riddlesArea.classList.remove('u-hidden');
+    }
+
+    updateRiddlesUI(data = null) {
+        const el = document.getElementById('item-display');
+        const riddleData = data || this.currentRiddle;
+        if (!el || !riddleData) return;
+
+        el.classList.remove('u-hidden');
+        el.style.display = 'block';
+
+        let html = `<div class="item-category">لغز #${this.roundNumber || 1}</div>`;
+        html += `<div class="item-name" style="font-size: 1.6rem; line-height: 1.6;">${riddleData.riddle}</div>`;
+        if (riddleData.category) {
+            html += `<div style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-light);">الفئة: ${riddleData.category}</div>`;
+        }
+
+        html += '<div style="margin-top: 1.5rem;">';
+        html += '<div class="input-group">';
+        html += '<input type="text" id="riddle-answer-input" placeholder="اكتب إجابتك..." style="text-align: center; font-size: 1.2rem;">';
+        html += '</div>';
+        html += '<button class="btn btn-primary" style="margin-top: 0.5rem;" onclick="window.gameInstance.submitRiddleAnswer()">إرسال الإجابة</button>';
+        html += '</div>';
+
+        html += '<div style="margin-top: 1rem;">';
+        html += '<button class="btn btn-outline" onclick="window.gameInstance.requestHint()">طلب تلميح (-2 نقاط)</button>';
+        html += '</div>';
+
+        if (riddleData.hints && riddleData.hints.length > 0) {
+            html += '<div id="hints-display" style="margin-top: 1rem;">';
+            riddleData.hints.forEach((hint) => {
+                html += `<div class="hint-item" style="padding: 0.5rem; background: var(--surface); border-radius: 8px; margin-top: 0.5rem;"><i class="fas fa-lightbulb" style="color: var(--warning);"></i> ${hint}</div>`;
+            });
+            html += '</div>';
+        }
+
+        if (this.isHost) {
+            html += '<div style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem;">';
+            html += '<button class="btn btn-outline" style="margin-left: 0.5rem;" onclick="window.gameInstance.skipRiddle()">تخطي اللغز</button>';
+            html += '<button class="btn btn-primary" onclick="window.gameInstance.nextRiddle()">اللغز التالي</button>';
+            html += '</div>';
+        }
+
+        el.innerHTML = html;
+        setTimeout(() => el.classList.add('visible'), 100);
+    }
+
+    submitRiddleAnswer() {
+        const answer = document.getElementById('riddle-answer-input')?.value?.trim();
+        if (!answer) {
+            Utils.showMessage('اكتب إجابة أولاً!', 'error');
+            return;
+        }
+        this.socket.emit('submit_riddle_answer', {
+            game_id: this.gameId,
+            answer: answer
+        });
+    }
+
+    clearRiddleAnswerInput() {
+        const input = document.getElementById('riddle-answer-input');
+        if (input) input.value = '';
+    }
+
+    requestHint() {
+        this.socket.emit('reveal_hint', { game_id: this.gameId });
+    }
+
+    displayHint(hint, remaining) {
+        const hintsDisplay = document.getElementById('hints-display');
+        if (hintsDisplay) {
+            const div = document.createElement('div');
+            div.className = 'hint-item animate-bounce-down';
+            div.style.cssText = 'padding: 0.5rem; background: var(--surface); border-radius: 8px; margin-top: 0.5rem;';
+            div.innerHTML = `<i class="fas fa-lightbulb" style="color: var(--warning);"></i> ${hint}`;
+            hintsDisplay.appendChild(div);
+        }
+    }
+
+    clearRiddleHints() {
+        const hintsDisplay = document.getElementById('hints-display');
+        if (hintsDisplay) hintsDisplay.innerHTML = '';
+    }
+
+    skipRiddle() {
+        this.socket.emit('skip_riddle', { game_id: this.gameId });
+    }
+
+    showRiddleAnswer(answer) {
+        const el = document.getElementById('item-display');
+        if (el) {
+            const answerDiv = document.createElement('div');
+            answerDiv.style.cssText = 'margin-top: 1rem; padding: 1rem; background: var(--primary); color: white; border-radius: 10px; font-size: 1.3rem; font-weight: 700;';
+            answerDiv.innerHTML = `<i class="fas fa-info-circle"></i> الإجابة: ${answer}`;
+            el.appendChild(answerDiv);
+        }
+    }
+
+    nextRiddle() {
+        this.socket.emit('next_riddle', { game_id: this.gameId });
+    }
+
     updateValidationProgress() {
         // Recalculate total votes from all cards
         const cards = document.querySelectorAll('.validation-card');
@@ -1740,308 +2137,6 @@ class GameEngine {
         document.getElementById('validation-progress-bar').style.width = `${progressPercent}%`;
         document.getElementById('votes-count').textContent = totalVotes;
         document.getElementById('total-answers').textContent = totalAnswers;
-    }
-
-    // --- Rapid Fire Methods ---
-
-    buzzTimerInterval = null;
-    buzzTimeRemaining = 0;
-
-    startBuzzTimer(duration) {
-        this.buzzTimeRemaining = duration;
-        const timerEl = document.getElementById('buzz-timer');
-        
-        if (timerEl) {
-            timerEl.textContent = this.buzzTimeRemaining;
-            timerEl.classList.remove('u-hidden');
-        }
-
-        if (this.buzzTimerInterval) clearInterval(this.buzzTimerInterval);
-
-        this.buzzTimerInterval = setInterval(() => {
-            this.buzzTimeRemaining--;
-            if (timerEl) timerEl.textContent = this.buzzTimeRemaining;
-
-            if (this.buzzTimeRemaining <= 0) {
-                this.stopBuzzTimer();
-                this.socket.emit('buzz_timeout', { game_id: this.gameId });
-            }
-        }, 1000);
-    }
-
-    stopBuzzTimer() {
-        if (this.buzzTimerInterval) {
-            clearInterval(this.buzzTimerInterval);
-            this.buzzTimerInterval = null;
-        }
-        const timerEl = document.getElementById('buzz-timer');
-        if (timerEl) timerEl.classList.add('u-hidden');
-    }
-
-    showBuzzedPlayer(playerName) {
-        const indicator = document.getElementById('buzzed-player-indicator');
-        if (indicator) {
-            indicator.textContent = `🔔 ${playerName} يفكر...`;
-            indicator.classList.remove('u-hidden');
-        }
-        // Disable buzz button for everyone
-        this.disableBuzzButton();
-    }
-
-    hideBuzzedPlayer() {
-        const indicator = document.getElementById('buzzed-player-indicator');
-        if (indicator) indicator.classList.add('u-hidden');
-        // Re-enable buzz button
-        this.enableBuzzButton();
-    }
-
-    disableBuzzButton() {
-        const btn = document.getElementById('buzzButton');
-        if (btn) {
-            btn.disabled = true;
-            btn.classList.add('disabled');
-        }
-    }
-
-    enableBuzzButton() {
-        const btn = document.getElementById('buzzButton');
-        if (btn) {
-            btn.disabled = false;
-            btn.classList.remove('disabled');
-        }
-    }
-
-    buzzIn() {
-        this.socket.emit('buzz_in', { game_id: this.gameId });
-    }
-
-    submitBuzzAnswer(idx) {
-        // Disable all option buttons
-        const optionButtons = document.querySelectorAll('.options-grid button');
-        optionButtons.forEach(btn => {
-            btn.disabled = true;
-            btn.style.opacity = '0.5';
-        });
-
-        this.socket.emit('submit_buzz_answer', {
-            game_id: this.gameId,
-            answer_idx: idx
-        });
-    }
-
-    skipRapidQuestion() {
-        this.socket.emit('skip_rapid_question', { game_id: this.gameId });
-    }
-
-    updateScores(scores) {
-        if (!scores) return;
-        
-        const scoresEl = document.getElementById('scores-list');
-        if (scoresEl) {
-            const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-            scoresEl.innerHTML = sorted.map(([name, score]) => 
-                `<li><span class="player-name">${name}</span><span class="score">${score}</span></li>`
-            ).join('');
-        }
-    }
-
-    showFinalScores(scores) {
-        const sorted = Object.entries(scores || {}).sort((a, b) => b[1] - a[1]);
-        const winner = sorted[0];
-        
-        if (winner) {
-            Utils.showMessage(`🏆 الفائز: ${winner[0]} بـ ${winner[1]} نقطة!`, 'info');
-        }
-        
-        this.setGameStatus('ended');
-    }
-
-    // --- Twenty Questions Methods ---
-
-    updateTwentyQPhase(phase) {
-        const setupArea = document.getElementById('twenty-q-setup-area');
-        const askingArea = document.getElementById('twenty-q-asking-area');
-        const guessingArea = document.getElementById('twenty-q-guessing-area');
-        
-        // Hide all first
-        if (setupArea) setupArea.classList.add('u-hidden');
-        if (askingArea) askingArea.classList.add('u-hidden');
-        if (guessingArea) guessingArea.classList.add('u-hidden');
-        
-        // Show appropriate phase
-        if (phase === 'setup' && setupArea) setupArea.classList.remove('u-hidden');
-        if (phase === 'asking' && askingArea) askingArea.classList.remove('u-hidden');
-        if (phase === 'guessing' && guessingArea) guessingArea.classList.remove('u-hidden');
-    }
-
-    showCategoryHint(category) {
-        const hintEl = document.getElementById('category-hint');
-        if (hintEl && category) {
-            hintEl.textContent = `الفئة: ${category}`;
-            hintEl.classList.remove('u-hidden');
-        }
-    }
-
-    addQuestionToHistory(question, asker) {
-        const historyEl = document.getElementById('questions-history');
-        if (historyEl) {
-            const qDiv = document.createElement('div');
-            qDiv.className = 'question-item';
-            qDiv.innerHTML = `<span class="asker">${asker}:</span> ${question}`;
-            historyEl.appendChild(qDiv);
-        }
-    }
-
-    updateQuestionAnswer(answer) {
-        const historyEl = document.getElementById('questions-history');
-        if (historyEl) {
-            const lastQ = historyEl.lastElementChild;
-            if (lastQ) {
-                const answerText = answer === 'yes' ? '✓ نعم' : 
-                                  answer === 'no' ? '✗ لا' : '~ ربما';
-                lastQ.innerHTML += ` <span class="answer">${answerText}</span>`;
-            }
-        }
-    }
-
-    updateQuestionsRemaining(remaining) {
-        const counterEl = document.getElementById('questions-remaining');
-        if (counterEl) {
-            counterEl.textContent = remaining;
-        }
-    }
-
-    showFinalResult(data) {
-        const resultEl = document.getElementById('twenty-q-result');
-        if (resultEl && data.secret_word) {
-            resultEl.innerHTML = `<div class="result-reveal">الكلمة السرية: <strong>${data.secret_word}</strong></div>`;
-            resultEl.classList.remove('u-hidden');
-        }
-        this.setGameStatus('ended');
-    }
-
-    getWordSuggestion() {
-        this.socket.emit('get_word_suggestion', { game_id: this.gameId });
-    }
-
-    setSecretWord() {
-        const wordInput = document.getElementById('secret-word-input');
-        const catInput = document.getElementById('secret-category-input');
-        
-        if (wordInput && wordInput.value.trim()) {
-            this.socket.emit('set_secret_word', {
-                game_id: this.gameId,
-                word: wordInput.value.trim(),
-                category: catInput ? catInput.value.trim() : null
-            });
-        }
-    }
-
-    askTwentyQ() {
-        const input = document.getElementById('question-input');
-        if (input && input.value.trim()) {
-            this.socket.emit('ask_twenty_q', {
-                game_id: this.gameId,
-                question: input.value.trim()
-            });
-            input.value = '';
-        }
-    }
-
-    answerTwentyQ(answer) {
-        this.socket.emit('answer_twenty_q', {
-            game_id: this.gameId,
-            answer: answer
-        });
-    }
-
-    makeTwentyQGuess() {
-        const input = document.getElementById('guess-input');
-        if (input && input.value.trim()) {
-            this.socket.emit('make_twenty_q_guess', {
-                game_id: this.gameId,
-                guess: input.value.trim()
-            });
-            input.value = '';
-        }
-    }
-
-    forfeitTwentyQ() {
-        this.socket.emit('forfeit_twenty_q', { game_id: this.gameId });
-    }
-
-    // --- Riddles Methods ---
-
-    showRiddle(data) {
-        const riddleEl = document.getElementById('riddle-text');
-        const riddleNumEl = document.getElementById('riddle-number');
-        const riddleCatEl = document.getElementById('riddle-category');
-        
-        if (riddleEl) riddleEl.textContent = data.riddle;
-        if (riddleNumEl) riddleNumEl.textContent = data.riddle_number;
-        if (riddleCatEl) riddleCatEl.textContent = data.category || '';
-        
-        // Show riddle area
-        const riddlesArea = document.getElementById('riddles-area');
-        if (riddlesArea) riddlesArea.classList.remove('u-hidden');
-        
-        // Hide answer
-        const answerEl = document.getElementById('riddle-answer');
-        if (answerEl) answerEl.classList.add('u-hidden');
-        
-        // Enable buzz button
-        this.enableBuzzButton();
-    }
-
-    showRiddleBuzzedPlayer(playerName) {
-        const indicator = document.getElementById('riddle-buzzed-indicator');
-        if (indicator) {
-            indicator.textContent = `🔔 ${playerName} يفكر...`;
-            indicator.classList.remove('u-hidden');
-        }
-        this.disableBuzzButton();
-    }
-
-    hideRiddleBuzzedPlayer() {
-        const indicator = document.getElementById('riddle-buzzed-indicator');
-        if (indicator) indicator.classList.add('u-hidden');
-        this.enableBuzzButton();
-    }
-
-    showRiddleAnswer(answer) {
-        const answerEl = document.getElementById('riddle-answer');
-        if (answerEl) {
-            answerEl.innerHTML = `<strong>الإجابة:</strong> ${answer}`;
-            answerEl.classList.remove('u-hidden');
-        }
-        this.disableBuzzButton();
-    }
-
-    riddlesBuzzIn() {
-        this.socket.emit('riddles_buzz_in', { game_id: this.gameId });
-    }
-
-    submitRiddleAnswer() {
-        const input = document.getElementById('riddle-answer-input');
-        if (input && input.value.trim()) {
-            this.socket.emit('submit_riddle_answer', {
-                game_id: this.gameId,
-                answer: input.value.trim()
-            });
-            input.value = '';
-        }
-    }
-
-    skipRiddle() {
-        this.socket.emit('skip_riddle', { game_id: this.gameId });
-    }
-
-    nextRiddle() {
-        this.socket.emit('next_riddle', { game_id: this.gameId });
-    }
-
-    revealRiddleAnswer() {
-        this.socket.emit('reveal_riddle_answer', { game_id: this.gameId });
     }
 }
 

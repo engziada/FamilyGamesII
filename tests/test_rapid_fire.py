@@ -1,283 +1,347 @@
 """
-Unit tests for Rapid Fire game model.
+Unit tests for Rapid Fire (الأسئلة السريعة) game model.
 """
 import pytest
-import sys
-import os
-
-# Add project root to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from games.rapid_fire.models import RapidFireGame
 
 
-class TestRapidFireGame:
-    """Test cases for RapidFireGame class."""
+def make_game() -> RapidFireGame:
+    """Create a test game with a mock question pre-loaded."""
+    game = RapidFireGame('rf1', 'host', {
+        'teams': False,
+        'difficulty': 'all',
+        'time_limit': 30,
+    })
+    game.add_player('player2')
+    # Inject a known question so tests are deterministic
+    game.current_question = {
+        'question': 'ما هي عاصمة مصر؟',
+        'options': ['القاهرة', 'الإسكندرية', 'أسوان', 'الأقصر'],
+        'answer': 0,
+        'category': 'جغرافيا',
+        'difficulty': 'easy',
+    }
+    return game
 
-    def test_game_initialization(self):
-        """Test game initializes with correct default values."""
-        game = RapidFireGame('test_room', 'host_player')
-        
-        assert game.game_id == 'test_room'
-        assert game.host == 'host_player'
-        assert game.status == 'waiting'
-        assert len(game.players) == 1
-        assert game.players[0]['name'] == 'host_player'
-        assert game.players[0]['isHost'] is True
-        assert game.game_type == 'rapid_fire'
-        assert game.current_question is None
-        assert game.question_active is False
-        assert game.buzzed_player is None
 
-    def test_add_player(self):
-        """Test adding players to the game."""
-        game = RapidFireGame('test_room', 'host_player')
-        game.add_player('player2')
-        
-        assert len(game.players) == 2
-        assert game.players[1]['name'] == 'player2'
-        assert game.players[1]['isHost'] is False
+# ── Player Management ────────────────────────────────────────────────
 
-    def test_add_player_room_full(self):
-        """Test that adding more than 8 players raises error."""
-        game = RapidFireGame('test_room', 'host_player')
-        for i in range(2, 9):
-            game.add_player(f'player{i}')
-        
-        assert len(game.players) == 8
-        
-        with pytest.raises(ValueError, match="الغرفة ممتلئة"):
-            game.add_player('player9')
 
-    def test_add_duplicate_player(self):
-        """Test that adding duplicate player raises error."""
-        game = RapidFireGame('test_room', 'host_player')
-        
-        with pytest.raises(ValueError, match="اللاعب موجود بالفعل"):
-            game.add_player('host_player')
+def test_add_player():
+    game = RapidFireGame('rf1', 'host')
+    game.add_player('p2')
+    assert len(game.players) == 2
+    assert game.players[1]['name'] == 'p2'
 
-    def test_remove_player(self):
-        """Test removing a player from the game."""
-        game = RapidFireGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.remove_player('player2')
-        
-        assert len(game.players) == 1
-        assert not any(p['name'] == 'player2' for p in game.players)
 
-    def test_remove_host_transfers_host(self):
-        """Test that removing host transfers host to another player."""
-        game = RapidFireGame('test_room', 'host_player')
-        game.add_player('player2')
-        
-        result = game.remove_player('host_player')
-        
-        assert result is True  # Host was transferred
-        assert game.host == 'player2'
-        assert game.players[0]['isHost'] is True
+def test_add_player_duplicate_raises():
+    game = RapidFireGame('rf1', 'host')
+    with pytest.raises(ValueError, match='موجود'):
+        game.add_player('host')
 
-    def test_start_game(self, sample_trivia_questions):
-        """Test starting the game."""
-        game = RapidFireGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.test_questions = sample_trivia_questions
+
+def test_add_player_full_raises():
+    game = RapidFireGame('rf1', 'host')
+    for i in range(7):
+        game.add_player(f'p{i}')
+    with pytest.raises(ValueError, match='ممتلئة'):
+        game.add_player('extra')
+
+
+def test_remove_player():
+    game = RapidFireGame('rf1', 'host')
+    game.add_player('p2')
+    game.remove_player('p2')
+    assert len(game.players) == 1
+
+
+def test_remove_host_transfers():
+    game = RapidFireGame('rf1', 'host')
+    game.add_player('p2')
+    game.remove_player('host')
+    assert game.host == 'p2'
+    assert game.players[0]['isHost'] is True
+
+
+# ── Game Start ───────────────────────────────────────────────────────
+
+
+def test_start_game_needs_two_players():
+    game = RapidFireGame('rf1', 'host')
+    with pytest.raises(ValueError, match='غير كافي'):
         game.start_game()
-        
-        assert game.status == 'playing'
-        assert game.current_question is not None
-        assert game.question_active is True
-        assert game.questions_asked == 1
 
-    def test_start_game_insufficient_players(self):
-        """Test that starting with less than 2 players raises error."""
-        game = RapidFireGame('test_room', 'host_player')
-        
-        with pytest.raises(ValueError, match="عدد اللاعبين غير كافي"):
-            game.start_game()
 
-    def test_buzz_registers_first_player(self, sample_trivia_questions):
-        """Test that first buzz is registered successfully."""
-        game = RapidFireGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.test_questions = sample_trivia_questions
-        game.start_game()
-        
-        result = game.buzz('host_player')
-        
-        assert result['success'] is True
-        assert game.buzzed_player == 'host_player'
-        assert game.question_active is False  # Locked for others
+def test_start_game_sets_status():
+    game = make_game()
+    game.start_game()
+    assert game.status == 'round_active'
+    assert game.question_active is True
 
-    def test_buzz_rejected_after_first_buzz(self, sample_trivia_questions):
-        """Test that subsequent buzzes are rejected."""
-        game = RapidFireGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.test_questions = sample_trivia_questions
-        game.start_game()
-        
-        game.buzz('host_player')
-        result = game.buzz('player2')
-        
-        assert result['success'] is False
-        assert game.buzzed_player == 'host_player'
 
-    def test_buzz_rejected_already_buzzed(self, sample_trivia_questions):
-        """Test that same player can't buzz twice in same round."""
-        game = RapidFireGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.test_questions = sample_trivia_questions
-        game.start_game()
-        
-        game.buzz('host_player')
-        # Simulate wrong answer unlocking
-        game.question_active = True
-        game.buzzed_player = None
-        
-        result = game.buzz('host_player')
-        
-        assert result['success'] is False
-        assert 'لقد ضغطت بالفعل' in result['message']
+# ── Buzz Mechanics ───────────────────────────────────────────────────
 
-    def test_submit_answer_correct(self, sample_trivia_questions):
-        """Test submitting correct answer."""
-        game = RapidFireGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.test_questions = sample_trivia_questions
-        game.start_game()
-        game.buzz('host_player')
-        
-        # Get the correct answer index
-        correct_idx = game.current_question['answer']
-        result = game.submit_answer('host_player', correct_idx)
-        
-        assert result['correct'] is True
-        assert result['points'] > 0
-        assert 'host_player' in game.scores
-        assert game.scores['host_player'] > 0
 
-    def test_submit_answer_wrong(self, sample_trivia_questions):
-        """Test submitting wrong answer unlocks for others."""
-        game = RapidFireGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.test_questions = sample_trivia_questions
-        game.start_game()
-        game.buzz('host_player')
-        
-        # Submit wrong answer
-        wrong_idx = (game.current_question['answer'] + 1) % 4
-        result = game.submit_answer('host_player', wrong_idx)
-        
-        assert result['correct'] is False
-        assert game.question_active is True  # Unlocked for others
-        assert game.buzzed_player is None
+def test_buzz_registers_first_player():
+    game = make_game()
+    game.status = 'round_active'
+    game.question_active = True
 
-    def test_buzz_timeout(self, sample_trivia_questions):
-        """Test buzz timeout unlocks for other players."""
-        game = RapidFireGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.test_questions = sample_trivia_questions
-        game.start_game()
-        game.buzz('host_player')
-        
-        result = game.buzz_timeout()
-        
-        assert result['unlocked'] is True
-        assert game.buzzed_player is None
-        assert game.question_active is True
+    assert game.buzz('host') is True
+    assert game.buzzed_player == 'host'
+    assert game.status == 'buzzed'
 
-    def test_next_question_resets_state(self, sample_trivia_questions):
-        """Test that next_question resets buzz state."""
-        game = RapidFireGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.test_questions = sample_trivia_questions
-        game.start_game()
-        game.buzz('host_player')
-        
-        game.next_question()
-        
-        assert game.buzzed_player is None
-        assert game.players_answered == set()
-        assert game.question_active is True
 
-    def test_game_ends_after_max_questions(self, sample_trivia_questions):
-        """Test game ends after all questions asked."""
-        game = RapidFireGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.settings['questions_per_game'] = 2
-        game.test_questions = sample_trivia_questions
-        game.start_game()
-        
-        # Answer first question
-        game.next_question()
-        # Answer second question
-        result = game.next_question()
-        
-        # Should be None after max questions
-        assert result is None
-        assert game.status == 'ended'
+def test_buzz_rejects_second_player():
+    game = make_game()
+    game.status = 'round_active'
+    game.question_active = True
 
-    def test_to_dict_hides_answer(self, sample_trivia_questions):
-        """Test that to_dict hides the answer by default."""
-        game = RapidFireGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.test_questions = sample_trivia_questions
-        game.start_game()
-        
-        state = game.to_dict()
-        
-        assert state['current_question'] is not None
-        assert 'answer' not in state['current_question']
-        assert 'answer_text' not in state['current_question']
+    game.buzz('host')
+    assert game.buzz('player2') is False
+    assert game.buzzed_player == 'host'
 
-    def test_to_dict_includes_answer_when_requested(self, sample_trivia_questions):
-        """Test that to_dict includes answer when requested."""
-        game = RapidFireGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.test_questions = sample_trivia_questions
-        game.start_game()
-        
-        state = game.to_dict(include_answer=True)
-        
-        assert 'answer' in state['current_question']
-        assert 'answer_text' in state['current_question']
 
-    def test_points_calculation_quick_answer(self, sample_trivia_questions):
-        """Test that quick answer (<=3s) gives 10 points."""
-        game = RapidFireGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.test_questions = sample_trivia_questions
-        game.start_game()
-        game.buzz('host_player')
-        
-        # Simulate quick answer by not waiting
-        correct_idx = game.current_question['answer']
-        result = game.submit_answer('host_player', correct_idx)
-        
-        # Should be 10 points for quick answer (elapsed <= 3s)
-        assert result['points'] == 10
+def test_buzz_rejected_when_question_inactive():
+    game = make_game()
+    game.status = 'round_active'
+    game.question_active = False
 
-    def test_transfer_host(self):
-        """Test host transfer functionality."""
-        game = RapidFireGame('test_room', 'host_player')
-        game.add_player('player2')
-        
-        game.transfer_host('player2')
-        
-        assert game.host == 'player2'
-        assert game.players[1]['isHost'] is True
-        assert game.players[0]['isHost'] is False
+    assert game.buzz('host') is False
 
-    def test_from_dict_reconstruction(self, sample_trivia_questions):
-        """Test game reconstruction from dictionary."""
-        game = RapidFireGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.test_questions = sample_trivia_questions
-        game.start_game()
-        
-        state = game.to_dict(include_answer=True)
-        reconstructed = RapidFireGame.from_dict('test_room', state)
-        
-        assert reconstructed.game_id == game.game_id
-        assert reconstructed.host == game.host
-        assert reconstructed.status == game.status
-        assert len(reconstructed.players) == len(game.players)
+
+def test_buzz_rejected_after_wrong_answer():
+    """Player who already answered wrong cannot buzz again on same question."""
+    game = make_game()
+    game.status = 'round_active'
+    game.question_active = True
+
+    game.buzz('host')
+    game.submit_answer('host', 3)  # wrong answer
+    assert 'host' in game.players_buzzed_wrong
+
+    # Host tries to buzz again - rejected
+    assert game.buzz('host') is False
+
+    # Player2 can still buzz
+    assert game.buzz('player2') is True
+
+
+# ── Answer Submission ────────────────────────────────────────────────
+
+
+def test_submit_answer_correct():
+    game = make_game()
+    game.status = 'round_active'
+    game.question_active = True
+
+    game.buzz('host')
+    result = game.submit_answer('host', 0)  # القاهرة = correct
+
+    assert result is True
+    assert game.question_active is False
+    assert game.scores.get('host', 0) == 10
+
+
+def test_submit_answer_wrong():
+    game = make_game()
+    game.status = 'round_active'
+    game.question_active = True
+
+    game.buzz('host')
+    result = game.submit_answer('host', 2)  # أسوان = wrong
+
+    assert result is False
+    assert game.question_active is True  # question still active for others
+    assert game.buzzed_player is None
+    assert 'host' in game.players_buzzed_wrong
+    assert game.scores.get('host', 0) == 0
+
+
+def test_submit_answer_wrong_player_rejected():
+    """Only the buzzed player can submit an answer."""
+    game = make_game()
+    game.status = 'round_active'
+    game.question_active = True
+
+    game.buzz('host')
+    result = game.submit_answer('player2', 0)
+    assert result is False
+
+
+# ── All Players Wrong ────────────────────────────────────────────────
+
+
+def test_all_players_wrong_ends_question():
+    game = make_game()
+    game.status = 'round_active'
+    game.question_active = True
+
+    # Host buzzes and answers wrong
+    game.buzz('host')
+    game.submit_answer('host', 2)
+
+    # Player2 buzzes and answers wrong
+    game.buzz('player2')
+    game.submit_answer('player2', 3)
+
+    # All players exhausted
+    assert game.question_active is False
+
+
+# ── Buzz Timeout ─────────────────────────────────────────────────────
+
+
+def test_buzz_timeout_reopens_for_others():
+    game = make_game()
+    game.status = 'round_active'
+    game.question_active = True
+
+    game.buzz('host')
+    game.buzz_timeout()
+
+    assert game.buzzed_player is None
+    assert 'host' in game.players_buzzed_wrong
+    assert game.status == 'round_active'
+    assert game.question_active is True  # player2 can still buzz
+
+
+def test_buzz_timeout_all_exhausted():
+    game = make_game()
+    game.status = 'round_active'
+    game.question_active = True
+
+    # Host buzzes and times out
+    game.buzz('host')
+    game.buzz_timeout()
+
+    # Player2 buzzes and times out
+    game.buzz('player2')
+    game.buzz_timeout()
+
+    assert game.question_active is False
+
+
+# ── Question Timeout ─────────────────────────────────────────────────
+
+
+def test_question_timeout():
+    game = make_game()
+    game.status = 'round_active'
+    game.question_active = True
+
+    game.question_timeout()
+
+    assert game.question_active is False
+    assert game.buzzed_player is None
+
+
+# ── Next Question ────────────────────────────────────────────────────
+
+
+def test_next_question_resets_state():
+    game = make_game()
+    game.status = 'round_active'
+    game.question_active = True
+
+    game.buzz('host')
+    game.submit_answer('host', 0)  # correct
+
+    old_question = game.current_question
+    game.next_question()
+
+    assert game.question_active is True
+    assert game.buzzed_player is None
+    assert game.players_buzzed_wrong == set()
+    assert game.status == 'round_active'
+
+
+# ── Scoring ──────────────────────────────────────────────────────────
+
+
+def test_scoring_multiple_rounds():
+    game = make_game()
+    game.status = 'round_active'
+    game.question_active = True
+
+    # Host answers correctly twice
+    game.buzz('host')
+    game.submit_answer('host', 0)
+    assert game.scores['host'] == 10
+
+    game.next_question()
+    game.current_question = {
+        'question': 'test', 'options': ['a', 'b'], 'answer': 0,
+        'category': 'test', 'difficulty': 'easy'
+    }
+    game.buzz('host')
+    game.submit_answer('host', 0)
+    assert game.scores['host'] == 20
+
+
+def test_team_scoring():
+    game = RapidFireGame('rf1', 'host', {'teams': True, 'time_limit': 30})
+    game.add_player('player2')
+    game.current_question = {
+        'question': 'test', 'options': ['a', 'b'], 'answer': 0,
+        'category': 'test', 'difficulty': 'easy'
+    }
+    game.status = 'round_active'
+    game.question_active = True
+
+    # player2 is team 1 (auto-assigned)
+    game.buzz('player2')
+    game.submit_answer('player2', 0)
+
+    assert game.scores['player2'] == 10
+    # Team scores should be updated
+    p2 = next(p for p in game.players if p['name'] == 'player2')
+    team_id = str(p2['team'])
+    assert game.team_scores[team_id] == 10
+
+
+# ── Serialization ────────────────────────────────────────────────────
+
+
+def test_to_dict_hides_answer():
+    game = make_game()
+    game.status = 'round_active'
+    game.question_active = True
+
+    state = game.to_dict(include_answer=False)
+    assert state['game_type'] == 'rapid_fire'
+    assert state['current_question'] is not None
+    assert 'answer' not in state['current_question']
+
+
+def test_to_dict_includes_answer():
+    game = make_game()
+    game.status = 'round_active'
+    game.question_active = True
+
+    state = game.to_dict(include_answer=True)
+    assert state['current_question']['answer'] == 0
+
+
+def test_to_dict_includes_buzz_state():
+    game = make_game()
+    game.status = 'round_active'
+    game.question_active = True
+    game.buzz('host')
+
+    state = game.to_dict()
+    assert state['buzzed_player'] == 'host'
+    assert state['question_active'] is True
+    assert state['status'] == 'buzzed'
+
+
+def test_to_dict_includes_players_buzzed_wrong():
+    game = make_game()
+    game.status = 'round_active'
+    game.question_active = True
+
+    game.buzz('host')
+    game.submit_answer('host', 2)  # wrong
+
+    state = game.to_dict()
+    assert 'host' in state['players_buzzed_wrong']

@@ -1,417 +1,334 @@
 """
-Twenty Questions game models.
-One player thinks of something, others ask yes/no questions to guess it.
+Twenty Questions (عشرون سؤال) - Guess the word in 20 yes/no questions.
+
+One player (the thinker) picks a secret word. Other players ask yes/no
+questions to narrow down the answer. After each question the thinker
+answers yes/no/maybe. Players can attempt a final guess at any time.
+Game ends when someone guesses correctly or 20 questions are exhausted.
 """
-from datetime import datetime
-import random
 import json
-import os
-from services.data_service import get_data_service
+import random
+from typing import Optional
 
 
 class TwentyQuestionsGame:
-    """Twenty Questions game where guessers ask yes/no questions.
-    
-    Game flow:
-    1. Thinker picks a secret word (or gets random suggestion)
-    2. Guessers ask yes/no/maybe questions
-    3. After 20 questions, guessers must make final guess
-    4. Correct guess = guessers win; Wrong = thinker wins
-    """
-    
+    """Twenty Questions game: deduction through yes/no questions."""
+
     MAX_QUESTIONS = 20
-    
-    def __init__(self, game_id: str, host: str, settings: dict = None):
-        """Initialize a Twenty Questions game.
-        
-        Args:
-            game_id: Unique game identifier
-            host: Name of the host player
-            settings: Game settings dictionary
-        """
+
+    def __init__(self, game_id: str, host: str, settings: Optional[dict] = None):
         self.game_id = game_id
         self.host = host
-        self.players = [{'name': host, 'isHost': True}]
+        self.players: list[dict] = [{'name': host, 'isHost': True, 'team': 1}]
         self.game_type = 'twenty_questions'
-        self.status = 'waiting'
-        self.scores = {}
-        
-        # Game state
-        self.thinker = None  # Player who knows the secret
+        self.status = 'waiting'  # waiting | thinking | asking | ended
+        self.scores: dict[str, int] = {}
+        self.team_scores: dict[str, int] = {'1': 0, '2': 0}
+        self.current_player = ''
+
+        self.settings = settings or {
+            'teams': False,
+            'time_limit': 60,
+        }
+
+        # Round state
+        self.thinker: Optional[str] = None
+        self.secret_word: Optional[str] = None
+        self.secret_category: Optional[str] = None
+        self.questions_asked: list[dict] = []  # [{player, question, answer}]
+        self.question_count = 0
+        self.current_asker: Optional[str] = None  # who is currently asking
+        self.guesses_made: dict[str, list[str]] = {}  # {player: [guesses]}
+        self.round_number = 0
+        self.thinker_index = 0  # rotate thinker each round
+
+        # Word pool
+        self.word_pool: list[dict] = []
+        self._load_word_pool()
+
+    # ── Player management ─────────────────────────────────────────────
+
+    def add_player(self, player_name: str) -> None:
+        """Add a player to the game lobby."""
+        if len(self.players) >= 8:
+            raise ValueError("غرفة اللعب ممتلئة")
+        if any(p['name'] == player_name for p in self.players):
+            raise ValueError("اللاعب موجود بالفعل")
+
+        team = 1
+        if self.settings.get('teams'):
+            t1 = len([p for p in self.players if p.get('team') == 1])
+            t2 = len([p for p in self.players if p.get('team') == 2])
+            team = 2 if t2 < t1 else 1
+
+        self.players.append({'name': player_name, 'isHost': False, 'team': team})
+
+    def remove_player(self, player_name: str) -> None:
+        """Remove a player; transfer host if needed."""
+        self.players = [p for p in self.players if p['name'] != player_name]
+        self.scores.pop(player_name, None)
+        self.guesses_made.pop(player_name, None)
+
+        if player_name == self.thinker:
+            # Thinker left — end round, no one wins
+            self.status = 'ended'
+
+        if player_name == self.host and self.players:
+            self.host = self.players[0]['name']
+            self.players[0]['isHost'] = True
+
+    # ── Game flow ─────────────────────────────────────────────────────
+
+    def start_game(self) -> None:
+        """Start the game — first round begins with thinker selection."""
+        if len(self.players) < 2:
+            raise ValueError("عدد اللاعبين غير كافي")
+        self.round_number = 1
+        self._start_new_round()
+
+    def _start_new_round(self) -> None:
+        """Begin a new round with the next thinker."""
+        self.thinker_index = self.thinker_index % len(self.players)
+        self.thinker = self.players[self.thinker_index]['name']
+        self.thinker_index += 1
         self.secret_word = None
         self.secret_category = None
         self.questions_asked = []
-        self.current_question = None
         self.question_count = 0
-        self.game_phase = 'setup'  # setup, asking, guessing, ended
-        
-        # Settings
-        self.settings = settings or {
-            'thinker_mode': 'host',  # 'host' or 'rotate'
-            'word_source': 'random',  # 'random' or 'thinker_chooses'
-            'max_questions': 20
-        }
-        
-        # Load words
-        self.words = self._load_words()
-        self.test_words = None  # For unit testing
-        
-        # Data service for word fetching
-        self.data_service = get_data_service()
-    
-    def _load_words(self) -> list:
-        """Load words from JSON file.
-        
-        Returns:
-            List of word objects
-        """
-        words_path = os.path.join('static', 'data', 'twenty_questions_words.json')
-        try:
-            with open(words_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            return []
-    
-    def add_player(self, player_name: str) -> None:
-        """Add a player to the game.
-        
+        self.current_asker = None
+        self.guesses_made = {}
+        self.status = 'thinking'  # thinker must set a word
+
+    def next_round(self) -> None:
+        """Advance to next round with new thinker."""
+        self.round_number += 1
+        self._start_new_round()
+
+    # ── Secret word ───────────────────────────────────────────────────
+
+    def set_secret(self, player_name: str, word: str, category: str = '') -> bool:
+        """Thinker sets the secret word.
+
         Args:
-            player_name: Name of the player to add
-            
-        Raises:
-            ValueError: If room is full or player already exists
+            player_name: Must be the thinker.
+            word: The secret word.
+            category: Optional category hint.
+
+        Returns:
+            True if set successfully.
         """
-        if len(self.players) >= 8:
-            raise ValueError("الغرفة ممتلئة")
-        if any(p['name'] == player_name for p in self.players):
-            raise ValueError("اللاعب موجود بالفعل")
-        
-        self.players.append({'name': player_name, 'isHost': False})
-    
-    def remove_player(self, player_name: str) -> bool:
-        """Remove a player from the game.
-        
+        if player_name != self.thinker:
+            return False
+        if self.status != 'thinking':
+            return False
+        if not word or not word.strip():
+            return False
+
+        self.secret_word = word.strip()
+        self.secret_category = category.strip() if category else ''
+        self.status = 'asking'
+        return True
+
+    def get_random_word(self) -> dict:
+        """Get a random word suggestion for the thinker."""
+        if self.word_pool:
+            return random.choice(self.word_pool)
+        return {'word': 'قطة', 'category': 'حيوان'}
+
+    # ── Question mechanics ────────────────────────────────────────────
+
+    def ask_question(self, player_name: str, question: str) -> bool:
+        """A player asks a yes/no question.
+
         Args:
-            player_name: Name of the player to remove
-            
+            player_name: The player asking (cannot be the thinker).
+            question: The question text.
+
         Returns:
-            True if host was transferred, False otherwise
+            True if question accepted.
         """
-        was_host = any(p['name'] == player_name and p.get('isHost', True) for p in self.players)
-        
-        self.players = [p for p in self.players if p['name'] != player_name]
-        
-        if player_name in self.scores:
-            del self.scores[player_name]
-        
-        # Transfer host if needed
-        if was_host and self.players:
-            new_host = self.players[0]['name']
-            self.transfer_host(new_host)
-            return True
-        
-        return False
-    
-    def transfer_host(self, new_host: str) -> None:
-        """Transfer host privileges to another player.
-        
-        Args:
-            new_host: Name of the new host
-        """
-        for player in self.players:
-            player['isHost'] = (player['name'] == new_host)
-        self.host = new_host
-    
-    def start_game(self) -> dict:
-        """Start the game and assign thinker.
-        
-        Returns:
-            dict with game setup info
-            
-        Raises:
-            ValueError: If not enough players
-        """
-        if len(self.players) < 2:
-            raise ValueError("عدد اللاعبين غير كافي")
-        
-        self.status = 'playing'
-        self.game_phase = 'setup'
-        self.question_count = 0
-        self.questions_asked = []
-        
-        # Assign thinker (host by default, or random)
-        if self.settings.get('thinker_mode') == 'host':
-            self.thinker = self.host
-        else:
-            self.thinker = random.choice(self.players)['name']
-        
-        return {
-            'thinker': self.thinker,
-            'phase': self.game_phase,
-            'word_source': self.settings.get('word_source')
-        }
-    
-    def get_random_word_suggestion(self) -> dict:
-        """Get a random word suggestion for the thinker.
-        
-        Returns:
-            dict with word and category, or None if no words available
-        """
-        # Use test words if available
-        if self.test_words:
-            word = random.choice(self.test_words)
-            return {'word': word['word'], 'category': word['category']}
-        
-        if not self.words:
-            return None
-        
-        word = random.choice(self.words)
-        return {'word': word['word'], 'category': word['category']}
-    
-    def set_secret_word(self, word: str, category: str = None) -> dict:
-        """Set the secret word (thinker only).
-        
-        Args:
-            word: The secret word
-            category: Optional category hint
-            
-        Returns:
-            dict with success status
-        """
-        self.secret_word = word
-        self.secret_category = category
-        self.game_phase = 'asking'
-        
-        return {
-            'success': True,
-            'phase': self.game_phase,
-            'category_hint': category
-        }
-    
-    def ask_question(self, player_name: str, question: str) -> dict:
-        """Ask a question about the secret word.
-        
-        Args:
-            player_name: Name of the player asking
-            question: The yes/no question
-            
-        Returns:
-            dict with question status
-        """
-        if self.game_phase != 'asking':
-            return {'success': False, 'message': 'ليس وقت السؤال'}
-        
+        if self.status != 'asking':
+            return False
         if player_name == self.thinker:
-            return {'success': False, 'message': 'المفكر لا يسأل!'}
-        
+            return False
+        if not question or not question.strip():
+            return False
         if self.question_count >= self.MAX_QUESTIONS:
-            return {'success': False, 'message': 'انتهت الأسئلة العشرون!'}
-        
-        self.current_question = {
-            'question': question,
-            'asker': player_name,
-            'answer': None,
-            'timestamp': datetime.now().isoformat()
-        }
-        
-        return {
-            'success': True,
-            'question': question,
-            'asker': player_name,
-            'question_number': self.question_count + 1
-        }
-    
-    def answer_question(self, answer: str) -> dict:
-        """Answer the current question (thinker only).
-        
-        Args:
-            answer: 'yes', 'no', or 'maybe'
-            
-        Returns:
-            dict with answer status
-        """
-        if not self.current_question:
-            return {'success': False, 'message': 'لا يوجد سؤال حالي'}
-        
-        if answer not in ['yes', 'no', 'maybe']:
-            return {'success': False, 'message': 'إجابة غير صحيحة'}
-        
-        self.current_question['answer'] = answer
-        self.questions_asked.append(self.current_question)
+            return False
+
+        self.questions_asked.append({
+            'player': player_name,
+            'question': question.strip(),
+            'answer': None,  # thinker hasn't answered yet
+        })
         self.question_count += 1
-        
-        result = {
-            'success': True,
-            'answer': answer,
-            'question_count': self.question_count,
-            'questions_remaining': self.MAX_QUESTIONS - self.question_count
-        }
-        
+        self.current_asker = player_name
+        return True
+
+    def answer_question(self, player_name: str, answer: str) -> bool:
+        """Thinker answers the latest question.
+
+        Args:
+            player_name: Must be the thinker.
+            answer: 'yes', 'no', or 'maybe'.
+
+        Returns:
+            True if answer recorded.
+        """
+        if player_name != self.thinker:
+            return False
+        if self.status != 'asking':
+            return False
+        if not self.questions_asked:
+            return False
+
+        last_q = self.questions_asked[-1]
+        if last_q['answer'] is not None:
+            return False  # already answered
+
+        if answer not in ('yes', 'no', 'maybe'):
+            return False
+
+        last_q['answer'] = answer
+
         # Check if max questions reached
         if self.question_count >= self.MAX_QUESTIONS:
-            self.game_phase = 'guessing'
-            result['phase'] = 'guessing'
-            result['message'] = 'انتهت الأسئلة! حان وقت التخمين النهائي'
-        
-        self.current_question = None
-        return result
-    
+            # All questions used up — thinker wins
+            self._thinker_wins()
+
+        return True
+
+    # ── Guessing ──────────────────────────────────────────────────────
+
     def make_guess(self, player_name: str, guess: str) -> dict:
-        """Make a final guess of the secret word.
-        
+        """A player makes a final guess.
+
         Args:
-            player_name: Name of the player guessing
-            guess: The guessed word
-            
+            player_name: Cannot be the thinker.
+            guess: The guessed word.
+
         Returns:
-            dict with guess result
+            dict with 'correct' boolean and details.
         """
+        if self.status != 'asking':
+            return {'correct': False, 'message': 'اللعبة غير نشطة'}
         if player_name == self.thinker:
-            return {'success': False, 'message': 'المفكر لا يخمن!'}
-        
-        if self.game_phase not in ['asking', 'guessing']:
-            return {'success': False, 'message': 'ليس وقت التخمين'}
-        
-        # Check if guess is correct (case-insensitive)
-        is_correct = guess.strip().lower() == self.secret_word.strip().lower()
-        
-        if is_correct:
-            self.status = 'ended'
-            self.game_phase = 'ended'
-            # Award points to guesser
-            points = self._calculate_guess_points()
-            self.add_score(player_name, points)
-            
+            return {'correct': False, 'message': 'المفكر لا يمكنه التخمين'}
+        if not guess or not guess.strip():
+            return {'correct': False, 'message': 'التخمين فارغ'}
+
+        guess = guess.strip()
+
+        # Track guesses
+        if player_name not in self.guesses_made:
+            self.guesses_made[player_name] = []
+        self.guesses_made[player_name].append(guess)
+
+        # Check if correct (normalize Arabic)
+        if self._normalize(guess) == self._normalize(self.secret_word):
+            self._guesser_wins(player_name)
             return {
-                'success': True,
                 'correct': True,
-                'secret_word': self.secret_word,
-                'winner': player_name,
-                'points': points,
-                'message': f'🎉 صحيح! الكلمة كانت: {self.secret_word}'
+                'message': f'{player_name} خمن الكلمة صح!',
+                'word': self.secret_word,
             }
         else:
-            # Wrong guess - game continues or ends
-            if self.game_phase == 'guessing':
-                # Final guess was wrong - thinker wins
-                self.status = 'ended'
-                self.game_phase = 'ended'
-                self.add_score(self.thinker, 10)
-                
-                return {
-                    'success': True,
-                    'correct': False,
-                    'secret_word': self.secret_word,
-                    'winner': self.thinker,
-                    'message': f'❌ خطأ! الكلمة كانت: {self.secret_word}'
-                }
-            else:
-                # Wrong guess during asking phase - continue
-                return {
-                    'success': True,
-                    'correct': False,
-                    'message': 'تخمين خاطئ! استمروا في السؤال',
-                    'continue': True
-                }
-    
-    def _calculate_guess_points(self) -> int:
-        """Calculate points for correct guess based on questions used.
-        
-        Returns:
-            Points to award (more points for fewer questions)
-        """
-        # Base points: 20 - questions asked
-        return max(5, self.MAX_QUESTIONS - self.question_count)
-    
-    def forfeit(self, player_name: str) -> dict:
-        """Give up and reveal the answer.
-        
-        Args:
-            player_name: Name of the player forfeiting
-            
-        Returns:
-            dict with forfeit result
-        """
-        if player_name == self.thinker:
-            return {'success': False, 'message': 'المفكر لا يستسلم!'}
-        
-        self.status = 'ended'
-        self.game_phase = 'ended'
-        
-        # Thinker gets points
-        self.add_score(self.thinker, 10)
-        
+            return {
+                'correct': False,
+                'message': f'تخمين خاطئ!',
+                'guess': guess,
+            }
+
+    def forfeit_round(self) -> dict:
+        """All guessers give up — thinker wins."""
+        self._thinker_wins()
         return {
-            'success': True,
-            'secret_word': self.secret_word,
+            'word': self.secret_word,
             'category': self.secret_category,
-            'message': f'استسلمتم! الكلمة كانت: {self.secret_word}'
+            'message': f'الإجابة كانت: {self.secret_word}',
         }
-    
+
+    # ── Scoring ───────────────────────────────────────────────────────
+
+    def _guesser_wins(self, player_name: str) -> None:
+        """Award points when a guesser wins."""
+        # Points based on how few questions were asked
+        remaining = self.MAX_QUESTIONS - self.question_count
+        points = 10 + remaining  # 10-30 points
+        self._award_points(player_name, points)
+        self.status = 'ended'
+
+    def _thinker_wins(self) -> None:
+        """Award points when nobody guesses correctly."""
+        self._award_points(self.thinker, 15)
+        self.status = 'ended'
+
+    def _award_points(self, player_name: str, points: int) -> None:
+        """Award points to a player."""
+        self.scores[player_name] = self.scores.get(player_name, 0) + points
+
+        if self.settings.get('teams'):
+            player = next((p for p in self.players if p['name'] == player_name), None)
+            if player:
+                team_id = str(player.get('team', 1))
+                self.team_scores[team_id] = self.team_scores.get(team_id, 0) + points
+
     def add_score(self, player_name: str, points: int) -> None:
-        """Add points to a player's score.
-        
+        """Public score setter (compatibility)."""
+        self._award_points(player_name, points)
+
+    # ── Data ──────────────────────────────────────────────────────────
+
+    def _load_word_pool(self) -> None:
+        """Load word pool from JSON file."""
+        try:
+            with open('static/data/twenty_questions_words.json', 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                self.word_pool = data.get('words', [])
+        except Exception:
+            self.word_pool = []
+
+    # ── Helpers ───────────────────────────────────────────────────────
+
+    @staticmethod
+    def _normalize(text: str) -> str:
+        """Normalize Arabic text for comparison."""
+        if not text:
+            return ''
+        t = text.strip().lower()
+        t = t.replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا')
+        t = t.replace('ة', 'ه').replace('ى', 'ي')
+        t = t.replace('ؤ', 'و').replace('ئ', 'ي')
+        # Remove diacritics
+        import re
+        t = re.sub(r'[\u064B-\u065F\u0670]', '', t)
+        return t
+
+    # ── Serialization ─────────────────────────────────────────────────
+
+    def to_dict(self, for_player: Optional[str] = None, **kwargs) -> dict:
+        """Serialize game state for broadcasting.
+
         Args:
-            player_name: Name of the player
-            points: Points to add
+            for_player: If set, hides secret word from non-thinker players.
         """
-        if player_name not in self.scores:
-            self.scores[player_name] = 0
-        self.scores[player_name] += points
-    
-    def to_dict(self, include_secret: bool = False) -> dict:
-        """Convert game state to dictionary for serialization.
-        
-        Args:
-            include_secret: Whether to include the secret word
-            
-        Returns:
-            Game state dictionary
-        """
-        result = {
+        show_secret = (for_player == self.thinker) or (self.status == 'ended')
+
+        return {
             'game_id': self.game_id,
             'host': self.host,
             'players': self.players,
             'game_type': self.game_type,
             'status': self.status,
             'scores': self.scores,
+            'team_scores': self.team_scores,
+            'current_player': self.current_player,
             'settings': self.settings,
             'thinker': self.thinker,
-            'game_phase': self.game_phase,
-            'question_count': self.question_count,
+            'secret_word': self.secret_word if show_secret else None,
+            'secret_category': self.secret_category if (show_secret or self.status == 'asking') else None,
             'questions_asked': self.questions_asked,
-            'questions_remaining': self.MAX_QUESTIONS - self.question_count,
-            'current_question': self.current_question
+            'question_count': self.question_count,
+            'max_questions': self.MAX_QUESTIONS,
+            'round_number': self.round_number,
         }
-        
-        if include_secret:
-            result['secret_word'] = self.secret_word
-            result['secret_category'] = self.secret_category
-        else:
-            result['category_hint'] = self.secret_category  # Show category as hint
-        
-        return result
-    
-    @classmethod
-    def from_dict(cls, game_id: str, data: dict) -> 'TwentyQuestionsGame':
-        """Reconstruct a game from a dictionary.
-        
-        Args:
-            game_id: Game identifier
-            data: Game state dictionary
-            
-        Returns:
-            TwentyQuestionsGame instance
-        """
-        game = cls(game_id, data['host'], data.get('settings'))
-        game.players = data['players']
-        game.status = data['status']
-        game.scores = data['scores']
-        game.thinker = data.get('thinker')
-        game.secret_word = data.get('secret_word')
-        game.secret_category = data.get('secret_category')
-        game.game_phase = data.get('game_phase', 'setup')
-        game.question_count = data.get('question_count', 0)
-        game.questions_asked = data.get('questions_asked', [])
-        game.current_question = data.get('current_question')
-        return game

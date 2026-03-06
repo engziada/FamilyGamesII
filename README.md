@@ -3,14 +3,10 @@
 A modern web-based platform for family-friendly multiplayer games with real-time gameplay.
 
 ## Project Description
-A Flask-based web application that allows families and friends to play games together in real-time. Features seven game modes:
+A Flask-based web application that allows families and friends to play games together in real-time. Features three game modes:
 - **Charades (بدون كلام)**: Players act out items while others guess
 - **Pictionary (تعاضل)**: Players draw items while others guess
 - **Trivia (بنك المعلومات)**: Multiple-choice trivia questions with AI translation
-- **Bus Complete (أتوبيس كومبليت)**: Fill-in-the-blank word game with letter categories
-- **Rapid Fire (الأسئلة السريعة)**: Fast-paced trivia where players buzz in to answer
-- **Twenty Questions (العشرين سؤال)**: Guess the secret word by asking yes/no questions
-- **Riddles (الألغاز)**: Solve riddles by buzzing in with the correct answer
 
 ## Requirements
 - Python 3.11+
@@ -34,17 +30,9 @@ FamilyGamesII/
 │   │   └── routes.py     # Socket events
 │   ├── pictionary/       # Pictionary game module
 │   │   └── models.py     # Game logic
-│   ├── trivia/           # Trivia game module
-│   │   ├── models.py     # Game logic
-│   │   └── questions.json # Question bank
-│   ├── bus_complete/     # Bus Complete game module
-│   │   └── models.py     # Game logic
-│   ├── rapid_fire/       # Rapid Fire game module
-│   │   └── models.py     # Game logic
-│   ├── twenty_questions/ # Twenty Questions game module
-│   │   └── models.py     # Game logic
-│   └── riddles/          # Riddles game module
-│       └── models.py     # Game logic
+│   └── trivia/           # Trivia game module
+│       ├── models.py     # Game logic
+│       └── questions.json # Question bank
 ├── services/             # Data management services
 │   ├── data_service.py   # Main data service
 │   ├── data_manager.py   # Database operations
@@ -71,15 +59,10 @@ FamilyGamesII/
 
 ## Features
 
-### 1. Seven Game Modes
-
-- **Charades**: 70+ items across multiple categories
-- **Pictionary**: 400+ items with drawing canvas and category hints
-- **Trivia**: 150+ questions with AI-powered Arabic translation
-- **Bus Complete**: Fill-in-the-blank word game with 7 categories and AI validation
-- **Rapid Fire**: Fast-paced trivia with buzz-in mechanics and scoring
-- **Twenty Questions**: Word guessing game with yes/no questions (50+ Arabic words)
-- **Riddles**: 50+ Arabic riddles with buzz-to-answer mechanics
+### 1. Three Game Modes
+   - **Charades**: 70+ items across multiple categories
+   - **Pictionary**: 400+ items with drawing canvas and category hints
+   - **Trivia**: 150+ questions with AI-powered Arabic translation
 
 ### 2. Real-time Multiplayer
    - Socket.IO for real-time communication

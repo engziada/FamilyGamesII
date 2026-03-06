@@ -1,268 +1,381 @@
 """
-Unit tests for Twenty Questions game model.
+Unit tests for Twenty Questions (عشرون سؤال) game model.
 """
 import pytest
-import sys
-import os
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from games.twenty_questions.models import TwentyQuestionsGame
 
 
-class TestTwentyQuestionsGame:
-    """Test cases for TwentyQuestionsGame class."""
+def make_game() -> TwentyQuestionsGame:
+    """Create a test game with 2 players."""
+    game = TwentyQuestionsGame('tq1', 'host', {'teams': False, 'time_limit': 60})
+    game.add_player('player2')
+    return game
 
-    def test_game_initialization(self):
-        """Test game initializes with correct default values."""
-        game = TwentyQuestionsGame('test_room', 'host_player')
-        
-        assert game.game_id == 'test_room'
-        assert game.host == 'host_player'
-        assert game.status == 'waiting'
-        assert len(game.players) == 1
-        assert game.players[0]['name'] == 'host_player'
-        assert game.players[0]['isHost'] is True
-        assert game.game_type == 'twenty_questions'
-        assert game.thinker is None
-        assert game.secret_word is None
-        assert game.game_phase == 'setup'
 
-    def test_add_player(self):
-        """Test adding players to the game."""
-        game = TwentyQuestionsGame('test_room', 'host_player')
-        game.add_player('player2')
-        
-        assert len(game.players) == 2
-        assert game.players[1]['name'] == 'player2'
-        assert game.players[1]['isHost'] is False
+# ── Player Management ────────────────────────────────────────────────
 
-    def test_add_player_room_full(self):
-        """Test that adding more than 8 players raises error."""
-        game = TwentyQuestionsGame('test_room', 'host_player')
-        for i in range(2, 9):
-            game.add_player(f'player{i}')
-        
-        assert len(game.players) == 8
-        
-        with pytest.raises(ValueError, match="الغرفة ممتلئة"):
-            game.add_player('player9')
 
-    def test_start_game(self, sample_twenty_q_words):
-        """Test starting the game."""
-        game = TwentyQuestionsGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.test_words = sample_twenty_q_words
-        result = game.start_game()
-        
-        assert game.status == 'playing'
-        assert game.thinker is not None
-        assert game.game_phase == 'setup'
+def test_add_player():
+    game = TwentyQuestionsGame('tq1', 'host')
+    game.add_player('p2')
+    assert len(game.players) == 2
+    assert game.players[1]['name'] == 'p2'
 
-    def test_start_game_insufficient_players(self):
-        """Test that starting with less than 2 players raises error."""
-        game = TwentyQuestionsGame('test_room', 'host_player')
-        
-        with pytest.raises(ValueError, match="عدد اللاعبين غير كافي"):
-            game.start_game()
 
-    def test_get_random_word_suggestion(self, sample_twenty_q_words):
-        """Test getting random word suggestion."""
-        game = TwentyQuestionsGame('test_room', 'host_player')
-        game.test_words = sample_twenty_q_words
-        
-        suggestion = game.get_random_word_suggestion()
-        
-        assert suggestion is not None
-        assert 'word' in suggestion
-        assert 'category' in suggestion
+def test_add_player_duplicate_raises():
+    game = TwentyQuestionsGame('tq1', 'host')
+    with pytest.raises(ValueError, match='موجود'):
+        game.add_player('host')
 
-    def test_set_secret_word(self):
-        """Test setting the secret word."""
-        game = TwentyQuestionsGame('test_room', 'host_player')
-        game.add_player('player2')
+
+def test_add_player_full_raises():
+    game = TwentyQuestionsGame('tq1', 'host')
+    for i in range(7):
+        game.add_player(f'p{i}')
+    with pytest.raises(ValueError, match='ممتلئة'):
+        game.add_player('extra')
+
+
+def test_remove_player():
+    game = make_game()
+    game.remove_player('player2')
+    assert len(game.players) == 1
+
+
+def test_remove_thinker_ends_game():
+    game = make_game()
+    game.start_game()
+    game.set_secret('host', 'قطة', 'حيوان')
+    game.remove_player('host')  # thinker leaves
+    assert game.status == 'ended'
+
+
+# ── Game Start ───────────────────────────────────────────────────────
+
+
+def test_start_game_needs_two_players():
+    game = TwentyQuestionsGame('tq1', 'host')
+    with pytest.raises(ValueError, match='غير كافي'):
         game.start_game()
-        
-        result = game.set_secret_word('أسد', 'حيوان')
-        
-        assert result['success'] is True
-        assert game.secret_word == 'أسد'
-        assert game.secret_category == 'حيوان'
-        assert game.game_phase == 'asking'
 
-    def test_ask_question(self):
-        """Test asking a question."""
-        game = TwentyQuestionsGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.start_game()
-        game.set_secret_word('أسد', 'حيوان')
-        
-        result = game.ask_question('player2', 'هل هو حيوان؟')
-        
-        assert result['success'] is True
-        assert result['question'] == 'هل هو حيوان؟'
-        assert result['question_number'] == 1
 
-    def test_ask_question_as_thinker_fails(self):
-        """Test that thinker cannot ask questions."""
-        game = TwentyQuestionsGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.start_game()
-        game.set_secret_word('أسد', 'حيوان')
-        
-        result = game.ask_question('host_player', 'هل هو حيوان؟')
-        
-        assert result['success'] is False
+def test_start_game_sets_thinker():
+    game = make_game()
+    game.start_game()
+    assert game.status == 'thinking'
+    assert game.thinker == 'host'
+    assert game.round_number == 1
 
-    def test_answer_question(self):
-        """Test answering a question."""
-        game = TwentyQuestionsGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.start_game()
-        game.set_secret_word('أسد', 'حيوان')
-        game.ask_question('player2', 'هل هو حيوان؟')
-        
-        result = game.answer_question('yes')
-        
-        assert result['success'] is True
-        assert result['answer'] == 'yes'
-        assert game.question_count == 1
 
-    def test_answer_question_invalid(self):
-        """Test that invalid answer is rejected."""
-        game = TwentyQuestionsGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.start_game()
-        game.set_secret_word('أسد', 'حيوان')
-        game.ask_question('player2', 'هل هو حيوان؟')
-        
-        result = game.answer_question('maybe_not')
-        
-        assert result['success'] is False
+def test_thinker_rotates_each_round():
+    game = make_game()
+    game.start_game()
+    assert game.thinker == 'host'
 
-    def test_make_guess_correct(self):
-        """Test making correct guess."""
-        game = TwentyQuestionsGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.start_game()
-        game.set_secret_word('أسد', 'حيوان')
-        
-        result = game.make_guess('player2', 'أسد')
-        
-        assert result['correct'] is True
-        assert result['winner'] == 'player2'
-        assert game.status == 'ended'
+    game.set_secret('host', 'قطة', 'حيوان')
+    game.make_guess('player2', 'قطة')  # correct guess ends round
 
-    def test_make_guess_wrong(self):
-        """Test making wrong guess."""
-        game = TwentyQuestionsGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.start_game()
-        game.set_secret_word('أسد', 'حيوان')
-        
-        result = game.make_guess('player2', 'قطة')
-        
-        assert result['correct'] is False
-        assert game.status == 'playing'
+    game.next_round()
+    assert game.thinker == 'player2'
 
-    def test_make_guess_case_insensitive(self):
-        """Test that guess is case insensitive."""
-        game = TwentyQuestionsGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.start_game()
-        game.set_secret_word('أسد', 'حيوان')
-        
-        result = game.make_guess('player2', '  أسد  ')
-        
-        assert result['correct'] is True
 
-    def test_max_questions_triggers_guessing_phase(self):
-        """Test that reaching max questions triggers guessing phase."""
-        game = TwentyQuestionsGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.start_game()
-        game.set_secret_word('أسد', 'حيوان')
-        
-        # Ask 20 questions
-        for i in range(20):
-            game.ask_question('player2', f'سؤال {i+1}')
-            game.answer_question('yes')
-        
-        assert game.game_phase == 'guessing'
+# ── Secret Word ──────────────────────────────────────────────────────
 
-    def test_forfeit(self):
-        """Test forfeiting the game."""
-        game = TwentyQuestionsGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.start_game()
-        game.set_secret_word('أسد', 'حيوان')
-        
-        result = game.forfeit('player2')
-        
-        assert result['success'] is True
-        assert game.status == 'ended'
-        assert 'host_player' in game.scores
 
-    def test_points_calculation(self):
-        """Test points are calculated correctly."""
-        game = TwentyQuestionsGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.start_game()
-        game.set_secret_word('أسد', 'حيوان')
-        
-        # Correct guess with 0 questions = 20 points
-        result = game.make_guess('player2', 'أسد')
-        
-        assert result['points'] == 20
+def test_set_secret_success():
+    game = make_game()
+    game.start_game()
+    result = game.set_secret('host', 'قطة', 'حيوان')
+    assert result is True
+    assert game.secret_word == 'قطة'
+    assert game.secret_category == 'حيوان'
+    assert game.status == 'asking'
 
-    def test_points_decrease_with_questions(self):
-        """Test points decrease as more questions are asked."""
-        game = TwentyQuestionsGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.start_game()
-        game.set_secret_word('أسد', 'حيوان')
-        
-        # Ask 5 questions
-        for i in range(5):
-            game.ask_question('player2', f'سؤال {i+1}')
-            game.answer_question('yes')
-        
-        result = game.make_guess('player2', 'أسد')
-        
-        assert result['points'] == 15  # 20 - 5 = 15
 
-    def test_to_dict_hides_secret(self):
-        """Test that to_dict hides the secret word by default."""
-        game = TwentyQuestionsGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.start_game()
-        game.set_secret_word('أسد', 'حيوان')
-        
-        state = game.to_dict()
-        
-        assert 'secret_word' not in state
+def test_set_secret_only_thinker():
+    game = make_game()
+    game.start_game()
+    result = game.set_secret('player2', 'قطة', 'حيوان')
+    assert result is False
 
-    def test_to_dict_includes_secret_when_requested(self):
-        """Test that to_dict includes secret when requested."""
-        game = TwentyQuestionsGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.start_game()
-        game.set_secret_word('أسد', 'حيوان')
-        
-        state = game.to_dict(include_secret=True)
-        
-        assert state['secret_word'] == 'أسد'
 
-    def test_from_dict_reconstruction(self):
-        """Test game reconstruction from dictionary."""
-        game = TwentyQuestionsGame('test_room', 'host_player')
-        game.add_player('player2')
-        game.start_game()
-        game.set_secret_word('أسد', 'حيوان')
-        
-        state = game.to_dict(include_secret=True)
-        reconstructed = TwentyQuestionsGame.from_dict('test_room', state)
-        
-        assert reconstructed.game_id == game.game_id
-        assert reconstructed.host == game.host
-        assert reconstructed.secret_word == game.secret_word
+def test_set_secret_only_in_thinking_phase():
+    game = make_game()
+    game.start_game()
+    game.set_secret('host', 'قطة', 'حيوان')  # changes to asking
+    result = game.set_secret('host', 'كلب', 'حيوان')  # should fail
+    assert result is False
+
+
+def test_set_secret_rejects_empty():
+    game = make_game()
+    game.start_game()
+    result = game.set_secret('host', '', 'حيوان')
+    assert result is False
+
+
+def test_get_random_word():
+    game = make_game()
+    word = game.get_random_word()
+    assert 'word' in word
+    assert 'category' in word
+
+
+# ── Questions ───────────────────────────────────────────────────────
+
+
+def test_ask_question_success():
+    game = make_game()
+    game.start_game()
+    game.set_secret('host', 'قطة', 'حيوان')
+
+    result = game.ask_question('player2', 'هل هو حيوان؟')
+    assert result is True
+    assert game.question_count == 1
+    assert len(game.questions_asked) == 1
+    assert game.questions_asked[0]['question'] == 'هل هو حيوان؟'
+
+
+def test_ask_question_only_in_asking_phase():
+    game = make_game()
+    game.start_game()
+    # still in thinking phase
+    result = game.ask_question('player2', 'هل هو حيوان؟')
+    assert result is False
+
+
+def test_ask_question_thinker_cannot_ask():
+    game = make_game()
+    game.start_game()
+    game.set_secret('host', 'قطة', 'حيوان')
+
+    result = game.ask_question('host', 'هل هو حيوان؟')
+    assert result is False
+
+
+def test_ask_question_max_limit():
+    game = make_game()
+    game.start_game()
+    game.set_secret('host', 'قطة', 'حيوان')
+
+    for i in range(20):
+        game.ask_question('player2', f'سؤال {i}؟')
+
+    result = game.ask_question('player2', 'سؤال 21؟')
+    assert result is False
+
+
+# ── Answer Questions ────────────────────────────────────────────────
+
+
+def test_answer_question_success():
+    game = make_game()
+    game.start_game()
+    game.set_secret('host', 'قطة', 'حيوان')
+    game.ask_question('player2', 'هل هو حيوان؟')
+
+    result = game.answer_question('host', 'yes')
+    assert result is True
+    assert game.questions_asked[-1]['answer'] == 'yes'
+
+
+def test_answer_question_only_thinker():
+    game = make_game()
+    game.start_game()
+    game.set_secret('host', 'قطة', 'حيوان')
+    game.ask_question('player2', 'هل هو حيوان؟')
+
+    result = game.answer_question('player2', 'yes')
+    assert result is False
+
+
+def test_answer_question_invalid_answer():
+    game = make_game()
+    game.start_game()
+    game.set_secret('host', 'قطة', 'حيوان')
+    game.ask_question('player2', 'هل هو حيوان؟')
+
+    result = game.answer_question('host', 'invalid')
+    assert result is False
+
+
+def test_answer_question_only_once():
+    game = make_game()
+    game.start_game()
+    game.set_secret('host', 'قطة', 'حيوان')
+    game.ask_question('player2', 'هل هو حيوان؟')
+
+    game.answer_question('host', 'yes')
+    result = game.answer_question('host', 'no')  # second attempt
+    assert result is False
+
+
+# ── Guessing ─────────────────────────────────────────────────────────
+
+
+def test_make_guess_correct():
+    game = make_game()
+    game.start_game()
+    game.set_secret('host', 'قطة', 'حيوان')
+
+    result = game.make_guess('player2', 'قطة')
+    assert result['correct'] is True
+    assert game.scores.get('player2', 0) > 0
+
+
+def test_make_guess_wrong():
+    game = make_game()
+    game.start_game()
+    game.set_secret('host', 'قطة', 'حيوان')
+
+    result = game.make_guess('player2', 'كلب')
+    assert result['correct'] is False
+    assert 'guess' in result
+
+
+def test_make_guess_normalized_arabic():
+    """Test that Arabic normalization works for guessing."""
+    game = make_game()
+    game.start_game()
+    game.set_secret('host', 'أحمد', 'اسم')
+
+    # Different hamza forms should match
+    result = game.make_guess('player2', 'احمد')  # without hamza
+    assert result['correct'] is True
+
+    # Test with taa marbuta
+    game2 = make_game()
+    game2.start_game()
+    game2.set_secret('host', 'سارة', 'اسم')
+    result = game2.make_guess('player2', 'ساره')  # ta marbuta -> ha
+    assert result['correct'] is True
+
+
+def test_thinker_cannot_guess():
+    game = make_game()
+    game.start_game()
+    game.set_secret('host', 'قطة', 'حيوان')
+
+    result = game.make_guess('host', 'قطة')
+    assert result['correct'] is False
+
+
+def test_make_guess_only_in_asking_phase():
+    game = make_game()
+    game.start_game()
+    # still in thinking phase
+    result = game.make_guess('player2', 'قطة')
+    assert 'message' in result
+
+
+def test_make_guess_tracks_history():
+    game = make_game()
+    game.start_game()
+    game.set_secret('host', 'قطة', 'حيوان')
+
+    game.make_guess('player2', 'كلب')
+    game.make_guess('player2', 'أسد')
+    assert len(game.guesses_made['player2']) == 2
+
+
+# ── Scoring ──────────────────────────────────────────────────────────
+
+
+def test_guesser_wins_points():
+    game = make_game()
+    game.start_game()
+    game.set_secret('host', 'قطة', 'حيوان')
+    # Ask 5 questions first
+    for i in range(5):
+        game.ask_question('player2', f'سؤال {i}؟')
+        game.answer_question('host', 'yes')
+
+    game.make_guess('player2', 'قطة')
+    # Points = 10 + remaining questions (15) = 25
+    assert game.scores['player2'] == 25
+
+
+def test_thinker_wins_on_forfeit():
+    game = make_game()
+    game.start_game()
+    game.set_secret('host', 'قطة', 'حيوان')
+    # Use all 20 questions
+    for i in range(20):
+        game.ask_question('player2', f'سؤال {i}؟')
+        game.answer_question('host', 'yes')
+
+    assert game.status == 'ended'
+    assert game.scores.get('host', 0) == 15
+
+
+def test_team_scoring():
+    game = TwentyQuestionsGame('tq1', 'host', {'teams': True})
+    game.add_player('player2')
+    game.start_game()
+    game.set_secret('host', 'قطة', 'حيوان')
+    game.make_guess('player2', 'قطة')
+
+    assert game.scores['player2'] > 0
+    # player2 should be on team 1
+    p2 = next(p for p in game.players if p['name'] == 'player2')
+    team_id = str(p2['team'])
+    assert game.team_scores[team_id] > 0
+
+
+# ── Forfeit ───────────────────────────────────────────────────────────
+
+
+def test_forfeit_reveals_answer():
+    game = make_game()
+    game.start_game()
+    game.set_secret('host', 'قطة', 'حيوان')
+
+    result = game.forfeit_round()
+    assert result['word'] == 'قطة'
+    assert result['category'] == 'حيوان'
+    assert game.status == 'ended'
+
+
+# ── Serialization ────────────────────────────────────────────────────
+
+
+def test_to_dict_hides_secret_from_guesser():
+    game = make_game()
+    game.start_game()
+    game.set_secret('host', 'قطة', 'حيوان')
+
+    state = game.to_dict(for_player='player2')
+    assert state['secret_word'] is None
+    assert state['secret_category'] is not None  # category is shown
+
+
+def test_to_dict_shows_secret_to_thinker():
+    game = make_game()
+    game.start_game()
+    game.set_secret('host', 'قطة', 'حيوان')
+
+    state = game.to_dict(for_player='host')
+    assert state['secret_word'] == 'قطة'
+
+
+def test_to_dict_shows_secret_when_ended():
+    game = make_game()
+    game.start_game()
+    game.set_secret('host', 'قطة', 'حيوان')
+    game.make_guess('player2', 'قطة')
+
+    state = game.to_dict(for_player='player2')
+    assert state['secret_word'] == 'قطة'
+
+
+def test_to_dict_includes_questions():
+    game = make_game()
+    game.start_game()
+    game.set_secret('host', 'قطة', 'حيوان')
+    game.ask_question('player2', 'هل هو حيوان؟')
+    game.answer_question('host', 'yes')
+
+    state = game.to_dict()
+    assert len(state['questions_asked']) == 1
+    assert state['questions_asked'][0]['question'] == 'هل هو حيوان؟'
+    assert state['questions_asked'][0]['answer'] == 'yes'

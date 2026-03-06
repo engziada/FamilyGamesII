@@ -1,6 +1,1 @@
-"""
-Rapid Fire game package.
-"""
-from .models import RapidFireGame
-
-__all__ = ['RapidFireGame']
+"""Rapid Fire game module - race to answer questions first."""

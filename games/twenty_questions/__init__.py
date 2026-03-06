@@ -1,6 +1,1 @@
-"""
-Twenty Questions game package.
-"""
-from .models import TwentyQuestionsGame
-
-__all__ = ['TwentyQuestionsGame']
+"""Twenty Questions game module - guess the word in 20 yes/no questions."""

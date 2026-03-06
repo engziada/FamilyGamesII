@@ -138,136 +138,27 @@
                 </div>
             </div>
 
-            <!-- Rapid Fire Area -->
-            <div id="rapid-fire-area" class="u-hidden u-full-width">
-                <div class="rapid-fire-header u-text-center u-margin-bottom">
-                    <div id="buzzed-player-indicator" class="buzzed-indicator u-hidden" style="font-size: 1.5rem; font-weight: 700; color: var(--primary); margin-bottom: 1rem;"></div>
-                    <div id="buzz-timer" class="buzz-timer u-hidden" style="font-size: 3rem; font-weight: 800; color: var(--danger);"></div>
-                </div>
-                <div class="u-flex-center u-margin-top">
-                    <button type="button" id="buzzButton" class="btn btn-primary btn-large animate-pulse" onclick="window.gameInstance.buzzIn()" style="font-size: 2rem; padding: 2rem 4rem; border-radius: 50%;">
-                        <i class="fas fa-hand-pointer"></i> اضغط!
-                    </button>
-                </div>
+            <div id="waiting-area" class="waiting-area u-text-center">
+                <i class="fas fa-hourglass-start fa-3x animate-heartbeat" style="color: var(--secondary); margin-bottom: 2rem;"></i>
+                <h3>في انتظار بدء الجولة...</h3>
+            </div>
+
+            <!-- Rapid Fire Buzz Area -->
+            <div id="rapid-fire-area" class="u-hidden u-full-width u-text-center u-margin-top">
+                <button type="button" id="buzzButton" class="btn btn-primary btn-large u-hidden animate-pulse" style="font-size: 1.5rem; padding: 1.5rem 3rem; border-radius: 50px;">
+                    <i class="fas fa-bell"></i> اضغط الجرس!
+                </button>
+                <div id="buzz-timer" style="display: none; font-size: 2rem; font-weight: 800; margin-top: 1rem; color: var(--primary);"></div>
             </div>
 
             <!-- Twenty Questions Area -->
             <div id="twenty-questions-area" class="u-hidden u-full-width">
-                <!-- Setup Phase: Thinker sets secret word -->
-                <div id="twenty-q-setup-area" class="u-hidden">
-                    <h3 class="u-text-center u-margin-bottom">فكر في كلمة سرية!</h3>
-                    <div id="category-hint" class="u-hidden u-text-center" style="font-size: 1.2rem; color: var(--secondary); margin-bottom: 1rem;"></div>
-                    <div class="input-group u-margin-bottom">
-                        <label for="secret-word-input">الكلمة السرية:</label>
-                        <input type="text" id="secret-word-input" class="input-control" placeholder="أدخل الكلمة...">
-                    </div>
-                    <div class="input-group u-margin-bottom">
-                        <label for="secret-category-input">الفئة (اختياري):</label>
-                        <input type="text" id="secret-category-input" class="input-control" placeholder="مثال: حيوان، فاكهة...">
-                    </div>
-                    <div class="u-flex-center u-margin-top">
-                        <button type="button" class="btn btn-outline" onclick="window.gameInstance.getWordSuggestion()">
-                            <i class="fas fa-lightbulb"></i> اقتراح عشوائي
-                        </button>
-                        <button type="button" class="btn btn-primary" onclick="window.gameInstance.setSecretWord()">
-                            <i class="fas fa-check"></i> تأكيد
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Asking Phase: Players ask questions -->
-                <div id="twenty-q-asking-area" class="u-hidden">
-                    <div class="twenty-q-header u-flex-between u-margin-bottom">
-                        <div>الأسئلة المتبقية: <span id="questions-remaining" style="font-weight: 700; color: var(--primary);">20</span></div>
-                        <div id="thinker-indicator" style="color: var(--secondary);">المفكر: <span id="thinker-name"></span></div>
-                    </div>
-                    
-                    <!-- Question History -->
-                    <div id="questions-history" class="questions-history" style="max-height: 200px; overflow-y: auto; margin-bottom: 1rem; padding: 1rem; background: var(--bg); border-radius: 10px;">
-                        <!-- Questions will be added here -->
-                    </div>
-
-                    <!-- Ask Question Input (for guessers) -->
-                    <div id="question-input-area" class="input-group u-margin-bottom">
-                        <label>اسأل سؤال نعم/لا:</label>
-                        <div class="u-flex" style="gap: 0.5rem;">
-                            <input type="text" id="question-input" class="input-control" placeholder="هل هو حيوان؟">
-                            <button type="button" class="btn btn-primary" onclick="window.gameInstance.askTwentyQ()">
-                                <i class="fas fa-paper-plane"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Answer Buttons (for thinker) -->
-                    <div id="answer-buttons-area" class="u-hidden u-flex-center" style="gap: 1rem;">
-                        <button type="button" class="btn btn-success" onclick="window.gameInstance.answerTwentyQ('yes')">
-                            <i class="fas fa-check"></i> نعم
-                        </button>
-                        <button type="button" class="btn btn-warning" onclick="window.gameInstance.answerTwentyQ('maybe')">
-                            <i class="fas fa-question"></i> ربما
-                        </button>
-                        <button type="button" class="btn btn-danger" onclick="window.gameInstance.answerTwentyQ('no')">
-                            <i class="fas fa-times"></i> لا
-                        </button>
-                    </div>
-
-                    <!-- Guess Input -->
-                    <div class="input-group u-margin-top">
-                        <label>تخمين نهائي:</label>
-                        <div class="u-flex" style="gap: 0.5rem;">
-                            <input type="text" id="guess-input" class="input-control" placeholder="أعرفها! الكلمة هي...">
-                            <button type="button" class="btn btn-secondary" onclick="window.gameInstance.makeTwentyQGuess()">
-                                <i class="fas fa-lightbulb"></i> تخمين!
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Forfeit Button -->
-                    <div class="u-flex-center u-margin-top">
-                        <button type="button" class="btn btn-outline" onclick="window.gameInstance.forfeitTwentyQ()" style="color: var(--danger);">
-                            <i class="fas fa-flag"></i> استسلام
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Result Area -->
-                <div id="twenty-q-result" class="u-hidden u-text-center u-margin-top" style="font-size: 1.5rem; padding: 2rem; background: var(--bg); border-radius: 15px;">
-                    <!-- Result will be shown here -->
-                </div>
+                <!-- UI populated by JavaScript -->
             </div>
 
             <!-- Riddles Area -->
             <div id="riddles-area" class="u-hidden u-full-width">
-                <div class="riddles-header u-text-center u-margin-bottom">
-                    <div style="font-size: 0.9rem; color: var(--text-light);">اللغز رقم <span id="riddle-number">1</span></div>
-                    <div id="riddle-category" style="font-size: 0.85rem; color: var(--secondary); margin-bottom: 0.5rem;"></div>
-                    <div id="riddle-text" style="font-size: 1.5rem; font-weight: 700; line-height: 1.6;"></div>
-                </div>
-                
-                <div id="riddle-buzzed-indicator" class="u-hidden u-text-center" style="font-size: 1.2rem; color: var(--primary); margin: 1rem 0;"></div>
-                
-                <div id="riddle-answer" class="u-hidden u-text-center" style="font-size: 1.3rem; padding: 1rem; background: var(--bg); border-radius: 10px; margin: 1rem 0;"></div>
-                
-                <div class="u-flex-center u-margin-top" style="gap: 1rem;">
-                    <button type="button" id="riddlesBuzzButton" class="btn btn-primary btn-large animate-pulse" onclick="window.gameInstance.riddlesBuzzIn()" style="font-size: 1.5rem; padding: 1.5rem 3rem; border-radius: 50%;">
-                        <i class="fas fa-hand-pointer"></i> اضغط!
-                    </button>
-                </div>
-                
-                <div class="input-group u-margin-top">
-                    <label for="riddle-answer-input">إجابتك:</label>
-                    <div class="u-flex" style="gap: 0.5rem;">
-                        <input type="text" id="riddle-answer-input" class="input-control" placeholder="اكتب الإجابة...">
-                        <button type="button" class="btn btn-secondary" onclick="window.gameInstance.submitRiddleAnswer()">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="waiting-area" class="waiting-area u-text-center">
-                <i class="fas fa-hourglass-start fa-3x animate-heartbeat" style="color: var(--secondary); margin-bottom: 2rem;"></i>
-                <h3>في انتظار بدء الجولة...</h3>
+                <!-- UI populated by JavaScript -->
             </div>
 
             <div class="game-actions u-flex-center u-full-width u-margin-top">
@@ -290,9 +181,6 @@
             </button>
             <button type="button" id="nextButton" class="btn btn-secondary" style="display: none;">
                 <i class="fas fa-step-forward"></i> الجولة التالية
-            </button>
-            <button type="button" id="skipQuestionButton" class="btn btn-outline u-hidden" onclick="window.gameInstance.skipRapidQuestion()">
-                <i class="fas fa-forward"></i> تخطي السؤال
             </button>
             <button type="button" id="close-room" class="btn btn-outline" style="color: white; background-color: var(--danger);">
                 <i class="fas fa-times-circle"></i> إنهاء اللعبة
