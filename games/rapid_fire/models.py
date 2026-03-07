@@ -10,29 +10,21 @@ import json
 import random
 from typing import Optional
 
+from games.base import BaseGame
 from services.data_service import get_data_service
 
 
-class RapidFireGame:
+class RapidFireGame(BaseGame):
     """Rapid Fire game: buzz-in trivia with race mechanics."""
 
     BUZZ_TIMEOUT_SECONDS = 10  # Time for buzzed player to answer
 
     def __init__(self, game_id: str, host: str, settings: Optional[dict] = None):
-        self.game_id = game_id
-        self.host = host
-        self.players: list[dict] = [{'name': host, 'isHost': True, 'team': 1}]
-        self.game_type = 'rapid_fire'
-        self.status = 'waiting'  # waiting | playing | round_active | buzzed | ended
-        self.scores: dict[str, int] = {}
-        self.team_scores: dict[str, int] = {'1': 0, '2': 0}
-        self.current_player = ''
-
-        self.settings = settings or {
+        super().__init__(game_id=game_id, host=host, game_type='rapid_fire', settings=settings or {
             'teams': False,
             'difficulty': 'all',
-            'time_limit': 30,  # seconds per question before auto-skip
-        }
+            'time_limit': 30,
+        })
 
         # Question state
         self.current_question: Optional[dict] = None
@@ -53,33 +45,16 @@ class RapidFireGame:
     # ── Player management ─────────────────────────────────────────────
 
     def add_player(self, player_name: str) -> None:
-        """Add a player to the game lobby."""
-        if len(self.players) >= 8:
-            raise ValueError("غرفة اللعب ممتلئة")
-        if any(p['name'] == player_name for p in self.players):
-            raise ValueError("اللاعب موجود بالفعل")
-
-        team = 1
-        if self.settings.get('teams'):
-            t1 = len([p for p in self.players if p.get('team') == 1])
-            t2 = len([p for p in self.players if p.get('team') == 2])
-            team = 2 if t2 < t1 else 1
-
-        self.players.append({'name': player_name, 'isHost': False, 'team': team})
+        super().add_player(player_name)
 
     def remove_player(self, player_name: str) -> None:
         """Remove a player; transfer host if needed."""
-        self.players = [p for p in self.players if p['name'] != player_name]
-        self.scores.pop(player_name, None)
+        super().remove_player(player_name)
         self.players_buzzed_wrong.discard(player_name)
 
         if player_name == self.buzzed_player:
             self.buzzed_player = None
             self.buzz_time = None
-
-        if player_name == self.host and self.players:
-            self.host = self.players[0]['name']
-            self.players[0]['isHost'] = True
 
     # ── Game flow ─────────────────────────────────────────────────────
 
@@ -186,13 +161,7 @@ class RapidFireGame:
 
     def _award_points(self, player_name: str, points: int = 10) -> None:
         """Award points to a player."""
-        self.scores[player_name] = self.scores.get(player_name, 0) + points
-
-        if self.settings.get('teams'):
-            player = next((p for p in self.players if p['name'] == player_name), None)
-            if player:
-                team_id = str(player.get('team', 1))
-                self.team_scores[team_id] = self.team_scores.get(team_id, 0) + points
+        super().add_score(player_name, points)
 
     def add_score(self, player_name: str, points: int) -> None:
         """Public score setter (compatibility with app.py patterns)."""
@@ -256,18 +225,11 @@ class RapidFireGame:
             if not include_answer:
                 q.pop('answer', None)
 
-        return {
-            'game_id': self.game_id,
-            'host': self.host,
-            'players': self.players,
-            'game_type': self.game_type,
-            'status': self.status,
-            'scores': self.scores,
-            'team_scores': self.team_scores,
-            'current_player': self.current_player,
+        state = self._build_base_state()
+        state.update({
             'current_question': q,
-            'settings': self.settings,
             'buzzed_player': self.buzzed_player,
             'players_buzzed_wrong': list(self.players_buzzed_wrong),
             'question_active': self.question_active,
-        }
+        })
+        return state

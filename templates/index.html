@@ -6,6 +6,19 @@
         <p>استمتع بأجمل الألعاب مع العائلة والأصدقاء في مكان واحد</p>
     </header>
 
+    <div class="card join-hub-card animate-bounce-down">
+        <div class="game-icon">
+            <i class="fas fa-door-open"></i>
+        </div>
+        <h3>انضم إلى غرفة موجودة</h3>
+        <p>اكتب رقم الغرفة وسنعرض لك نوع اللعبة وصاحب الغرفة قبل الانضمام.</p>
+        <div class="buttons">
+            <button class="btn btn-secondary" onclick="Utils.showGameModal(null, 'join')">
+                <i class="fas fa-sign-in-alt"></i> انضمام إلى غرفة
+            </button>
+        </div>
+    </div>
+
     <div class="games-grid">
         <!-- Charades Card -->
         <div class="card game-card animate-bounce-down">
@@ -20,9 +33,6 @@
             <div class="buttons">
                 <button class="btn btn-primary" onclick="Utils.showGameModal('charades', 'create')">
                     <i class="fas fa-plus"></i> لعبة جديدة
-                </button>
-                <button class="btn btn-outline" onclick="Utils.showGameModal('charades', 'join')">
-                    <i class="fas fa-sign-in-alt"></i> انضمام
                 </button>
             </div>
         </div>
@@ -41,9 +51,6 @@
                 <button class="btn btn-primary" onclick="Utils.showGameModal('pictionary', 'create')">
                     <i class="fas fa-plus"></i> لعبة جديدة
                 </button>
-                <button class="btn btn-outline" onclick="Utils.showGameModal('pictionary', 'join')">
-                    <i class="fas fa-sign-in-alt"></i> انضمام
-                </button>
             </div>
         </div>
 
@@ -60,9 +67,6 @@
             <div class="buttons">
                 <button class="btn btn-primary" onclick="Utils.showGameModal('trivia', 'create')">
                     <i class="fas fa-plus"></i> لعبة جديدة
-                </button>
-                <button class="btn btn-outline" onclick="Utils.showGameModal('trivia', 'join')">
-                    <i class="fas fa-sign-in-alt"></i> انضمام
                 </button>
             </div>
         </div>
@@ -81,9 +85,6 @@
                 <button class="btn btn-primary" onclick="Utils.showGameModal('rapid_fire', 'create')">
                     <i class="fas fa-plus"></i> لعبة جديدة
                 </button>
-                <button class="btn btn-outline" onclick="Utils.showGameModal('rapid_fire', 'join')">
-                    <i class="fas fa-sign-in-alt"></i> انضمام
-                </button>
             </div>
         </div>
 
@@ -100,9 +101,6 @@
             <div class="buttons">
                 <button class="btn btn-primary" onclick="Utils.showGameModal('twenty_questions', 'create')">
                     <i class="fas fa-plus"></i> لعبة جديدة
-                </button>
-                <button class="btn btn-outline" onclick="Utils.showGameModal('twenty_questions', 'join')">
-                    <i class="fas fa-sign-in-alt"></i> انضمام
                 </button>
             </div>
         </div>
@@ -121,9 +119,6 @@
                 <button class="btn btn-primary" onclick="Utils.showGameModal('riddles', 'create')">
                     <i class="fas fa-plus"></i> لعبة جديدة
                 </button>
-                <button class="btn btn-outline" onclick="Utils.showGameModal('riddles', 'join')">
-                    <i class="fas fa-sign-in-alt"></i> انضمام
-                </button>
             </div>
         </div>
 
@@ -140,9 +135,6 @@
             <div class="buttons">
                 <button class="btn btn-primary" onclick="Utils.showGameModal('bus_complete', 'create')">
                     <i class="fas fa-plus"></i> لعبة جديدة
-                </button>
-                <button class="btn btn-outline" onclick="Utils.showGameModal('bus_complete', 'join')">
-                    <i class="fas fa-sign-in-alt"></i> انضمام
                 </button>
             </div>
         </div>
@@ -208,12 +200,27 @@
                 <input type="text" id="room-code" inputmode="numeric" pattern="[0-9]*" placeholder="اكتب رقم الغرفة...">
             </div>
             <div class="buttons u-flex-center u-full-width">
-                <button type="button" class="btn btn-primary" style="flex: 2;" onclick="Lobby.joinGame()">انضم الآن</button>
+                <button type="button" class="btn btn-primary" style="flex: 2;" onclick="Lobby.previewRoom()">عرض الغرفة</button>
                 <button type="button" class="btn btn-outline" style="flex: 1;" onclick="Utils.hideModal('join-game-modal')">إلغاء</button>
+            </div>
+        </div>
+        <div id="join-preview" class="u-hidden u-full-width">
+            <h2 class="u-margin-bottom">تأكيد الغرفة</h2>
+            <div class="card u-full-width join-preview-card">
+                <p>رقم الغرفة: <strong id="preview-room-id"></strong></p>
+                <p>نوع اللعبة: <strong id="preview-game-title"></strong></p>
+                <p>المضيف: <strong id="preview-host-name"></strong></p>
+                <p>عدد اللاعبين: <strong id="preview-players-count"></strong></p>
+                <p id="preview-room-status" class="u-margin-top"></p>
+            </div>
+            <div class="buttons u-flex-center u-full-width">
+                <button type="button" id="confirm-join-btn" class="btn btn-primary" style="flex: 2;" onclick="Lobby.joinGame()">تأكيد الانضمام</button>
+                <button type="button" class="btn btn-outline" style="flex: 1;" onclick="Lobby.backToJoinForm()">رجوع</button>
             </div>
         </div>
         <div id="join-lobby" class="u-hidden u-full-width">
             <h2 class="u-margin-bottom">في انتظار البداية</h2>
+            <p class="u-margin-bottom" style="color: var(--secondary); font-weight: 700; font-size: 1.05rem;">اللعبة: <span id="join-game-title"></span></p>
             <p class="u-margin-bottom" style="color: var(--primary); font-weight: 700; font-size: 1.2rem;">رقم الغرفة: <span id="join-room-id"></span></p>
             <div class="players-list u-full-width u-margin-bottom">
                 <h4>اللاعبين الموجودين:</h4>

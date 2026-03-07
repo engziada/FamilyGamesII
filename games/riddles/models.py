@@ -8,29 +8,21 @@ multiple riddles.
 import json
 import random
 from typing import Optional
+from games.base import BaseGame
 
 
-class RiddlesGame:
+class RiddlesGame(BaseGame):
     """Riddles game: guess the answer from clues."""
 
     HINT_COST = 2  # points deducted per hint used
     MAX_HINTS = 3
 
     def __init__(self, game_id: str, host: str, settings: Optional[dict] = None):
-        self.game_id = game_id
-        self.host = host
-        self.players: list[dict] = [{'name': host, 'isHost': True, 'team': 1}]
-        self.game_type = 'riddles'
-        self.status = 'waiting'  # waiting | round_active | ended
-        self.scores: dict[str, int] = {}
-        self.team_scores: dict[str, int] = {'1': 0, '2': 0}
-        self.current_player = ''
-
-        self.settings = settings or {
+        super().__init__(game_id=game_id, host=host, game_type='riddles', settings=settings or {
             'teams': False,
             'difficulty': 'all',
             'time_limit': 60,
-        }
+        })
 
         # Riddle state
         self.current_riddle: Optional[dict] = None
@@ -47,29 +39,12 @@ class RiddlesGame:
     # ── Player management ─────────────────────────────────────────────
 
     def add_player(self, player_name: str) -> None:
-        """Add a player to the game lobby."""
-        if len(self.players) >= 8:
-            raise ValueError("غرفة اللعب ممتلئة")
-        if any(p['name'] == player_name for p in self.players):
-            raise ValueError("اللاعب موجود بالفعل")
-
-        team = 1
-        if self.settings.get('teams'):
-            t1 = len([p for p in self.players if p.get('team') == 1])
-            t2 = len([p for p in self.players if p.get('team') == 2])
-            team = 2 if t2 < t1 else 1
-
-        self.players.append({'name': player_name, 'isHost': False, 'team': team})
+        super().add_player(player_name)
 
     def remove_player(self, player_name: str) -> None:
         """Remove a player; transfer host if needed."""
-        self.players = [p for p in self.players if p['name'] != player_name]
-        self.scores.pop(player_name, None)
+        super().remove_player(player_name)
         self.players_answered.discard(player_name)
-
-        if player_name == self.host and self.players:
-            self.host = self.players[0]['name']
-            self.players[0]['isHost'] = True
 
     # ── Game flow ─────────────────────────────────────────────────────
 
@@ -146,13 +121,7 @@ class RiddlesGame:
 
     def _award_points(self, player_name: str, points: int) -> None:
         """Award points to a player."""
-        self.scores[player_name] = self.scores.get(player_name, 0) + points
-
-        if self.settings.get('teams'):
-            player = next((p for p in self.players if p['name'] == player_name), None)
-            if player:
-                team_id = str(player.get('team', 1))
-                self.team_scores[team_id] = self.team_scores.get(team_id, 0) + points
+        super().add_score(player_name, points)
 
     def add_score(self, player_name: str, points: int) -> None:
         """Public score setter (compatibility)."""
@@ -248,18 +217,11 @@ class RiddlesGame:
             if not self.riddle_active:
                 riddle_data['answer'] = self.current_riddle['answer']
 
-        return {
-            'game_id': self.game_id,
-            'host': self.host,
-            'players': self.players,
-            'game_type': self.game_type,
-            'status': self.status,
-            'scores': self.scores,
-            'team_scores': self.team_scores,
-            'current_player': self.current_player,
-            'settings': self.settings,
+        state = self._build_base_state()
+        state.update({
             'current_riddle': riddle_data,
             'riddle_active': self.riddle_active,
             'round_number': self.round_number,
             'players_answered': list(self.players_answered),
-        }
+        })
+        return state

@@ -13,9 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 @pytest.fixture
 def app():
     """Create a Flask test application with SocketIO."""
-    # Patch eventlet before importing app
-    import eventlet
-    eventlet.monkey_patch()
+    os.environ['FAMILY_GAMES_SKIP_EVENTLET_PATCH'] = '1'
 
     from app import app as flask_app, socketio, game_rooms
     flask_app.config['TESTING'] = True
@@ -28,6 +26,7 @@ def app():
 
     # Cleanup
     game_rooms.clear()
+    os.environ.pop('FAMILY_GAMES_SKIP_EVENTLET_PATCH', None)
 
 
 @pytest.fixture

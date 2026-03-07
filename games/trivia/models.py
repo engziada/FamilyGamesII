@@ -1,35 +1,29 @@
 from datetime import datetime
 import json
 import random
+from games.base import BaseGame
 from services.data_service import get_data_service
 
-class TriviaGame:
+class TriviaGame(BaseGame):
     def __init__(self, game_id, host, settings=None):
-        self.game_id = game_id
-        self.host = host
-        self.players = [{'name': host, 'isHost': True, 'team': 1}]
-        self.game_type = 'trivia'
-        self.status = 'waiting'
-        self.scores = {}
-        self.team_scores = {'1': 0, '2': 0}
+        super().__init__(game_id=game_id, host=host, game_type='trivia', settings=settings or {
+            'teams': False,
+            'difficulty': 'all',
+            'time_limit': 30
+        })
         self.current_player = '' # Trivia won't use this as much now
         self.current_question = None
         self.question_active = False
         self.round_start_time = None
         self.players_answered = set()  # Track who answered current question
         self.players_answered_wrong = set()  # Track who answered wrong
-        self.settings = settings or {
-            'teams': False,
-            'difficulty': 'all',
-            'time_limit': 30
-        }
-        
+
         # Get data service instance
         self.data_service = get_data_service()
-        
+
         # Pre-fetch questions for this room (30 questions as per requirements)
         self.data_service.prefetch_for_room(self.game_id, 'trivia', count=30)
-        
+
         # Legacy support - keep for backward compatibility
         self.questions = []
         self.question_index = 0
@@ -45,25 +39,10 @@ class TriviaGame:
             return []
 
     def add_player(self, player_name):
-        if len(self.players) >= 8:
-            raise ValueError("الغرفة ممتلئة")
-        if any(p['name'] == player_name for p in self.players):
-            raise ValueError("اللاعب موجود بالفعل")
-
-        team = 1
-        if self.settings.get('teams'):
-            t1 = len([p for p in self.players if p.get('team') == 1])
-            t2 = len([p for p in self.players if p.get('team') == 2])
-            team = 2 if t2 < t1 else 1
-
-        self.players.append({'name': player_name, 'isHost': False, 'team': team})
+        super().add_player(player_name)
 
     def remove_player(self, player_name):
-        self.players = [p for p in self.players if p['name'] != player_name]
-        if player_name in self.scores: del self.scores[player_name]
-        if player_name == self.host and self.players:
-            self.host = self.players[0]['name']
-            self.players[0]['isHost'] = True
+        super().remove_player(player_name)
 
     def start_game(self):
         self.status = 'round_active' # Automatically start the round
@@ -85,17 +64,17 @@ class TriviaGame:
         """Get a question using data service (prevents repetition)"""
         # Get question from data service
         question = self.data_service.get_item_for_room(self.game_id, 'trivia')
-        
+
         if question:
             # Transform to match expected frontend format (options array + answer index)
             correct_answer = question.get('correct_answer')
             wrong_answers = question.get('wrong_answers', [])
-            
+
             # Create options array with correct answer at random position
             options = wrong_answers.copy()
             answer_index = random.randint(0, len(options))
             options.insert(answer_index, correct_answer)
-            
+
             return {
                 'question': question.get('question'),
                 'options': options,
@@ -103,7 +82,7 @@ class TriviaGame:
                 'category': question.get('category'),
                 'difficulty': question.get('difficulty')
             }
-        
+
         # Fallback to legacy method if data service fails
         if not self.questions:
             self.questions = self.load_and_shuffle_questions()
@@ -120,12 +99,7 @@ class TriviaGame:
         return self.get_question()
 
     def add_score(self, player_name, points):
-        self.scores[player_name] = self.scores.get(player_name, 0) + points
-        if self.settings.get('teams'):
-            p = next((p for p in self.players if p['name'] == player_name), None)
-            if p:
-                team_id = str(p['team'])
-                self.team_scores[team_id] = self.team_scores.get(team_id, 0) + points
+        super().add_score(player_name, points)
 
     def to_dict(self, include_answer=False):
         q = None
@@ -134,15 +108,8 @@ class TriviaGame:
             if not include_answer:
                 q.pop('answer', None)
 
-        return {
-            'game_id': self.game_id,
-            'host': self.host,
-            'players': self.players,
-            'game_type': self.game_type,
-            'status': self.status,
-            'scores': self.scores,
-            'team_scores': self.team_scores,
-            'current_player': self.current_player,
+        state = self._build_base_state()
+        state.update({
             'current_question': q,
-            'settings': self.settings
-        }
+        })
+        return state

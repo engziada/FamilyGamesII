@@ -1,28 +1,19 @@
 from datetime import datetime
 import json
 import random
+from games.base import BaseGame
 from services.data_service import get_data_service
 
-class CharadesGame:
+class CharadesGame(BaseGame):
     def __init__(self, game_id, host, settings=None):
-        self.game_id = game_id
-        self.host = host
-        self.players = [{'name': host, 'isHost': True, 'team': 1}]
-        self.game_type = 'charades'
-        self.status = 'waiting'
-        self.scores = {} # {player_name: score}
-        self.team_scores = {'1': 0, '2': 0}
-        self.current_player = ''
-        self.current_item = None
-        self.round_start_time = None
-        
-        # Settings: {teams: bool, difficulty: str, custom_words: str, time_limit: int}
-        self.settings = settings or {
+        super().__init__(game_id=game_id, host=host, game_type='charades', settings=settings or {
             'teams': False,
             'difficulty': 'all',
             'custom_words': '',
             'time_limit': 120
-        }
+        })
+        self.current_item = None
+        self.round_start_time = None
         
         self.custom_items = []
         if self.settings.get('custom_words'):
@@ -52,26 +43,12 @@ class CharadesGame:
             return []
 
     def add_player(self, player_name):
-        if len(self.players) >= 8:
-            raise ValueError("غرفة اللعب ممتلئة")
-        if any(p['name'] == player_name for p in self.players):
-            raise ValueError("اللاعب موجود بالفعل")
-        
-        # Assign to team with fewer players if teams mode is on
-        team = 1
-        if self.settings.get('teams'):
-            team1_count = len([p for p in self.players if p.get('team') == 1])
-            team2_count = len([p for p in self.players if p.get('team') == 2])
-            team = 2 if team2_count < team1_count else 1
-            
-        self.players.append({'name': player_name, 'isHost': False, 'team': team})
+        super().add_player(player_name)
 
     def remove_player(self, player_name):
         was_host = any(p['name'] == player_name and p.get('isHost', True) for p in self.players)
         was_current_player = self.current_player == player_name
-        self.players = [p for p in self.players if p['name'] != player_name]
-        if player_name in self.scores:
-            del self.scores[player_name]
+        super().remove_player(player_name)
         
         # If the host left and there are other players, transfer host to the next player
         if was_host and self.players:
@@ -132,9 +109,7 @@ class CharadesGame:
         self.round_start_time = None
 
     def add_score(self, player_name, points):
-        if player_name not in self.scores:
-            self.scores[player_name] = 0
-        self.scores[player_name] += points
+        super().add_score(player_name, points)
 
     @staticmethod
     def calculate_score(start_time):
@@ -162,20 +137,13 @@ class CharadesGame:
             if difficulty in ['easy', 'medium']:
                 # Send only category for non-drawer players
                 current_item_data = {'category': self.current_item.get('category', '')}
-        
-        return {
-            'game_id': self.game_id,
-            'host': self.host,
-            'players': self.players,
-            'game_type': self.game_type,
-            'status': self.status,
-            'scores': self.scores,
-            'team_scores': self.team_scores,
-            'settings': self.settings,
-            'current_player': self.current_player,
+
+        state = self._build_base_state()
+        state.update({
             'current_item': current_item_data,
             'round_start_time': self.round_start_time.isoformat() if self.round_start_time else None
-        }
+        })
+        return state
 
     def get_item(self):
         """Get an item based on game settings using data service"""

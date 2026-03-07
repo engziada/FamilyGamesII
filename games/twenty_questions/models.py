@@ -9,27 +9,19 @@ Game ends when someone guesses correctly or 20 questions are exhausted.
 import json
 import random
 from typing import Optional
+from games.base import BaseGame
 
 
-class TwentyQuestionsGame:
+class TwentyQuestionsGame(BaseGame):
     """Twenty Questions game: deduction through yes/no questions."""
 
     MAX_QUESTIONS = 20
 
     def __init__(self, game_id: str, host: str, settings: Optional[dict] = None):
-        self.game_id = game_id
-        self.host = host
-        self.players: list[dict] = [{'name': host, 'isHost': True, 'team': 1}]
-        self.game_type = 'twenty_questions'
-        self.status = 'waiting'  # waiting | thinking | asking | ended
-        self.scores: dict[str, int] = {}
-        self.team_scores: dict[str, int] = {'1': 0, '2': 0}
-        self.current_player = ''
-
-        self.settings = settings or {
+        super().__init__(game_id=game_id, host=host, game_type='twenty_questions', settings=settings or {
             'teams': False,
             'time_limit': 60,
-        }
+        })
 
         # Round state
         self.thinker: Optional[str] = None
@@ -49,33 +41,16 @@ class TwentyQuestionsGame:
     # ── Player management ─────────────────────────────────────────────
 
     def add_player(self, player_name: str) -> None:
-        """Add a player to the game lobby."""
-        if len(self.players) >= 8:
-            raise ValueError("غرفة اللعب ممتلئة")
-        if any(p['name'] == player_name for p in self.players):
-            raise ValueError("اللاعب موجود بالفعل")
-
-        team = 1
-        if self.settings.get('teams'):
-            t1 = len([p for p in self.players if p.get('team') == 1])
-            t2 = len([p for p in self.players if p.get('team') == 2])
-            team = 2 if t2 < t1 else 1
-
-        self.players.append({'name': player_name, 'isHost': False, 'team': team})
+        super().add_player(player_name)
 
     def remove_player(self, player_name: str) -> None:
         """Remove a player; transfer host if needed."""
-        self.players = [p for p in self.players if p['name'] != player_name]
-        self.scores.pop(player_name, None)
+        super().remove_player(player_name)
         self.guesses_made.pop(player_name, None)
 
         if player_name == self.thinker:
             # Thinker left — end round, no one wins
             self.status = 'ended'
-
-        if player_name == self.host and self.players:
-            self.host = self.players[0]['name']
-            self.players[0]['isHost'] = True
 
     # ── Game flow ─────────────────────────────────────────────────────
 
@@ -265,13 +240,7 @@ class TwentyQuestionsGame:
 
     def _award_points(self, player_name: str, points: int) -> None:
         """Award points to a player."""
-        self.scores[player_name] = self.scores.get(player_name, 0) + points
-
-        if self.settings.get('teams'):
-            player = next((p for p in self.players if p['name'] == player_name), None)
-            if player:
-                team_id = str(player.get('team', 1))
-                self.team_scores[team_id] = self.team_scores.get(team_id, 0) + points
+        super().add_score(player_name, points)
 
     def add_score(self, player_name: str, points: int) -> None:
         """Public score setter (compatibility)."""
@@ -314,16 +283,8 @@ class TwentyQuestionsGame:
         """
         show_secret = (for_player == self.thinker) or (self.status == 'ended')
 
-        return {
-            'game_id': self.game_id,
-            'host': self.host,
-            'players': self.players,
-            'game_type': self.game_type,
-            'status': self.status,
-            'scores': self.scores,
-            'team_scores': self.team_scores,
-            'current_player': self.current_player,
-            'settings': self.settings,
+        state = self._build_base_state()
+        state.update({
             'thinker': self.thinker,
             'secret_word': self.secret_word if show_secret else None,
             'secret_category': self.secret_category if (show_secret or self.status == 'asking') else None,
@@ -331,4 +292,5 @@ class TwentyQuestionsGame:
             'question_count': self.question_count,
             'max_questions': self.MAX_QUESTIONS,
             'round_number': self.round_number,
-        }
+        })
+        return state

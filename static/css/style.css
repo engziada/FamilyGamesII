@@ -115,6 +115,20 @@ header h1 {
     margin-bottom: 0.5rem;
 }
 
+.join-hub-card {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.join-preview-card {
+    text-align: right;
+    padding: 1.5rem;
+}
+
+.join-preview-card p {
+    margin-bottom: 0.75rem;
+}
+
 .games-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));

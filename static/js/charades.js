@@ -42,6 +42,7 @@ const AudioManager = {
 const Lobby = {
     socket: null,
     gameType: 'charades',
+    pendingRoomPreview: null,
 
     init() {
         // Show connecting overlay
@@ -84,10 +85,17 @@ const Lobby = {
             this.updatePlayerList(data.players);
         });
 
+        this.socket.on('room_preview', (data) => {
+            this.pendingRoomPreview = data;
+            this.showRoomPreview(data);
+        });
+
         this.socket.on('join_success', (data) => {
             document.getElementById('join-form').classList.add('u-hidden');
+            document.getElementById('join-preview').classList.add('u-hidden');
             document.getElementById('join-lobby').classList.remove('u-hidden');
             document.getElementById('join-room-id').textContent = document.getElementById('room-code').value;
+            document.getElementById('join-game-title').textContent = data.preview?.game_title || 'غرفة لعبة';
             this.updatePlayerList(data.players, data.host);
         });
 
@@ -183,7 +191,7 @@ const Lobby = {
         }
     },
 
-    joinGame() {
+    previewRoom() {
         const playerName = document.getElementById('player-name').value.trim();
         const roomCode = document.getElementById('room-code').value.trim();
 
@@ -196,14 +204,66 @@ const Lobby = {
         const joinBtn = document.querySelector('#join-form .btn-primary');
         if (joinBtn) {
             joinBtn.disabled = true;
-            joinBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الانضمام...';
+            joinBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري عرض الغرفة...';
         }
 
         this.init();
+        this.pendingRoomPreview = null;
+        this.socket.emit('preview_room', {
+            game_id: roomCode,
+            player_name: playerName
+        });
+    },
+
+    showRoomPreview(preview) {
+        document.getElementById('join-form').classList.add('u-hidden');
+        document.getElementById('join-preview').classList.remove('u-hidden');
+        document.getElementById('preview-room-id').textContent = preview.game_id;
+        document.getElementById('preview-game-title').textContent = preview.game_title;
+        document.getElementById('preview-host-name').textContent = preview.host;
+        document.getElementById('preview-players-count').textContent = `${preview.players_count}`;
+        document.getElementById('preview-room-status').textContent = preview.join_allowed
+            ? 'الغرفة متاحة للانضمام الآن.'
+            : (preview.join_block_reason || 'الانضمام غير متاح حالياً.');
+
+        const confirmButton = document.getElementById('confirm-join-btn');
+        if (confirmButton) {
+            confirmButton.disabled = !preview.join_allowed;
+            confirmButton.innerHTML = preview.join_allowed
+                ? 'تأكيد الانضمام'
+                : 'الانضمام غير متاح';
+        }
+    },
+
+    backToJoinForm() {
+        document.getElementById('join-preview').classList.add('u-hidden');
+        document.getElementById('join-form').classList.remove('u-hidden');
+        const joinBtn = document.querySelector('#join-form .btn-primary');
+        if (joinBtn) {
+            joinBtn.disabled = false;
+            joinBtn.innerHTML = 'عرض الغرفة';
+        }
+    },
+
+    joinGame() {
+        const playerName = document.getElementById('player-name').value.trim();
+        const roomCode = document.getElementById('room-code').value.trim();
+
+        if (!this.pendingRoomPreview || !this.pendingRoomPreview.join_allowed) {
+            Utils.showError(this.pendingRoomPreview?.join_block_reason || 'الغرفة غير متاحة للانضمام');
+            return;
+        }
+
+        const confirmButton = document.getElementById('confirm-join-btn');
+        if (confirmButton) {
+            confirmButton.disabled = true;
+            confirmButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الانضمام...';
+        }
+
         this.socket.emit('join_game', {
             game_id: roomCode,
             player_name: playerName,
-            game_type: 'charades'
+            game_type: this.pendingRoomPreview.game_type
         });
     },
 
@@ -236,7 +296,7 @@ const Lobby = {
                 li.textContent = name;
                 if (isHost) {
                     li.classList.add('host');
-                    li.textContent += ' 👑';
+                    li.textContent += ' ';
                 }
                 list.appendChild(li);
             });
@@ -286,6 +346,8 @@ const Utils = {
                 bus_complete: 'إنشاء غرفة أتوبيس كومبليت'
             };
             document.getElementById('modal-title').textContent = titles[gameType] || 'إنشاء غرفة لعبة';
+        } else {
+            Lobby.pendingRoomPreview = null;
         }
         document.getElementById(modalId).style.display = 'flex';
     },
@@ -306,8 +368,19 @@ const Utils = {
             document.getElementById('player-name').value = '';
             document.getElementById('room-code').value = '';
             document.getElementById('join-form').classList.remove('u-hidden');
+            document.getElementById('join-preview').classList.add('u-hidden');
             document.getElementById('join-lobby').classList.add('u-hidden');
             document.getElementById('join-players-list').innerHTML = '';
+            const joinBtn = document.querySelector('#join-form .btn-primary');
+            if (joinBtn) {
+                joinBtn.disabled = false;
+                joinBtn.innerHTML = 'عرض الغرفة';
+            }
+            const confirmButton = document.getElementById('confirm-join-btn');
+            if (confirmButton) {
+                confirmButton.disabled = false;
+                confirmButton.innerHTML = 'تأكيد الانضمام';
+            }
         }
     },
 
