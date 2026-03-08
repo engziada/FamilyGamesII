@@ -36,7 +36,7 @@ class RapidFireGame(BaseGame):
 
         # Data service for questions (reuses trivia pool)
         self.data_service = get_data_service()
-        self.data_service.prefetch_for_room(self.game_id, 'trivia', count=30)
+        self.data_service.prefetch_for_room(self.game_id, 'rapid_fire', count=30)
 
         # Legacy fallback
         self.questions: list[dict] = []
@@ -170,8 +170,8 @@ class RapidFireGame(BaseGame):
     # ── Data ──────────────────────────────────────────────────────────
 
     def _get_question(self) -> Optional[dict]:
-        """Fetch a question from the data service (trivia pool)."""
-        question = self.data_service.get_item_for_room(self.game_id, 'trivia')
+        """Fetch a question from the data service (rapid fire pool)."""
+        question = self.data_service.get_item_for_room(self.game_id, 'rapid_fire')
 
         if question:
             correct_answer = question.get('correct_answer')

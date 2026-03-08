@@ -94,12 +94,12 @@ def compute_content_hash(game_type: str, item_data: dict) -> str:
     """
     Compute a SHA-256 hash from item content for deduplication.
     
-    For trivia: uses question + correct_answer + category
+    For trivia and rapid_fire: uses question + correct_answer + category
     For charades/pictionary: uses word/title + category
     """
     hash_parts = [game_type]
     
-    if game_type == 'trivia':
+    if game_type in {'trivia', 'rapid_fire'}:
         # Trivia items have question, correct_answer, category
         question = item_data.get('question', '')
         answer = item_data.get('correct_answer', '')

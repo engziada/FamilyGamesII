@@ -267,16 +267,11 @@ header h1 {
     z-index: 3000;
     background: var(--surface);
     border: 3px solid var(--text);
-    padding: 1rem 2.5rem;
-    border-radius: 20px 50px;
-    box-shadow: var(--shadow-heavy);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    font-weight: 800;
-    min-width: auto;
-    max-width: 90vw;
+    border-radius: 18px;
+    box-shadow: var(--shadow-pop);
+    padding: 1rem 1.5rem;
+    box-sizing: border-box;
+    font-weight: 700;
     width: auto;
     text-align: center;
     white-space: nowrap;
@@ -284,11 +279,12 @@ header h1 {
 
 @media (max-width: 600px) {
     #game-status {
+        inset-inline: 1rem;
         left: 50%;
         transform: translateX(-50%);
         right: auto;
-        width: auto;
-        max-width: 85vw;
+        width: min(85vw, calc(100vw - 2rem));
+        max-width: calc(100vw - 2rem);
         padding: 0.8rem 1.5rem;
         font-size: 0.9rem;
         white-space: normal;
@@ -298,6 +294,10 @@ header h1 {
 #game-status.success { border-color: var(--success); color: var(--success); }
 #game-status.error { border-color: var(--danger); color: var(--danger); }
 #game-status.info { border-color: var(--secondary); color: var(--secondary); }
+
+#game-status.status-visible {
+    animation: statusPopIn 0.35s ease-out;
+}
 
 .status-bar {
     display: flex;
@@ -467,6 +467,7 @@ header h1 {
 
 .badge-team-1 { background-color: var(--purple); color: white; }
 .badge-team-2 { background-color: var(--secondary); color: white; }
+.badge-team-3 { background-color: var(--accent); color: var(--text); }
 
 /* --- Trivia Options --- */
 .options-grid button {
@@ -484,9 +485,10 @@ header h1 {
 
 .reveal-message {
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    inset: 0;
+    margin: auto;
+    width: fit-content;
+    height: fit-content;
     background: var(--surface);
     padding: 3rem;
     border-radius: 24px;
@@ -494,13 +496,26 @@ header h1 {
     z-index: 2000;
     text-align: center;
     max-width: 400px;
-    width: 90%;
+    box-sizing: border-box;
 }
 
 .reveal-content h3 {
     color: var(--accent);
     margin-bottom: 1rem;
     font-size: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .reveal-message {
+        max-width: min(92vw, 420px);
+        padding: 1.5rem 1rem;
+    }
+
+    .reveal-message .item-name {
+        font-size: 1.6rem !important;
+        line-height: 1.4;
+        word-break: break-word;
+    }
 }
 
 /* --- Animations --- */
@@ -530,6 +545,17 @@ header h1 {
     75% { transform: translate3d(0, -10px, 0) scaleY(0.95); }
     90% { transform: translate3d(0, 5px, 0) scaleY(0.98); }
     to { transform: translate3d(0, 0, 0); }
+}
+
+@keyframes statusPopIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
 }
 
 /* --- Utilities --- */

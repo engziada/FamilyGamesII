@@ -4,7 +4,6 @@ Handles caching, pre-fetching, and item distribution for all game types.
 """
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
-from sqlalchemy import and_, or_
 from models.game_items import GameItem, RoomItemUsage, get_session, init_db, compute_content_hash
 import random
 

@@ -9,6 +9,7 @@ import json
 import random
 from typing import Optional
 from games.base import BaseGame
+from services.data_service import get_data_service
 
 
 class RiddlesGame(BaseGame):
@@ -30,11 +31,14 @@ class RiddlesGame(BaseGame):
         self.players_answered: set[str] = set()  # who already tried this riddle
         self.hints_revealed: int = 0
         self.round_number = 0
+        self.data_service = get_data_service()
+        self.data_service.prefetch_for_room(self.game_id, 'riddles', count=30)
 
         # Load riddle pool
-        self.riddle_pool: list[dict] = []
+        self.riddle_pool: list[dict] = self.data_service.get_items_for_room(self.game_id, 'riddles', count=30)
         self.used_riddles: set[int] = set()  # track used indices
-        self._load_riddles()
+        if not self.riddle_pool:
+            self._load_riddles()
 
     # ── Player management ─────────────────────────────────────────────
 

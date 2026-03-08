@@ -439,14 +439,14 @@ const Utils = {
         const statusElement = document.getElementById('game-status');
         if (statusElement) {
             statusElement.textContent = message;
-            statusElement.className = `animate-bounce-down ${type}`;
+            statusElement.className = `${type} status-visible`;
             statusElement.style.display = 'flex';
 
             if (this.hideTimeout) clearTimeout(this.hideTimeout);
 
             this.hideTimeout = setTimeout(() => {
                 statusElement.style.display = 'none';
-                statusElement.classList.remove('animate-bounce-down');
+                statusElement.classList.remove('status-visible');
             }, 4000);
         }
     }
@@ -470,6 +470,10 @@ class GameEngine {
         this.busInputsInitialized = false;
         this.currentRound = 0;
         this.totalRounds = 0;
+        this.twentyQuestionsState = null;
+        this.canvasInitialized = false;
+        this.canvasResizeHandler = null;
+        this.canvasStrokes = [];
 
         this.isDrawing = false;
         this.lastPos = { x: 0, y: 0 };
@@ -563,32 +567,32 @@ class GameEngine {
         bindClick('passButton', () => this.socket.emit('player_passed', { game_id: this.gameId, player_name: this.playerName }));
         bindClick('buzzButton', () => this.buzzIn());
 
-        bindClick('leave-room', () => {
-            if (confirm('هل أنت متأكد أنك تريد الانسحاب؟')) {
-                sessionStorage.removeItem('gameData');
-                this.socket.emit('host_withdraw', { roomId: this.gameId, playerName: this.playerName }, () => {
-                    window.location.href = '/';
-                });
-            }
-        });
-
         bindClick('close-room', () => {
             if (confirm('هل أنت متأكد أنك تريد إغلاق الغرفة؟')) {
-                sessionStorage.removeItem('gameData');
-                this.socket.emit('close_room', { roomId: this.gameId, playerName: this.playerName }, () => {
-                    window.location.href = '/';
-                });
+                this.requestExit('close');
             }
         });
 
         bindClick('leaveButton', () => {
             if (confirm('هل أنت متأكد أنك تريد الانسحاب؟')) {
-                sessionStorage.removeItem('gameData');
-                this.socket.emit('leave_game', { roomId: this.gameId, playerName: this.playerName }, () => {
-                    window.location.href = '/';
-                });
+                this.requestExit('leave');
             }
         });
+    }
+
+    requestExit(action) {
+        sessionStorage.removeItem('gameData');
+        if (action === 'close') {
+            this.socket.emit('close_room', { roomId: this.gameId, playerName: this.playerName });
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1200);
+            return;
+        }
+        this.socket.emit('leave_game', { roomId: this.gameId, playerName: this.playerName });
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 250);
     }
 
     setupSocketListeners() {
@@ -634,7 +638,10 @@ class GameEngine {
         });
 
         this.socket.on('new_question', (data) => {
-            if (data) this.displayQuestion(data);
+            if (!data) return;
+            if (this.gameType === 'twenty_questions') return;
+            if (this.gameType === 'riddles') return;
+            this.displayQuestion(data);
         });
 
         this.socket.on('answer_result', (data) => {
@@ -652,15 +659,24 @@ class GameEngine {
         });
 
         this.socket.on('draw', (stroke) => {
-            if (this.gameType === 'pictionary') this.drawStroke(stroke);
+            if (this.gameType === 'pictionary') {
+                this.canvasStrokes.push(stroke);
+                this.drawStroke(stroke);
+            }
         });
 
         this.socket.on('clear_canvas', () => {
-            if (this.gameType === 'pictionary') this.clearLocalCanvas();
+            if (this.gameType === 'pictionary') {
+                this.canvasStrokes = [];
+                this.clearLocalCanvas();
+            }
         });
 
         this.socket.on('sync_canvas', (data) => {
-            if (this.gameType === 'pictionary') data.forEach(s => this.drawStroke(s));
+            if (this.gameType === 'pictionary') {
+                this.canvasStrokes = Array.isArray(data) ? data : [];
+                this.redrawCanvasStrokes();
+            }
         });
 
         this.socket.on('reveal_item', (data) => this.showRevealMessage(data));
@@ -858,6 +874,16 @@ class GameEngine {
         if (data.current_player !== undefined) this.updateCurrentPlayer(data.current_player);
         if (data.scores || data.team_scores) this.updateScores(data);
 
+        if (this.gameType === 'twenty_questions') {
+            this.twentyQuestionsState = {
+                ...(this.twentyQuestionsState || {}),
+                ...data
+            };
+            this.renderTwentyQuestionsState(this.twentyQuestionsState);
+            this.updateButtonVisibility();
+            return;
+        }
+
         if (data.current_question && this.gameType === 'rapid_fire') {
             this.displayRapidFireQuestion(data);
         } else if (data.current_question) {
@@ -893,6 +919,19 @@ class GameEngine {
         this.updateButtonVisibility();
     }
 
+    updateCurrentPlayer(playerName) {
+        const currentTurnEl = document.getElementById('current-turn');
+        if (currentTurnEl) {
+            currentTurnEl.textContent = playerName || '...';
+        }
+
+        if (playerName !== undefined) {
+            this.currentPlayer = playerName;
+        }
+
+        this.updateButtonVisibility();
+    }
+
     setGameStatus(status) {
         if (this.gameStatus !== status) {
             this.gameStatus = status;
@@ -907,6 +946,20 @@ class GameEngine {
                 }
                 // Clear the stored category
                 this.currentItemCategory = null;
+
+                // Hide Pictionary canvas between rounds
+                if (this.gameType === 'pictionary') {
+                    document.getElementById('pictionary-area')?.classList.add('u-hidden');
+                }
+            }
+
+            // Show Pictionary canvas and controls when round starts
+            if (status === 'round_active' && this.gameType === 'pictionary') {
+                const pArea = document.getElementById('pictionary-area');
+                if (pArea) {
+                    pArea.classList.remove('u-hidden');
+                    this.initCanvas();
+                }
             }
 
             this.updateButtonVisibility();
@@ -967,85 +1020,13 @@ class GameEngine {
 
         // Hide standard buttons for twenty_questions and riddles
         if (this.gameType === 'twenty_questions') {
-            this.updateTwentyQButtonVisibility();
+            Object.values(btns).forEach(b => { if (b) b.classList.add('u-hidden'); });
         }
         if (this.gameType === 'riddles') {
             if (btns.ready) btns.ready.classList.add('u-hidden');
             if (btns.guess) btns.guess.classList.add('u-hidden');
             if (btns.pass) btns.pass.classList.add('u-hidden');
         }
-    }
-
-    updateCurrentPlayer(player) {
-        const el = document.getElementById('current-turn');
-        if (el) {
-            if (this.gameType === 'trivia' || this.gameType === 'bus_complete' || this.gameType === 'rapid_fire' ||
-                this.gameType === 'twenty_questions' || this.gameType === 'riddles') {
-                el.textContent = 'الكل!';
-            } else if (player) {
-                el.textContent = player;
-            } else {
-                el.textContent = '...';
-            }
-        }
-
-        const isMe = (player === this.playerName);
-        const itemDisplay = document.getElementById('item-display');
-        const pictionaryArea = document.getElementById('pictionary-area');
-
-        if (itemDisplay) {
-            // In Trivia/Rapid Fire/Twenty Questions/Riddles, everyone sees the display.
-            // In Charades/Pictionary, only the performer (isMe) sees it.
-            if (this.gameType === 'trivia' || this.gameType === 'rapid_fire' ||
-                this.gameType === 'twenty_questions' || this.gameType === 'riddles' || isMe) {
-                itemDisplay.classList.remove('u-hidden');
-                itemDisplay.style.display = 'block';
-            } else if (this.gameType === 'pictionary' && !isMe && this.currentItemCategory) {
-                // Show category hint for non-drawing players in easy/medium difficulty
-                const difficulty = this.gameSettings.difficulty || 'medium';
-                if (difficulty === 'easy' || difficulty === 'medium') {
-                    itemDisplay.classList.remove('u-hidden');
-                    itemDisplay.style.display = 'block';
-                    itemDisplay.innerHTML = `<div class="item-category" style="font-size: 1.8rem;">${this.currentItemCategory}</div>`;
-                    itemDisplay.classList.add('visible');
-                } else {
-                    itemDisplay.classList.add('u-hidden');
-                }
-            } else {
-                itemDisplay.classList.add('u-hidden');
-            }
-        }
-
-        if (pictionaryArea) {
-            if (this.gameType === 'pictionary' && this.gameStatus === 'round_active') {
-                pictionaryArea.classList.remove('u-hidden');
-                pictionaryArea.style.display = 'block';
-                this.initCanvas();
-                // Show controls only to the drawer
-                document.querySelector('.canvas-controls').style.display = isMe ? 'flex' : 'none';
-            } else {
-                pictionaryArea.classList.add('u-hidden');
-            }
-        }
-
-        // Handle Bus Complete areas
-        const busArea = document.getElementById('bus-area');
-        const busResultsArea = document.getElementById('bus-results-area');
-        const busValidationArea = document.getElementById('bus-validation-area');
-
-        if (this.gameType !== 'bus_complete') {
-            if (busArea) busArea.classList.add('u-hidden');
-            if (busResultsArea) busResultsArea.classList.add('u-hidden');
-            if (busValidationArea) busValidationArea.classList.add('u-hidden');
-        } else {
-            // Bus Complete specific logic is handled in displayBusBoard and displayBusResults
-            // But we should hide them if the status isn't active/scoring/validating
-            if (this.gameStatus !== 'round_active' && busArea) busArea.classList.add('u-hidden');
-            if (this.gameStatus !== 'scoring' && busResultsArea) busResultsArea.classList.add('u-hidden');
-            if (this.gameStatus !== 'validating' && busValidationArea) busValidationArea.classList.add('u-hidden');
-        }
-
-        this.updateButtonVisibility();
     }
 
     displayItem(category, itemData) {
@@ -1068,19 +1049,40 @@ class GameEngine {
         }
     }
 
+    displayRapidFireQuestion(data) {
+        const el = document.getElementById('item-display');
+        if (el) {
+            el.classList.remove('u-hidden');
+            el.style.display = 'block';
+            const q = data.current_question;
+            let html = `<div class="item-category">${q.category || 'سؤال سريع'}</div>`;
+            html += `<div class="item-name" style="font-size: 1.8rem;">${q.question}</div>`;
+            // Don't show options until a player buzzes in
+            el.innerHTML = html;
+            this.currentRapidFireQuestion = q;
+            setTimeout(() => el.classList.add('visible'), 100);
+        }
+        // Show rapid fire buzz area
+        const rfArea = document.getElementById('rapid-fire-area');
+        if (rfArea) rfArea.classList.remove('u-hidden');
+        this.updateBuzzButton();
+    }
+
     displayQuestion(data) {
         const el = document.getElementById('item-display');
         if (el) {
             el.classList.remove('u-hidden');
             el.style.display = 'block';
-            let html = `<div class="item-category">${data.category}</div>`;
+            let html = `<div class="item-category">${data.category || ''}</div>`;
             html += `<div class="item-name" style="font-size: 1.8rem;">${data.question}</div>`;
 
-            html += `<div class="options-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; width: 100%; margin-top: 1.5rem;">`;
-            data.options.forEach((opt, i) => {
-                html += `<button class="btn btn-outline" onclick="window.gameInstance.submitAnswer(${i})">${opt}</button>`;
-            });
-            html += `</div>`;
+            if (data.options && data.options.length) {
+                html += `<div class="options-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; width: 100%; margin-top: 1.5rem;">`;
+                data.options.forEach((opt, i) => {
+                    html += `<button class="btn btn-outline" onclick="window.gameInstance.submitAnswer(${i})">${opt}</button>`;
+                });
+                html += `</div>`;
+            }
 
             el.innerHTML = html;
             setTimeout(() => el.classList.add('visible'), 100);
@@ -1106,25 +1108,32 @@ class GameEngine {
 
     initCanvas() {
         const canvas = document.getElementById('game-canvas');
-        if (!canvas || this.ctx) return;
+        if (!canvas) return;
 
-        // Set canvas internal dimensions to match display size
         const resizeCanvas = () => {
             const rect = canvas.getBoundingClientRect();
             const dpr = window.devicePixelRatio || 1;
             canvas.width = rect.width * dpr;
             canvas.height = rect.height * dpr;
-            if (this.ctx) {
-                this.ctx.scale(dpr, dpr);
-                this.ctx.lineCap = 'round';
-                this.ctx.lineJoin = 'round';
+            if (!this.ctx) {
+                this.ctx = canvas.getContext('2d');
             }
+            this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            this.ctx.lineCap = 'round';
+            this.ctx.lineJoin = 'round';
+            this.redrawCanvasStrokes();
         };
-        
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
 
-        this.ctx = canvas.getContext('2d');
+        if (!this.canvasResizeHandler) {
+            this.canvasResizeHandler = resizeCanvas;
+            window.addEventListener('resize', this.canvasResizeHandler);
+        }
+
+        resizeCanvas();
+
+        if (this.canvasInitialized) return;
+
+        this.canvasInitialized = true;
         this.ctx.lineCap = 'round';
         this.ctx.lineJoin = 'round';
 
@@ -1132,10 +1141,9 @@ class GameEngine {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            // Use logical coordinates (canvas width/height) instead of client coordinates
             return {
-                x: (clientX - rect.left) * (canvas.width / rect.width),
-                y: (clientY - rect.top) * (canvas.height / rect.height)
+                x: (clientX - rect.left) / rect.width,
+                y: (clientY - rect.top) / rect.height
             };
         };
 
@@ -1152,8 +1160,9 @@ class GameEngine {
                 from: this.lastPos,
                 to: currentPos,
                 color: document.getElementById('draw-color').value,
-                size: document.getElementById('draw-size').value
+                size: Number(document.getElementById('draw-size').value)
             };
+            this.canvasStrokes.push(stroke);
             this.drawStroke(stroke);
             this.socket.emit('draw', { game_id: this.gameId, stroke: stroke });
             this.lastPos = currentPos;
@@ -1173,18 +1182,31 @@ class GameEngine {
     }
 
     drawStroke(s) {
-        if (!this.ctx) return;
+        const canvas = document.getElementById('game-canvas');
+        if (!this.ctx || !canvas || !s?.from || !s?.to) return;
+        const rect = canvas.getBoundingClientRect();
+        const fromX = s.from.x <= 1 ? s.from.x * rect.width : s.from.x;
+        const fromY = s.from.y <= 1 ? s.from.y * rect.height : s.from.y;
+        const toX = s.to.x <= 1 ? s.to.x * rect.width : s.to.x;
+        const toY = s.to.y <= 1 ? s.to.y * rect.height : s.to.y;
         this.ctx.beginPath();
         this.ctx.strokeStyle = s.color;
         this.ctx.lineWidth = s.size;
-        this.ctx.moveTo(s.from.x, s.from.y);
-        this.ctx.lineTo(s.to.x, s.to.y);
+        this.ctx.moveTo(fromX, fromY);
+        this.ctx.lineTo(toX, toY);
         this.ctx.stroke();
+    }
+
+    redrawCanvasStrokes() {
+        if (!this.ctx) return;
+        this.clearLocalCanvas();
+        this.canvasStrokes.forEach((stroke) => this.drawStroke(stroke));
     }
 
     clearCanvas() {
         this.socket.emit('clear_canvas', { game_id: this.gameId });
         this.clearLocalCanvas();
+        this.canvasStrokes = [];
     }
 
     clearLocalCanvas() {
@@ -1363,465 +1385,40 @@ class GameEngine {
         msg.style.display = 'block';
         setTimeout(() => msg.style.display = 'none', 5000);
     }
-    /**
-     * Normalize Arabic letter for comparison (hamza variants -> alef, taa marbuta -> haa, etc.)
-     * @param {string} char - Arabic character to normalize
-     * @returns {string} Normalized character
-     */
-    normalizeArabicChar(char) {
-        if (!char) return '';
-        let c = char.trim();
-        c = c.replace(/[أإآ]/g, 'ا');
-        c = c.replace(/ة/g, 'ه');
-        c = c.replace(/ى/g, 'ي');
-        c = c.replace(/ئ/g, 'ي');
-        c = c.replace(/ؤ/g, 'و');
-        return c;
-    }
-
-    /**
-     * Check if a value starts with the current round letter (client-side).
-     * @param {string} value - The answer text
-     * @returns {boolean}
-     */
-    startsWithCurrentLetter(value) {
-        if (!value || !this.currentLetter) return false;
-        const normValue = this.normalizeArabicChar(value.trim());
-        const normLetter = this.normalizeArabicChar(this.currentLetter);
-        return normValue.startsWith(normLetter);
-    }
-
-    /**
-     * Attach real-time validation listeners to bus inputs.
-     * Also syncs answers to the server on blur and debounced input
-     * so that all players' answers are captured when the bus is stopped.
-     */
-    attachBusInputValidation() {
-        const inputs = document.querySelectorAll('.bus-input');
-
-        // Debounced server sync — collects all inputs and emits once
-        let syncTimer = null;
-        const syncAnswersToServer = () => {
-            clearTimeout(syncTimer);
-            syncTimer = setTimeout(() => {
-                const answers = {};
-                document.querySelectorAll('.bus-input').forEach(inp => {
-                    const cat = inp.getAttribute('data-category');
-                    answers[cat] = inp.value.trim();
-                });
-                this.socket.emit('submit_bus_answers', {
-                    game_id: this.gameId,
-                    answers: answers
-                });
-            }, 400);
-        };
-
-        inputs.forEach((input, index) => {
-            input.addEventListener('input', () => {
-                const val = input.value.trim();
-                input.classList.remove('bus-input-valid', 'bus-input-invalid');
-                if (!val) return;
-                if (this.startsWithCurrentLetter(val)) {
-                    input.classList.add('bus-input-valid');
-                } else {
-                    input.classList.add('bus-input-invalid');
-                }
-                // Update button state after input
-                this.checkAllCategoriesFilled();
-                // Sync to server (debounced)
-                syncAnswersToServer();
-            });
-
-            // Sync immediately on blur (player left the field)
-            input.addEventListener('blur', () => {
-                syncAnswersToServer();
-            });
-            
-            // Enter key navigation - focus next input
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const nextInput = inputs[index + 1];
-                    if (nextInput) {
-                        nextInput.focus();
-                    } else {
-                        // Last input - focus first or submit
-                        inputs[0].focus();
-                    }
-                }
-            });
-        });
-    }
-
-    displayBusBoard() {
-        document.getElementById('item-display').classList.add('u-hidden');
-        document.getElementById('pictionary-area').classList.add('u-hidden');
-        document.getElementById('waiting-area').style.display = 'none';
-        document.getElementById('bus-results-area').classList.add('u-hidden');
-        document.getElementById('bus-area').classList.remove('u-hidden');
-        
-        // Add fade-in animation
-        document.getElementById('bus-area').classList.add('fade-in');
-
-        if (this.gameStatus === 'round_active' && !this.busInputsInitialized) {
-            document.querySelectorAll('.bus-input').forEach(input => {
-                input.value = '';
-                input.classList.remove('bus-input-valid', 'bus-input-invalid');
-            });
-            this.attachBusInputValidation();
-            this.busInputsInitialized = true;
-            this.checkAllCategoriesFilled(); // Check initially
-        }
-        
-        // Show stop button for all players (not just host)
-        const stopBtn = document.getElementById('stopBusButton');
-        if (stopBtn) {
-            stopBtn.classList.remove('u-hidden');
-            this.checkAllCategoriesFilled(); // Set initial state
-        }
-    }
-
-    checkAllCategoriesFilled() {
-        const stopBtn = document.getElementById('stopBusButton');
-        if (!stopBtn) return;
-
-        let allFilled = true;
-        document.querySelectorAll('.bus-input').forEach(input => {
-            if (!input.value.trim()) {
-                allFilled = false;
-            }
-        });
-
-        // Enable/disable button based on fill status
-        stopBtn.disabled = !allFilled;
-        if (allFilled) {
-            stopBtn.classList.remove('btn-disabled');
-            stopBtn.style.opacity = '1';
-            stopBtn.style.cursor = 'pointer';
-        } else {
-            stopBtn.classList.add('btn-disabled');
-            stopBtn.style.opacity = '0.5';
-            stopBtn.style.cursor = 'not-allowed';
-        }
-    }
-
-    stopBus() {
-        const answers = {};
-        let hasInvalid = false;
-        let allFilled = true;
-
-        document.querySelectorAll('.bus-input').forEach(input => {
-            const val = input.value.trim();
-            const cat = input.getAttribute('data-category');
-            answers[cat] = val;
-
-            // Check if all fields are filled
-            if (!val) {
-                allFilled = false;
-            }
-
-            // Client-side letter check with visual feedback
-            input.classList.remove('bus-input-valid', 'bus-input-invalid');
-            if (val && !this.startsWithCurrentLetter(val)) {
-                input.classList.add('bus-input-invalid');
-                hasInvalid = true;
-            }
-        });
-
-        // Prevent stopping if not all categories are filled
-        if (!allFilled) {
-            Utils.showMessage('يجب ملء جميع الفئات قبل إيقاف الأتوبيس!', 'error');
-            return;
-        }
-
-        if (hasInvalid) {
-            Utils.showMessage('بعض الإجابات لا تبدأ بالحرف المطلوب! سيتم تجاهلها.', 'error');
-        }
-
-        this.socket.emit('stop_bus', { game_id: this.gameId, answers: answers });
-    }
-
-    displayBusResults(data) {
-        document.getElementById('bus-area').classList.add('u-hidden');
-        document.getElementById('bus-results-area').classList.remove('u-hidden');
-        this.busInputsInitialized = false;
-
-        const headerRow = document.getElementById('results-header');
-        while (headerRow.children.length > 2) {
-            headerRow.removeChild(headerRow.children[1]);
-        }
-        data.categories.forEach(cat => {
-            const th = document.createElement('th');
-            th.textContent = cat;
-            th.style.padding = '1rem';
-            headerRow.insertBefore(th, headerRow.lastElementChild);
-        });
-
-        const tbody = document.getElementById('results-body');
-        tbody.innerHTML = '';
-
-        data.players.forEach(player => {
-            const tr = document.createElement('tr');
-            tr.style.background = 'var(--surface)';
-            tr.style.borderRadius = '15px';
-
-            const tdName = document.createElement('td');
-            tdName.textContent = player.name;
-            tdName.style.padding = '1rem';
-            tdName.style.fontWeight = 'bold';
-            tr.appendChild(tdName);
-
-            data.categories.forEach(cat => {
-                const td = document.createElement('td');
-                const ans = (data.player_submissions[player.name] || {})[cat] || '';
-                const pts = (data.round_scores[player.name] || {})[cat] || 0;
-                const wrongLetter = (data.wrong_letter_answers || {})[player.name]?.[cat];
-                const invalidWord = (data.invalid_answers || {})[player.name]?.[cat];
-
-                let displayAns = ans || '-';
-                let extraInfo = '';
-
-                if (wrongLetter) {
-                    displayAns = `<s style="color:var(--danger);">${wrongLetter}</s>`;
-                    extraInfo = '<small style="color:var(--danger);display:block;">حرف خاطئ</small>';
-                } else if (invalidWord) {
-                    displayAns = `<s style="color:var(--warning,orange);">${invalidWord}</s>`;
-                    extraInfo = '<small style="color:var(--warning,orange);display:block;">كلمة غير صحيحة</small>';
-                }
-
-                td.innerHTML = `<div>${displayAns}</div>${extraInfo}<small class="badge ${pts > 0 ? 'badge-team-2' : 'badge-team-1'}" style="font-size: 0.7rem; color: white; padding: 2px 6px; border-radius: 10px;">${pts}</small>`;
-                td.style.padding = '1rem';
-                td.style.textAlign = 'center';
-                tr.appendChild(td);
-            });
-
-            const tdTotal = document.createElement('td');
-            const total = Object.values(data.round_scores[player.name] || {}).reduce((a, b) => a + b, 0);
-            tdTotal.innerHTML = `<strong style="color: var(--primary); font-size: 1.2rem;">${total}</strong>`;
-            tdTotal.style.padding = '1rem';
-            tdTotal.style.textAlign = 'center';
-            tr.appendChild(tdTotal);
-            tbody.appendChild(tr);
-        });
-
-        if (this.isHost) {
-            document.getElementById('host-bus-actions').classList.remove('u-hidden');
-        }
-    }
-
-    confirmBusScores() {
-        this.socket.emit('confirm_bus_scores', { game_id: this.gameId });
-    }
-
-    displayBusValidation(data) {
-        // Hide other areas
-        document.getElementById('bus-area').classList.add('u-hidden');
-        document.getElementById('bus-results-area').classList.add('u-hidden');
-        document.getElementById('waiting-area').style.display = 'none';
-
-        // Show validation area
-        const validationArea = document.getElementById('bus-validation-area');
-        validationArea.classList.remove('u-hidden');
-
-        // Update letter display
-        if (data.current_letter) {
-            this.currentLetter = data.current_letter;
-        }
-
-        // Build validation grid - now shows unique words per category
-        const grid = document.getElementById('validation-grid');
-        grid.innerHTML = '';
-
-        const validationStatuses = data.validation_statuses || {};
-        let totalWords = 0;
-        let totalVotes = 0;
-
-        // Sort by category, then word
-        const sortedKeys = Object.keys(validationStatuses).sort((a, b) => {
-            const aData = validationStatuses[a];
-            const bData = validationStatuses[b];
-            if (aData.category !== bData.category) {
-                return aData.category.localeCompare(bData.category);
-            }
-            return aData.answer.localeCompare(bData.answer);
-        });
-
-        sortedKeys.forEach(answerKey => {
-            const status = validationStatuses[answerKey];
-            totalWords++;
-
-            const card = document.createElement('div');
-            card.className = 'validation-card valid';
-            card.dataset.answerKey = answerKey;
-
-            // Determine card state based on validation status
-            if (status.is_valid === false) {
-                card.classList.remove('valid');
-                card.classList.add('invalid');
-            } else {
-                card.classList.add('valid');
-            }
-
-            // Previously validated indicator
-            let previouslyValidatedBadge = '';
-            if (status.previously_validated) {
-                previouslyValidatedBadge = '<span class="previously-validated-badge" title="تم التحقق منها سابقاً"><i class="fas fa-check-circle"></i></span>';
-            }
-
-            // Check if current player voted
-            const playerVote = status.votes && status.votes[this.playerName];
-            let voteIndicator = '';
-            if (playerVote !== undefined) {
-                totalVotes++;
-                voteIndicator = `<div class="user-vote-indicator ${playerVote ? 'valid' : 'invalid'}">
-                    <i class="fas fa-${playerVote ? 'check' : 'times'}"></i>
-                </div>`;
-            }
-
-            // Players count indicator (how many used this word)
-            const playersCount = status.players ? status.players.length : 1;
-            const playersCountBadge = `<span class="players-count-badge" title="عدد اللاعبين الذين استخدموا هذه الكلمة">${playersCount}x</span>`;
-
-            card.innerHTML = `
-                <div class="category">${status.category}</div>
-                <div class="answer">${status.answer} ${previouslyValidatedBadge}</div>
-                <div class="players-hint">${playersCountBadge}</div>
-                <div class="vote-counts">
-                    <span class="vote-valid"><i class="fas fa-check"></i> ${status.valid_count}</span>
-                    <span class="vote-invalid"><i class="fas fa-times"></i> ${status.invalid_count}</span>
-                </div>
-                ${voteIndicator}
-            `;
-
-            // Click handler for voting
-            card.addEventListener('click', () => {
-                // Toggle vote: if already voted valid, vote invalid; if invalid, vote valid; if none, vote valid
-                let newVote = true;
-                if (playerVote === true) {
-                    newVote = false;
-                } else if (playerVote === false) {
-                    newVote = true; // toggle back to valid
-                }
-
-                this.socket.emit('submit_validation_vote', {
-                    game_id: this.gameId,
-                    answer_key: answerKey,
-                    is_valid: newVote
-                });
-            });
-
-            grid.appendChild(card);
-        });
-
-        // Update progress
-        const progressPercent = totalWords > 0 ? (totalVotes / totalWords) * 100 : 0;
-        document.getElementById('validation-progress-bar').style.width = `${progressPercent}%`;
-        document.getElementById('votes-count').textContent = totalVotes;
-        document.getElementById('total-answers').textContent = totalWords;
-
-        // Show host actions
-        if (this.isHost) {
-            document.getElementById('host-validation-actions').classList.remove('u-hidden');
-        } else {
-            document.getElementById('host-validation-actions').classList.add('u-hidden');
-        }
-    }
-
-    finalizeValidation() {
-        this.socket.emit('finalize_validation', { game_id: this.gameId });
-    }
-
-    // --- Rapid Fire Logic ---
-
-    displayRapidFireQuestion(data) {
-        const el = document.getElementById('item-display');
-        if (!el) return;
-
-        // Hide non-relevant areas
-        document.getElementById('waiting-area').style.display = 'none';
-        const busArea = document.getElementById('bus-area');
-        if (busArea) busArea.classList.add('u-hidden');
-
-        el.classList.remove('u-hidden');
-        el.style.display = 'block';
-
-        const q = data.current_question;
-        if (!q) return;
-
-        let html = `<div class="item-category">${q.category || 'سؤال'}</div>`;
-        html += `<div class="item-name" style="font-size: 1.8rem;">${q.question}</div>`;
-
-        // Show buzz button area
-        const buzzArea = document.getElementById('rapid-fire-area');
-        if (buzzArea) buzzArea.classList.remove('u-hidden');
-
-        // If player is the buzzed player, show answer options
-        if (data.buzzed_player === this.playerName) {
-            html += `<div class="options-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; width: 100%; margin-top: 1.5rem;">`;
-            q.options.forEach((opt, i) => {
-                html += `<button class="btn btn-outline" onclick="window.gameInstance.submitBuzzAnswer(${i})">${opt}</button>`;
-            });
-            html += `</div>`;
-        } else if (data.buzzed_player) {
-            html += `<div class="buzz-status" style="margin-top: 1.5rem; font-size: 1.2rem; color: var(--secondary); font-weight: 700;"><i class="fas fa-bell"></i> ${data.buzzed_player} ضغط الجرس!</div>`;
-        }
-
-        el.innerHTML = html;
-        setTimeout(() => el.classList.add('visible'), 100);
-
-        this.updateBuzzButton();
-    }
-
-    handlePlayerBuzzed(data) {
-        const buzzBtn = document.getElementById('buzzButton');
-        if (buzzBtn) {
-            buzzBtn.disabled = true;
-            buzzBtn.innerHTML = `<i class="fas fa-bell"></i> ${data.player} ضغط الجرس!`;
-        }
-
-        // If I'm the buzzed player, show answer options
-        if (data.player === this.playerName) {
-            // Start buzz answer timer
-            this.startBuzzTimer(data.buzz_timeout);
-        }
-    }
-
-    clearBuzzState() {
-        this.stopBuzzTimer();
-        const buzzBtn = document.getElementById('buzzButton');
-        if (buzzBtn) {
-            buzzBtn.disabled = false;
-            buzzBtn.innerHTML = '<i class="fas fa-bell"></i> اضغط الجرس!';
-        }
-    }
 
     updateBuzzButton() {
-        const buzzBtn = document.getElementById('buzzButton');
-        if (!buzzBtn || this.gameType !== 'rapid_fire') return;
+        const buzzButton = document.getElementById('buzzButton');
+        const buzzTimer = document.getElementById('buzz-timer');
+        if (!buzzButton) return;
 
-        if (this.gameStatus === 'round_active') {
-            buzzBtn.classList.remove('u-hidden');
-            buzzBtn.disabled = false;
-            buzzBtn.innerHTML = '<i class="fas fa-bell"></i> اضغط الجرس!';
-        } else if (this.gameStatus === 'buzzed') {
-            buzzBtn.classList.remove('u-hidden');
-            buzzBtn.disabled = true;
-        } else {
-            buzzBtn.classList.add('u-hidden');
+        const isRapidFire = this.gameType === 'rapid_fire';
+        const canBuzz = isRapidFire && this.gameStatus === 'round_active';
+
+        buzzButton.classList.toggle('u-hidden', !canBuzz);
+        buzzButton.disabled = !canBuzz;
+
+        if (buzzTimer && this.gameStatus !== 'buzzed') {
+            buzzTimer.style.display = 'none';
+            buzzTimer.textContent = '';
         }
     }
 
     buzzIn() {
-        this.socket.emit('buzz_in', { game_id: this.gameId });
-        const buzzBtn = document.getElementById('buzzButton');
-        if (buzzBtn) {
-            buzzBtn.disabled = true;
-            buzzBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري...';
+        if (this.gameType !== 'rapid_fire' || this.gameStatus !== 'round_active') return;
+
+        const buzzButton = document.getElementById('buzzButton');
+        if (buzzButton) {
+            buzzButton.disabled = true;
+            buzzButton.classList.add('u-hidden');
         }
+
+        this.socket.emit('buzz_in', {
+            game_id: this.gameId,
+            player_name: this.playerName
+        });
     }
 
     submitBuzzAnswer(idx) {
-        // Disable all option buttons
         const optionButtons = document.querySelectorAll('.options-grid button');
         optionButtons.forEach(btn => {
             btn.disabled = true;
@@ -1829,91 +1426,77 @@ class GameEngine {
             btn.style.cursor = 'not-allowed';
         });
 
-        this.stopBuzzTimer();
         this.socket.emit('submit_buzz_answer', {
             game_id: this.gameId,
             answer_idx: idx
         });
     }
 
-    startBuzzTimer(duration) {
-        this.stopBuzzTimer();
-        const buzzTimerEl = document.getElementById('buzz-timer');
-        if (!buzzTimerEl) return;
+    handlePlayerBuzzed(data) {
+        const buzzButton = document.getElementById('buzzButton');
+        const buzzTimer = document.getElementById('buzz-timer');
 
-        let timeLeft = duration;
-        buzzTimerEl.style.display = 'block';
-        buzzTimerEl.textContent = `⏱ ${timeLeft}`;
+        this.gameStatus = 'buzzed';
 
-        this.buzzTimerInterval = setInterval(() => {
-            timeLeft--;
-            buzzTimerEl.textContent = `⏱ ${timeLeft}`;
-            if (timeLeft <= 3) buzzTimerEl.style.color = 'var(--danger)';
+        if (buzzButton) {
+            buzzButton.classList.add('u-hidden');
+            buzzButton.disabled = true;
+        }
 
-            if (timeLeft <= 0) {
-                this.stopBuzzTimer();
-                this.socket.emit('buzz_timeout', { game_id: this.gameId });
+        if (buzzTimer) {
+            buzzTimer.style.display = 'block';
+            buzzTimer.textContent = data.player ? `الجرس: ${data.player}` : 'تم الضغط على الجرس';
+        }
+
+        if (data.player) {
+            Utils.showMessage(`${data.player} ضغط الجرس!`, 'info');
+        }
+
+        // Show answer options only to the player who buzzed
+        if (data.player === this.playerName && this.currentRapidFireQuestion) {
+            const el = document.getElementById('item-display');
+            if (el) {
+                const q = this.currentRapidFireQuestion;
+                let html = `<div class="item-category">${q.category || 'سؤال سريع'}</div>`;
+                html += `<div class="item-name" style="font-size: 1.8rem;">${q.question}</div>`;
+                if (q.options && q.options.length) {
+                    html += `<div class="options-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; width: 100%; margin-top: 1.5rem;">`;
+                    q.options.forEach((opt, i) => {
+                        html += `<button class="btn btn-outline" onclick="window.gameInstance.submitBuzzAnswer(${i})">${opt}</button>`;
+                    });
+                    html += `</div>`;
+                }
+                el.innerHTML = html;
             }
-        }, 1000);
+        }
     }
 
-    stopBuzzTimer() {
-        if (this.buzzTimerInterval) {
-            clearInterval(this.buzzTimerInterval);
-            this.buzzTimerInterval = null;
+    clearBuzzState() {
+        const buzzTimer = document.getElementById('buzz-timer');
+        if (buzzTimer) {
+            buzzTimer.style.display = 'none';
+            buzzTimer.textContent = '';
         }
-        const buzzTimerEl = document.getElementById('buzz-timer');
-        if (buzzTimerEl) {
-            buzzTimerEl.style.display = 'none';
-            buzzTimerEl.style.color = 'var(--primary)';
+
+        if (this.gameType === 'rapid_fire') {
+            this.gameStatus = 'round_active';
         }
+
+        this.updateBuzzButton();
     }
 
     // --- Twenty Questions Logic ---
 
     handleTwentyQuestionsStarted(data) {
         this.thinker = data.thinker;
-        const isThinker = this.thinker === this.playerName;
-
-        // Hide other areas
-        document.getElementById('waiting-area').style.display = 'none';
-        document.getElementById('bus-area')?.classList.add('u-hidden');
-        document.getElementById('pictionary-area')?.classList.add('u-hidden');
-        document.getElementById('rapid-fire-area')?.classList.add('u-hidden');
-
-        const twentyQArea = document.getElementById('twenty-questions-area');
-        if (twentyQArea) twentyQArea.classList.remove('u-hidden');
-
-        const el = document.getElementById('item-display');
-        if (el) {
-            el.classList.remove('u-hidden');
-            el.style.display = 'block';
-
-            if (isThinker) {
-                // Thinker view: word input
-                let html = '<div class="item-category">أنت المفكر!</div>';
-                html += '<div style="margin: 1rem 0;">اختر كلمة للآخرين ليتخمّنوها</div>';
-                html += `<div class="word-suggestion" style="margin-bottom: 1rem; padding: 1rem; background: var(--surface); border-radius: 10px;">
-                    <strong>اقتراح:</strong> ${data.word_suggestion.word} (${data.word_suggestion.category})
-                    <button class="btn btn-outline" style="margin-right: 0.5rem;" onclick="window.gameInstance.useSuggestedWord('${data.word_suggestion.word}', '${data.word_suggestion.category}')">استخدم</button>
-                </div>`;
-                html += '<div class="input-group">';
-                html += '<input type="text" id="secret-word-input" placeholder="اكتب الكلمة السرية..." style="text-align: center; font-size: 1.2rem;">';
-                html += '<input type="text" id="secret-category-input" placeholder="الفئة (اختياري)..." style="text-align: center; margin-top: 0.5rem;">';
-                html += '</div>';
-                html += '<button class="btn btn-primary" style="margin-top: 1rem;" onclick="window.gameInstance.setSecretWord()">تم!</button>';
-                el.innerHTML = html;
-            } else {
-                // Guesser view: waiting
-                el.innerHTML = `
-                    <div class="item-category">في انتظار المفكر...</div>
-                    <div style="font-size: 1.5rem; margin-top: 1rem;">${this.thinker} يختار كلمة</div>
-                    <div class="animate-heartbeat" style="margin-top: 1rem; color: var(--secondary);"><i class="fas fa-hourglass-start"></i></div>
-                `;
-            }
-            setTimeout(() => el.classList.add('visible'), 100);
-        }
-
+        this.twentyQuestionsState = {
+            ...(this.twentyQuestionsState || {}),
+            thinker: data.thinker,
+            status: 'thinking',
+            word_suggestion: data.word_suggestion,
+            questions_asked: []
+        };
+        this.renderTwentyQuestionsState(this.twentyQuestionsState);
         this.updateTwentyQButtonVisibility();
     }
 
@@ -1937,38 +1520,12 @@ class GameEngine {
     }
 
     handleSecretSet(data) {
-        const el = document.getElementById('item-display');
-        const isThinker = this.thinker === this.playerName;
-
-        if (el) {
-            if (isThinker) {
-                // Thinker sees the word and answer buttons
-                let html = '<div class="item-category">أنت المفكر</div>';
-                html += `<div class="item-name" style="font-size: 2rem;">${data.category || '???'}</div>`;
-                html += '<div style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-light);">انتظر الأسئلة واجب عليها</div>';
-                html += '<div id="answer-buttons" style="margin-top: 1rem; display: none;">';
-                html += '</div>';
-                html += '<div id="pending-question" style="margin-top: 1rem; font-style: italic; color: var(--secondary);"></div>';
-                el.innerHTML = html;
-            } else {
-                // Guessers see category and can ask questions
-                let html = `<div class="item-category">الفئة: ${data.category || '???'}</div>`;
-                html += '<div style="margin-top: 1rem;">اسأل سؤال بنعم/لا/يمكن</div>';
-                html += '<div class="input-group" style="margin-top: 1rem;">';
-                html += '<input type="text" id="question-input" placeholder="اكتب سؤالك..." style="text-align: center;">';
-                html += '</div>';
-                html += '<button class="btn btn-primary" style="margin-top: 0.5rem;" onclick="window.gameInstance.askQuestion()">اسأل</button>';
-                html += '<div style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">';
-                html += '<div class="input-group">';
-                html += '<input type="text" id="guess-input" placeholder="أو حاول التخمين المباشر..." style="text-align: center;">';
-                html += '</div>';
-                html += '<button class="btn btn-secondary" style="margin-top: 0.5rem;" onclick="window.gameInstance.makeGuess()">خمن!</button>';
-                html += '</div>';
-                html += '<div id="questions-history" style="margin-top: 1.5rem; max-height: 200px; overflow-y: auto;"></div>';
-                el.innerHTML = html;
-            }
-        }
-
+        this.twentyQuestionsState = {
+            ...(this.twentyQuestionsState || {}),
+            status: 'asking',
+            secret_category: data.category || this.twentyQuestionsState?.secret_category
+        };
+        this.renderTwentyQuestionsState(this.twentyQuestionsState);
         this.updateTwentyQButtonVisibility();
     }
 
@@ -1986,53 +1543,30 @@ class GameEngine {
     }
 
     handleQuestionAsked(data) {
-        const historyEl = document.getElementById('questions-history');
-        if (historyEl) {
-            const div = document.createElement('div');
-            div.className = 'question-item';
-            div.style.cssText = 'padding: 0.5rem; border-bottom: 1px solid var(--border); text-align: right;';
-            div.innerHTML = `<strong>${data.player}:</strong> ${data.question} <span class="badge badge-team-1" style="margin-right: 0.5rem;">#${data.question_number}</span>`;
-            historyEl.appendChild(div);
-            historyEl.scrollTop = historyEl.scrollHeight;
+        if (this.twentyQuestionsState) {
+            const questions = [...(this.twentyQuestionsState.questions_asked || [])];
+            questions.push({ player: data.player, question: data.question, answer: null });
+            this.twentyQuestionsState = {
+                ...this.twentyQuestionsState,
+                questions_asked: questions,
+                question_count: data.question_number
+            };
+            this.renderTwentyQuestionsState(this.twentyQuestionsState);
         }
-
-        // Show to thinker
-        if (this.thinker === this.playerName) {
-            const pendingEl = document.getElementById('pending-question');
-            const answerBtns = document.getElementById('answer-buttons');
-            if (pendingEl) pendingEl.textContent = `السؤال: "${data.question}"`;
-            if (answerBtns) {
-                answerBtns.style.display = 'flex';
-                answerBtns.style.gap = '0.5rem';
-                answerBtns.innerHTML = `
-                    <button class="btn btn-success" onclick="window.gameInstance.answerQuestion('yes')">نعم ✓</button>
-                    <button class="btn btn-danger" onclick="window.gameInstance.answerQuestion('no')">لا ✗</button>
-                    <button class="btn btn-outline" onclick="window.gameInstance.answerQuestion('maybe')">يمكن 🤔</button>
-                `;
-            }
-        }
-    }
-
-    answerQuestion(answer) {
-        this.socket.emit('answer_question', {
-            game_id: this.gameId,
-            answer: answer
-        });
-        const answerBtns = document.getElementById('answer-buttons');
-        if (answerBtns) answerBtns.style.display = 'none';
     }
 
     handleQuestionAnswered(data) {
-        const historyEl = document.getElementById('questions-history');
-        if (historyEl) {
-            // Find the last question and add answer
-            const items = historyEl.querySelectorAll('.question-item');
-            const lastItem = items[items.length - 1];
-            if (lastItem && !lastItem.querySelector('.answer')) {
-                const answerClass = data.answer === 'yes' ? 'badge-team-2' : (data.answer === 'no' ? 'badge-team-1' : 'badge-team-3');
-                const answerText = data.answer === 'yes' ? 'نعم' : (data.answer === 'no' ? 'لا' : 'يمكن');
-                lastItem.innerHTML += ` <span class="badge ${answerClass} answer" style="margin-right: 0.5rem;">${answerText}</span>`;
-            }
+        if (this.twentyQuestionsState?.questions_asked?.length) {
+            const questions = [...this.twentyQuestionsState.questions_asked];
+            questions[questions.length - 1] = {
+                ...questions[questions.length - 1],
+                answer: data.answer
+            };
+            this.twentyQuestionsState = {
+                ...this.twentyQuestionsState,
+                questions_asked: questions
+            };
+            this.renderTwentyQuestionsState(this.twentyQuestionsState);
         }
     }
 
@@ -2049,17 +1583,22 @@ class GameEngine {
         document.getElementById('guess-input').value = '';
     }
 
+    answerQuestion(answer) {
+        this.socket.emit('answer_question', {
+            game_id: this.gameId,
+            answer: answer
+        });
+    }
+
     handleTwentyQuestionsEnded(data) {
-        const el = document.getElementById('item-display');
-        if (el) {
-            let html = `<div class="item-category">انتهت الجولة!</div>`;
-            html += `<div class="item-name" style="font-size: 2rem; color: ${data.winner === this.playerName ? 'var(--success)' : 'var(--primary)'};">الفائز: ${data.winner}</div>`;
-            html += `<div style="margin-top: 1rem;">${data.message}</div>`;
-            if (this.isHost) {
-                html += '<button class="btn btn-primary" style="margin-top: 1rem;" onclick="window.gameInstance.nextTwentyQRound()">الجولة التالية</button>';
-            }
-            el.innerHTML = html;
-        }
+        this.twentyQuestionsState = {
+            ...(this.twentyQuestionsState || {}),
+            status: 'ended',
+            winner: data.winner,
+            end_message: data.message,
+            secret_word: data.word
+        };
+        this.renderTwentyQuestionsState(this.twentyQuestionsState);
         this.updateTwentyQButtonVisibility();
     }
 
@@ -2079,6 +1618,108 @@ class GameEngine {
 
         if (this.gameType === 'twenty_questions') {
             Object.values(btns).forEach(b => { if (b) b.classList.add('u-hidden'); });
+        }
+    }
+
+    renderTwentyQuestionsState(state) {
+        if (!state || this.gameType !== 'twenty_questions') return;
+
+        this.thinker = state.thinker || this.thinker;
+        const isThinker = this.thinker === this.playerName;
+        const waitingArea = document.getElementById('waiting-area');
+        const twentyQArea = document.getElementById('twenty-questions-area');
+        const itemDisplay = document.getElementById('item-display');
+
+        if (waitingArea) waitingArea.style.display = 'none';
+        document.getElementById('bus-area')?.classList.add('u-hidden');
+        document.getElementById('pictionary-area')?.classList.add('u-hidden');
+        document.getElementById('rapid-fire-area')?.classList.add('u-hidden');
+        document.getElementById('riddles-area')?.classList.add('u-hidden');
+        if (itemDisplay) {
+            itemDisplay.classList.add('u-hidden');
+            itemDisplay.style.display = 'none';
+        }
+        if (!twentyQArea) return;
+
+        twentyQArea.classList.remove('u-hidden');
+        twentyQArea.style.display = 'block';
+
+        const questionsHistory = (state.questions_asked || []).map((questionEntry, index) => {
+            const answerBadge = questionEntry.answer
+                ? `<span class="badge ${questionEntry.answer === 'yes' ? 'badge-team-2' : (questionEntry.answer === 'no' ? 'badge-team-1' : 'badge-team-3')}" style="margin-right: 0.5rem;">${questionEntry.answer === 'yes' ? 'نعم' : (questionEntry.answer === 'no' ? 'لا' : 'يمكن')}</span>`
+                : '';
+            return `<div class="question-item" style="padding: 0.5rem; border-bottom: 1px solid var(--text-light); text-align: right;"><strong>${questionEntry.player}:</strong> ${questionEntry.question}<span class="badge badge-team-1" style="margin-right: 0.5rem;">#${index + 1}</span>${answerBadge}</div>`;
+        }).join('');
+
+        if (state.status === 'thinking') {
+            if (isThinker) {
+                const suggestionWord = state.word_suggestion?.word || '';
+                const suggestionCategory = state.word_suggestion?.category || '';
+                twentyQArea.innerHTML = `
+                    <div class="item-category">أنت المفكر!</div>
+                    <div style="margin: 1rem 0;">اختر كلمة للآخرين ليتخمّنوها</div>
+                    <div class="word-suggestion" style="margin-bottom: 1rem; padding: 1rem; background: var(--surface); border-radius: 10px;">
+                        <strong>اقتراح:</strong> ${suggestionWord || '---'}${suggestionCategory ? ` (${suggestionCategory})` : ''}
+                        ${suggestionWord ? `<button class="btn btn-outline" style="margin-right: 0.5rem;" onclick="window.gameInstance.useSuggestedWord('${suggestionWord}', '${suggestionCategory}')">استخدم</button>` : ''}
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="secret-word-input" placeholder="اكتب الكلمة السرية..." style="text-align: center; font-size: 1.2rem;">
+                        <input type="text" id="secret-category-input" placeholder="الفئة (اختياري)..." style="text-align: center; margin-top: 0.5rem;">
+                    </div>
+                    <button class="btn btn-primary" style="margin-top: 1rem;" onclick="window.gameInstance.setSecretWord()">تم!</button>
+                `;
+            } else {
+                twentyQArea.innerHTML = `
+                    <div class="item-category">في انتظار المفكر...</div>
+                    <div style="font-size: 1.5rem; margin-top: 1rem;">${this.thinker || '...' } يختار كلمة</div>
+                    <div class="animate-heartbeat" style="margin-top: 1rem; color: var(--secondary);"><i class="fas fa-hourglass-start"></i></div>
+                `;
+            }
+            return;
+        }
+
+        if (state.status === 'asking') {
+            if (isThinker) {
+                const pendingQuestion = [...(state.questions_asked || [])].reverse().find((entry) => !entry.answer);
+                twentyQArea.innerHTML = `
+                    <div class="item-category">أنت المفكر</div>
+                    <div class="item-name" style="font-size: 2rem;">${state.secret_category || '???'}</div>
+                    <div style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-light);">انتظر الأسئلة وأجب عليها</div>
+                    <div id="pending-question" style="margin-top: 1rem; font-style: italic; color: var(--secondary);">${pendingQuestion ? `السؤال: &quot;${pendingQuestion.question}&quot;` : ''}</div>
+                    <div id="answer-buttons" style="margin-top: 1rem; display: ${pendingQuestion ? 'flex' : 'none'}; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-primary" onclick="window.gameInstance.answerQuestion('yes')">نعم</button>
+                        <button class="btn btn-outline" onclick="window.gameInstance.answerQuestion('no')">لا</button>
+                        <button class="btn btn-secondary" onclick="window.gameInstance.answerQuestion('maybe')">يمكن</button>
+                    </div>
+                    <div id="questions-history" style="margin-top: 1.5rem; max-height: 220px; overflow-y: auto; width: 100%;">${questionsHistory}</div>
+                `;
+            } else {
+                twentyQArea.innerHTML = `
+                    <div class="item-category">الفئة: ${state.secret_category || '???'}</div>
+                    <div style="margin-top: 1rem;">اسأل سؤال بنعم/لا/يمكن</div>
+                    <div class="input-group" style="margin-top: 1rem; width: 100%;">
+                        <input type="text" id="question-input" placeholder="اكتب سؤالك..." style="text-align: center;">
+                    </div>
+                    <button class="btn btn-primary" style="margin-top: 0.5rem;" onclick="window.gameInstance.askQuestion()">اسأل</button>
+                    <div style="margin-top: 1rem; border-top: 1px solid var(--text-light); padding-top: 1rem; width: 100%;">
+                        <div class="input-group">
+                            <input type="text" id="guess-input" placeholder="أو حاول التخمين المباشر..." style="text-align: center;">
+                        </div>
+                        <button class="btn btn-secondary" style="margin-top: 0.5rem;" onclick="window.gameInstance.makeGuess()">خمن!</button>
+                    </div>
+                    <div id="questions-history" style="margin-top: 1.5rem; max-height: 220px; overflow-y: auto; width: 100%;">${questionsHistory}</div>
+                `;
+            }
+            return;
+        }
+
+        if (state.status === 'ended') {
+            twentyQArea.innerHTML = `
+                <div class="item-category">انتهت الجولة!</div>
+                <div class="item-name" style="font-size: 2rem; color: ${state.winner === this.playerName ? 'var(--success)' : 'var(--primary)'};">${state.winner ? `الفائز: ${state.winner}` : 'انتهت الجولة'}</div>
+                <div style="margin-top: 1rem;">${state.end_message || (state.secret_word ? `الكلمة كانت: ${state.secret_word}` : 'بانتظار الجولة التالية')}</div>
+                ${this.isHost ? '<button class="btn btn-primary" style="margin-top: 1rem;" onclick="window.gameInstance.nextTwentyQRound()">الجولة التالية</button>' : ''}
+            `;
         }
     }
 
@@ -2131,7 +1772,6 @@ class GameEngine {
 
         if (this.isHost) {
             html += '<div style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem;">';
-            html += '<button class="btn btn-outline" style="margin-left: 0.5rem;" onclick="window.gameInstance.skipRiddle()">تخطي اللغز</button>';
             html += '<button class="btn btn-primary" onclick="window.gameInstance.nextRiddle()">اللغز التالي</button>';
             html += '</div>';
         }
@@ -2193,6 +1833,211 @@ class GameEngine {
 
     nextRiddle() {
         this.socket.emit('next_riddle', { game_id: this.gameId });
+    }
+
+    // --- Bus Complete Logic ---
+
+    displayBusBoard() {
+        // Hide other areas
+        document.getElementById('waiting-area').style.display = 'none';
+        document.getElementById('twenty-questions-area')?.classList.add('u-hidden');
+        document.getElementById('pictionary-area')?.classList.add('u-hidden');
+        document.getElementById('rapid-fire-area')?.classList.add('u-hidden');
+        document.getElementById('riddles-area')?.classList.add('u-hidden');
+        document.getElementById('bus-results-area')?.classList.add('u-hidden');
+        document.getElementById('bus-validation-area')?.classList.add('u-hidden');
+        const itemDisplay = document.getElementById('item-display');
+        if (itemDisplay) { itemDisplay.classList.add('u-hidden'); itemDisplay.style.display = 'none'; }
+
+        const busArea = document.getElementById('bus-area');
+        if (!busArea) return;
+        busArea.classList.remove('u-hidden');
+
+        // Clear all inputs
+        busArea.querySelectorAll('.bus-input').forEach(input => { input.value = ''; input.disabled = false; });
+
+        // Update letter display
+        const letterEl = document.getElementById('current-letter');
+        if (letterEl && this.currentLetter) letterEl.textContent = this.currentLetter;
+
+        // Show stop button
+        const stopBtn = document.getElementById('stopBusButton');
+        if (stopBtn) stopBtn.disabled = false;
+
+        // Setup debounced auto-sync for inputs
+        if (!this._busInputsBound) {
+            this._busInputsBound = true;
+            let syncTimeout = null;
+            const syncAnswers = () => {
+                const answers = {};
+                busArea.querySelectorAll('.bus-input').forEach(input => {
+                    const cat = input.dataset.category;
+                    if (cat) answers[cat] = input.value.trim();
+                });
+                this.socket.emit('submit_bus_answers', { game_id: this.gameId, answers });
+            };
+            busArea.querySelectorAll('.bus-input').forEach(input => {
+                input.addEventListener('input', () => {
+                    clearTimeout(syncTimeout);
+                    syncTimeout = setTimeout(syncAnswers, 800);
+                });
+                input.addEventListener('blur', syncAnswers);
+            });
+        }
+    }
+
+    stopBus() {
+        const busArea = document.getElementById('bus-area');
+        const answers = {};
+        if (busArea) {
+            busArea.querySelectorAll('.bus-input').forEach(input => {
+                const cat = input.dataset.category;
+                if (cat) answers[cat] = input.value.trim();
+                input.disabled = true;
+            });
+        }
+        const stopBtn = document.getElementById('stopBusButton');
+        if (stopBtn) stopBtn.disabled = true;
+
+        this.socket.emit('stop_bus', { game_id: this.gameId, answers });
+    }
+
+    displayBusValidation(data) {
+        document.getElementById('bus-area')?.classList.add('u-hidden');
+        document.getElementById('bus-results-area')?.classList.add('u-hidden');
+        document.getElementById('waiting-area').style.display = 'none';
+
+        const valArea = document.getElementById('bus-validation-area');
+        if (!valArea) return;
+        valArea.classList.remove('u-hidden');
+
+        const grid = document.getElementById('validation-grid');
+        if (!grid) return;
+
+        const statuses = data.validation_statuses || {};
+        const categories = data.categories || [];
+        let html = '';
+
+        categories.forEach(cat => {
+            const catWords = Object.entries(statuses).filter(([, s]) => s.category === cat);
+            if (!catWords.length) return;
+            html += `<div class="validation-category" style="margin-bottom: 1.5rem;">`;
+            html += `<h4 style="color: var(--primary); margin-bottom: 0.5rem;">${cat}</h4>`;
+            catWords.forEach(([key, status]) => {
+                const validClass = status.is_valid === true ? 'valid' : (status.is_valid === false ? 'invalid' : 'pending');
+                const prevBadge = status.previously_validated ? '<span class="badge badge-team-2" style="font-size: 0.7rem;">✓ سابق</span>' : '';
+                const playerVote = status.votes?.[this.playerName];
+                const voteIndicator = playerVote !== undefined
+                    ? `<div class="user-vote-indicator ${playerVote ? 'valid' : 'invalid'}"><i class="fas fa-${playerVote ? 'check' : 'times'}"></i></div>`
+                    : '';
+                html += `<div class="validation-card ${validClass}" data-answer-key="${key}" style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; margin-bottom: 0.5rem; border: 2px solid var(--border); border-radius: 12px; cursor: pointer;" onclick="window.gameInstance.submitBusVote('${key}')">`;
+                html += `<div><strong>${status.answer}</strong> ${prevBadge}<div style="font-size: 0.8rem; color: var(--text-light);">${status.players.join(', ')}</div></div>`;
+                html += `<div style="display: flex; gap: 0.5rem; align-items: center;">`;
+                html += `<span class="vote-valid" style="color: var(--success);"><i class="fas fa-check"></i> ${status.valid_count}</span>`;
+                html += `<span class="vote-invalid" style="color: var(--danger);"><i class="fas fa-times"></i> ${status.invalid_count}</span>`;
+                html += voteIndicator;
+                html += `</div></div>`;
+            });
+            html += `</div>`;
+        });
+
+        grid.innerHTML = html;
+
+        // Show host finalize button
+        const hostActions = document.getElementById('host-validation-actions');
+        if (hostActions) hostActions.classList.toggle('u-hidden', !this.isHost);
+
+        this.updateValidationProgress();
+    }
+
+    submitBusVote(answerKey) {
+        // Toggle: first click = valid, second click on same = invalid, third = remove
+        const card = document.querySelector(`.validation-card[data-answer-key="${answerKey}"]`);
+        const indicator = card?.querySelector('.user-vote-indicator');
+        let isValid = true;
+        if (indicator && indicator.classList.contains('valid')) {
+            isValid = false;
+        }
+        this.socket.emit('submit_validation_vote', {
+            game_id: this.gameId,
+            answer_key: answerKey,
+            is_valid: isValid
+        });
+    }
+
+    finalizeValidation() {
+        this.socket.emit('finalize_validation', { game_id: this.gameId });
+    }
+
+    displayBusResults(data) {
+        document.getElementById('bus-area')?.classList.add('u-hidden');
+        document.getElementById('bus-validation-area')?.classList.add('u-hidden');
+        document.getElementById('waiting-area').style.display = 'none';
+
+        const resultsArea = document.getElementById('bus-results-area');
+        if (!resultsArea) return;
+        resultsArea.classList.remove('u-hidden');
+
+        const categories = data.categories || [];
+        const submissions = data.player_submissions || {};
+        const roundScores = data.round_scores || {};
+        const invalidAnswers = data.invalid_answers || {};
+        const wrongLetter = data.wrong_letter_answers || {};
+
+        // Build header
+        const header = document.getElementById('results-header');
+        if (header) {
+            let hHtml = '<th style="padding: 1rem; min-width: 80px;">اللاعب</th>';
+            categories.forEach(cat => { hHtml += `<th style="padding: 0.8rem; min-width: 70px; font-size: 0.85rem;">${cat}</th>`; });
+            hHtml += '<th style="padding: 1rem; min-width: 60px;">المجموع</th>';
+            header.innerHTML = hHtml;
+        }
+
+        // Build rows
+        const body = document.getElementById('results-body');
+        if (body) {
+            let bHtml = '';
+            const players = data.players || [];
+            players.forEach(p => {
+                const pname = typeof p === 'object' ? p.name : p;
+                const pSub = submissions[pname] || {};
+                const pScores = roundScores[pname] || {};
+                const pInvalid = invalidAnswers[pname] || {};
+                const pWrong = wrongLetter[pname] || {};
+                let total = 0;
+
+                bHtml += `<tr style="background: var(--surface); border-radius: 10px;">`;
+                bHtml += `<td style="padding: 0.8rem; font-weight: 700;">${pname}</td>`;
+                categories.forEach(cat => {
+                    const ans = pSub[cat] || '';
+                    const pts = pScores[cat] || 0;
+                    total += pts;
+                    const isInvalid = pInvalid[cat];
+                    const isWrongL = pWrong[cat];
+                    let cellStyle = '';
+                    let suffix = '';
+                    if (isWrongL) { cellStyle = 'color: var(--warning);'; suffix = ` ❌ ${isWrongL}`; }
+                    else if (isInvalid) { cellStyle = 'color: var(--danger); text-decoration: line-through;'; }
+                    else if (pts > 0) { cellStyle = 'color: var(--success);'; suffix = ` (${pts})`; }
+                    bHtml += `<td style="padding: 0.8rem; ${cellStyle}">${ans || '-'}${suffix}</td>`;
+                });
+                bHtml += `<td style="padding: 0.8rem; font-weight: 800; color: var(--primary);">${total}</td>`;
+                bHtml += `</tr>`;
+            });
+            body.innerHTML = bHtml;
+        }
+
+        // Show host actions
+        const hostActions = document.getElementById('host-bus-actions');
+        if (hostActions) hostActions.classList.toggle('u-hidden', !this.isHost);
+
+        // Update letter display
+        const resLetterEl = document.getElementById('result-letter');
+        if (resLetterEl && this.currentLetter) resLetterEl.textContent = this.currentLetter;
+    }
+
+    confirmBusScores() {
+        this.socket.emit('confirm_bus_scores', { game_id: this.gameId });
     }
 
     updateValidationProgress() {

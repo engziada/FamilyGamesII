@@ -1,0 +1,219 @@
+[
+  {
+    "game_type": "charades",
+    "room_id": "2694",
+    "steps": [
+      {
+        "step": "create_room",
+        "status": "passed",
+        "details": "Created room 2694"
+      },
+      {
+        "step": "join_guest_1",
+        "status": "passed",
+        "details": "Player-B joined room"
+      },
+      {
+        "step": "join_guest_2",
+        "status": "passed",
+        "details": "Player-C joined room"
+      },
+      {
+        "step": "start_game",
+        "status": "passed",
+        "details": "Host started the game"
+      },
+      {
+        "step": "interaction",
+        "status": "manual_check",
+        "details": "Complete one correct path, one wrong path, and one withdrawal path for this game in-browser if needed"
+      }
+    ]
+  },
+  {
+    "game_type": "pictionary",
+    "room_id": "6664",
+    "steps": [
+      {
+        "step": "create_room",
+        "status": "passed",
+        "details": "Created room 6664"
+      },
+      {
+        "step": "join_guest_1",
+        "status": "passed",
+        "details": "Player-B joined room"
+      },
+      {
+        "step": "join_guest_2",
+        "status": "passed",
+        "details": "Player-C joined room"
+      },
+      {
+        "step": "start_game",
+        "status": "passed",
+        "details": "Host started the game"
+      },
+      {
+        "step": "interaction",
+        "status": "manual_check",
+        "details": "Complete one correct path, one wrong path, and one withdrawal path for this game in-browser if needed"
+      }
+    ]
+  },
+  {
+    "game_type": "trivia",
+    "room_id": "5307",
+    "steps": [
+      {
+        "step": "create_room",
+        "status": "passed",
+        "details": "Created room 5307"
+      },
+      {
+        "step": "join_guest_1",
+        "status": "passed",
+        "details": "Player-B joined room"
+      },
+      {
+        "step": "join_guest_2",
+        "status": "passed",
+        "details": "Player-C joined room"
+      },
+      {
+        "step": "start_game",
+        "status": "passed",
+        "details": "Host started the game"
+      },
+      {
+        "step": "interaction",
+        "status": "manual_check",
+        "details": "Complete one correct path, one wrong path, and one withdrawal path for this game in-browser if needed"
+      }
+    ]
+  },
+  {
+    "game_type": "rapid_fire",
+    "room_id": "8731",
+    "steps": [
+      {
+        "step": "create_room",
+        "status": "passed",
+        "details": "Created room 8731"
+      },
+      {
+        "step": "join_guest_1",
+        "status": "passed",
+        "details": "Player-B joined room"
+      },
+      {
+        "step": "join_guest_2",
+        "status": "passed",
+        "details": "Player-C joined room"
+      },
+      {
+        "step": "start_game",
+        "status": "passed",
+        "details": "Host started the game"
+      },
+      {
+        "step": "interaction",
+        "status": "manual_check",
+        "details": "Complete one correct path, one wrong path, and one withdrawal path for this game in-browser if needed"
+      }
+    ]
+  },
+  {
+    "game_type": "twenty_questions",
+    "room_id": "1956",
+    "steps": [
+      {
+        "step": "create_room",
+        "status": "passed",
+        "details": "Created room 1956"
+      },
+      {
+        "step": "join_guest_1",
+        "status": "passed",
+        "details": "Player-B joined room"
+      },
+      {
+        "step": "join_guest_2",
+        "status": "passed",
+        "details": "Player-C joined room"
+      },
+      {
+        "step": "start_game",
+        "status": "passed",
+        "details": "Host started the game"
+      },
+      {
+        "step": "interaction",
+        "status": "manual_check",
+        "details": "Complete one correct path, one wrong path, and one withdrawal path for this game in-browser if needed"
+      }
+    ]
+  },
+  {
+    "game_type": "riddles",
+    "room_id": "1189",
+    "steps": [
+      {
+        "step": "create_room",
+        "status": "passed",
+        "details": "Created room 1189"
+      },
+      {
+        "step": "join_guest_1",
+        "status": "passed",
+        "details": "Player-B joined room"
+      },
+      {
+        "step": "join_guest_2",
+        "status": "passed",
+        "details": "Player-C joined room"
+      },
+      {
+        "step": "start_game",
+        "status": "passed",
+        "details": "Host started the game"
+      },
+      {
+        "step": "interaction",
+        "status": "manual_check",
+        "details": "Complete one correct path, one wrong path, and one withdrawal path for this game in-browser if needed"
+      }
+    ]
+  },
+  {
+    "game_type": "bus_complete",
+    "room_id": "5482",
+    "steps": [
+      {
+        "step": "create_room",
+        "status": "passed",
+        "details": "Created room 5482"
+      },
+      {
+        "step": "join_guest_1",
+        "status": "passed",
+        "details": "Player-B joined room"
+      },
+      {
+        "step": "join_guest_2",
+        "status": "passed",
+        "details": "Player-C joined room"
+      },
+      {
+        "step": "start_game",
+        "status": "passed",
+        "details": "Host started the game"
+      },
+      {
+        "step": "interaction",
+        "status": "manual_check",
+        "details": "Complete one correct path, one wrong path, and one withdrawal path for this game in-browser if needed"
+      }
+    ]
+  }
+]

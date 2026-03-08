@@ -225,18 +225,14 @@
             </button>
         </div>
         
-        <!-- Back to Home -->
-        <a href="/" class="btn btn-outline u-full-width" style="text-align: center; margin-top: 1rem;">
-            <i class="fas fa-home"></i> العودة للرئيسية
-        </a>
+        <div id="game-status" class="u-hidden">
+            <!-- Used for snackbar style notifications -->
+        </div>
+
+        <div id="error-message"></div>
     </div>
 </div>
 
-<div id="game-status" class="u-hidden">
-    <!-- Used for snackbar style notifications -->
-</div>
-
-<div id="error-message"></div>
 {% endblock %}
 
 {% block scripts %}

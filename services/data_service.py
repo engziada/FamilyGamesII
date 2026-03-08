@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from .data_manager import DataManager
 from .fetchers.charades_fetcher import CharadesFetcher
 from .fetchers.pictionary_fetcher import PictionaryFetcher
+from .fetchers.riddles_fetcher import RiddlesFetcher
 from .fetchers.trivia_fetcher import TriviaFetcher
 
 # Load environment variables from .env file
@@ -29,6 +30,7 @@ class DataService:
         self.data_manager = DataManager()
         self.charades_fetcher = CharadesFetcher()
         self.pictionary_fetcher = PictionaryFetcher()
+        self.riddles_fetcher = RiddlesFetcher(source_url=os.getenv('RIDDLES_SOURCE_URL'))
         self.trivia_fetcher = TriviaFetcher(ai_api_key=ai_api_key)
     
     def get_item_for_room(self, room_id: str, game_type: str, category: Optional[str] = None) -> Optional[Dict]:
@@ -37,7 +39,7 @@ class DataService:
         
         Args:
             room_id: Room identifier
-            game_type: Type of game (charades, pictionary, trivia)
+            game_type: Type of game (charades, pictionary, trivia, rapid_fire, riddles)
             category: Optional category filter
             
         Returns:
@@ -53,6 +55,15 @@ class DataService:
         # Get item from cache
         items = self.data_manager.get_items_for_room(room_id, game_type, category, count=1)
         return items[0] if items else None
+
+    def get_items_for_room(self, room_id: str, game_type: str, category: Optional[str] = None, count: int = 1) -> List[Dict]:
+        """Get multiple cached items for a room with the same anti-repetition behavior."""
+        cache_status = self.data_manager.get_cache_status(game_type, category)
+
+        if cache_status['total_items'] < count or cache_status['needs_refetch']:
+            self._refetch_items(game_type, category, count=max(count, 30))
+
+        return self.data_manager.get_items_for_room(room_id, game_type, category, count=count)
     
     def prefetch_for_room(self, room_id: str, game_type: str, category: Optional[str] = None, count: int = 30):
         """
@@ -122,6 +133,30 @@ class DataService:
                         items=[item],
                         source=source
                     )
+            elif game_type == 'rapid_fire':
+                items = self.trivia_fetcher.fetch_batch(count)
+                source = f"{self.trivia_fetcher.get_source_name()} [rapid_fire]"
+                
+                for item in items:
+                    item_category = item.get('category', category or 'ثقافة عامة')
+                    self.data_manager.add_items(
+                        game_type='rapid_fire',
+                        category=item_category,
+                        items=[item],
+                        source=source
+                    )
+            elif game_type == 'riddles':
+                items = self.riddles_fetcher.fetch_batch(count)
+                source = self.riddles_fetcher.get_source_name()
+                
+                for item in items:
+                    item_category = item.get('category', category or 'ألغاز عامة')
+                    self.data_manager.add_items(
+                        game_type='riddles',
+                        category=item_category,
+                        items=[item],
+                        source=source
+                    )
             
         except Exception as e:
             print(f"Error refetching items for {game_type}: {e}")
@@ -135,7 +170,9 @@ class DataService:
         return {
             'charades': self.data_manager.get_cache_status('charades'),
             'pictionary': self.data_manager.get_cache_status('pictionary'),
-            'trivia': self.data_manager.get_cache_status('trivia')
+            'trivia': self.data_manager.get_cache_status('trivia'),
+            'rapid_fire': self.data_manager.get_cache_status('rapid_fire'),
+            'riddles': self.data_manager.get_cache_status('riddles')
         }
 
 
