@@ -12,8 +12,9 @@ from datetime import timedelta
 from flask import Flask, redirect, render_template, request, url_for, flash, jsonify
 from dotenv import load_dotenv
 
-# Load environment variables
+# Load environment variables (.env first, then .env.local for Convex URL override)
 load_dotenv()
+load_dotenv('.env.local', override=True)
 
 # ── Logging ─────────────────────────────────────────────────────────────
 if not os.path.exists('logs'):
