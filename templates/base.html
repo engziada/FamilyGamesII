@@ -51,6 +51,12 @@
     {% block content %}{% endblock %}
     </main>
     <!-- Core JS modules -->
+    <script>
+      // Save Convex bundle exports before convexClient.js redeclares the 'convex' name.
+      // The bundle sets: var convex = { ConvexClient, ConvexHttpClient, anyApi }
+      window.ConvexClientClass = convex.ConvexClient;
+      window.api = convex.anyApi;
+    </script>
     <script src="{{ url_for('static', filename='js/convexClient.js') }}"></script>
     <script src="{{ url_for('static', filename='js/gameUI.js') }}"></script>
     <script src="{{ url_for('static', filename='js/timer.js') }}"></script>

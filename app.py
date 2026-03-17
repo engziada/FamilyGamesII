@@ -73,8 +73,8 @@ def game(room_id: str):
     game_type = request.args.get('game_type', '')
 
     if not player_name:
-        flash('اسم اللاعب مطلوب', 'error')
-        return redirect(url_for('index'))
+        # Redirect to index with join=<room_id> so the join modal auto-opens
+        return redirect(url_for('index', join=room_id))
 
     meta = GAME_CATALOG.get(game_type, {})
 

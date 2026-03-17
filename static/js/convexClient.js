@@ -7,7 +7,7 @@
 
 /* global ConvexClient */
 
-const convex = (() => {
+var convex = (() => {
   let _client = null;
   let _subscriptions = [];
 
@@ -22,7 +22,7 @@ const convex = (() => {
       console.error('[Convex] No CONVEX_URL provided');
       return null;
     }
-    _client = new ConvexClient(url);
+    _client = new ConvexClientClass(url);
     console.log('[Convex] Client initialized');
     return _client;
   }
