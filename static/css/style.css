@@ -1149,3 +1149,101 @@ header h1 {
     font-size: 1.3rem;
     margin-inline-end: 0.3rem;
 }
+
+/* ── Score fly-up animation (1.4) ────────────────────────────────── */
+.score-fly-up {
+    position: absolute;
+    top: -5px;
+    right: 50%;
+    transform: translateX(50%);
+    color: var(--success);
+    font-weight: 800;
+    font-size: 1.1rem;
+    pointer-events: none;
+    animation: scoreFly 1.5s ease-out forwards;
+    z-index: 10;
+}
+
+@keyframes scoreFly {
+    0%   { opacity: 1; transform: translateX(50%) translateY(0); }
+    100% { opacity: 0; transform: translateX(50%) translateY(-40px); }
+}
+
+.score-highlight {
+    animation: scoreGlow 1s ease-out;
+}
+
+@keyframes scoreGlow {
+    0%, 100% { background-color: transparent; }
+    30%      { background-color: rgba(255, 230, 109, 0.35); }
+}
+
+/* ── Avatar picker (3.2) ─────────────────────────────────────────── */
+.avatar-picker .avatar-opt.active {
+    border-color: var(--primary);
+    background: rgba(255, 107, 107, 0.15);
+    box-shadow: 0 0 0 2px var(--primary);
+}
+
+/* ── Circular timer (4.1) ────────────────────────────────────────── */
+.circular-timer-text {
+    font-family: 'Lemonada', cursive;
+}
+
+/* ── Kbd shortcut badges ─────────────────────────────────────────── */
+kbd {
+    background: var(--surface);
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 0.8rem;
+    box-shadow: 0 1px 0 #aaa;
+}
+
+[data-theme="dark"] kbd {
+    background: #2a2a4a;
+    border-color: #444;
+    box-shadow: 0 1px 0 #333;
+    color: var(--text);
+}
+
+/* ── Mobile optimizations (4.6) ──────────────────────────────────── */
+@media (max-width: 768px) {
+    .btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .game-card .card-body {
+        padding: 1rem;
+    }
+
+    #game-area {
+        font-size: 0.95rem;
+    }
+
+    .circular-timer-text {
+        font-size: 0.9rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .display-5 {
+        font-size: 1.6rem;
+    }
+
+    .col-lg-3 {
+        order: -1;
+    }
+}
+
+/* ── Game rules modal icons ──────────────────────────────────────── */
+#rulesModalBody h6 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+#rulesModalBody ul li {
+    padding: 0.15rem 0;
+}

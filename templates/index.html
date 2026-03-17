@@ -45,6 +45,7 @@
                     <label for="host-name" class="form-label">اسمك</label>
                     <input type="text" id="host-name" class="form-control text-end" placeholder="اكتب اسمك هنا..." dir="rtl" autofocus>
                 </div>
+                <div id="avatar-picker-slot"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
@@ -69,6 +70,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Init Convex client
   convex.init(window.__CONVEX_URL__);
 
+  // Avatar picker
+  const getAvatar = enhancements.createAvatarPicker('host-name');
+
   // Create game buttons
   document.querySelectorAll('.create-game-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -84,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-create-room').addEventListener('click', async () => {
     const gameType = document.getElementById('modal-game-type').value;
     const playerName = document.getElementById('host-name').value.trim();
+    const avatar = getAvatar();
     const errEl = document.getElementById('create-error');
 
     if (!playerName) {
@@ -94,8 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       errEl.classList.add('d-none');
-      const roomId = await lobby.createRoom(gameType, playerName);
-      // Navigate to game page
+      const roomId = await lobby.createRoom(gameType, playerName, avatar);
       lobby.navigateToGame(roomId, playerName, gameType);
     } catch (e) {
       errEl.textContent = e.message || 'حدث خطأ';

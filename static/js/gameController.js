@@ -68,6 +68,11 @@ const gameController = (() => {
     gameUI.updatePlayerList(state.players, _playerName);
     gameUI.updateScoreboard(state.players);
     gameUI.updateStatus(state.status, state.currentPlayer, _playerName);
+
+    // Animate score changes (fly-up + confetti for big gains)
+    if (typeof enhancements !== 'undefined') {
+      enhancements.animateScoreChanges(state.players);
+    }
     gameUI.updateRoundInfo(state.currentRound, state.settings);
 
     // Mouth-based game notification banner
@@ -80,6 +85,12 @@ const gameController = (() => {
     if (state.status === 'ended') {
       timer.stop();
       gameUI.showEndGameScreen(state.players, _playerName);
+      // Confetti celebration for the winner
+      if (typeof enhancements !== 'undefined') {
+        enhancements.confettiCelebration();
+        enhancements.haptic.vibrate('win');
+      }
+      sound.play('guessed');
       return;
     }
 
