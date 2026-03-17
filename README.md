@@ -1,170 +1,165 @@
-# Family Games II
+# Family Games II — ألعاب العيلة
 
-A modern web-based platform for family-friendly multiplayer games with real-time gameplay.
+A modern Arabic-first multiplayer party games platform with real-time gameplay powered by **Convex** and served via **Flask**.
 
-## Project Description
-A Flask-based web application that allows families and friends to play games together in real-time. Features three game modes:
-- **Charades (بدون كلام)**: Players act out items while others guess
-- **Pictionary (تعاضل)**: Players draw items while others guess
-- **Trivia (بنك المعلومات)**: Multiple-choice trivia questions with AI translation
+## Games (8 modes)
 
-## Requirements
-- Python 3.11+
-- Flask + Flask-SocketIO
-- eventlet (async I/O)
-- SQLAlchemy (data management)
-- Groq API key (for trivia translation)
-- Additional requirements in `requirements.txt`
+| Game | Arabic | Type |
+|------|--------|------|
+| Charades | بدون كلام | Act & guess |
+| Pictionary | ارسم وخمّن | Draw & guess |
+| Trivia | بنك المعلومات | Multiple choice |
+| Rapid Fire | الأسئلة السريعة | Buzz-in speed |
+| Twenty Questions | عشرين سؤال | Yes/No deduction (face-to-face) |
+| Riddles | الألغاز | 3-attempt solve with hints |
+| Bus Complete | أتوبيس كومبليت | Category fill race |
+| Who Am I? | من أنا؟ | Character guessing (face-to-face) |
+
+## Tech Stack
+
+- **Backend**: Flask (HTTP page server only — no Socket.IO)
+- **Real-time DB**: [Convex](https://convex.dev) — serverless functions + subscriptions
+- **Frontend**: Vanilla JS modules + Bootstrap 5 RTL + Animate.css
+- **Content**: 224 Arabic game items seeded into Convex via HTTP API
+- **Package mgr**: uv (Python), npm (Node.js/Convex)
 
 ## Project Structure
+
 ```
 FamilyGamesII/
-├── app.py                 # Main Flask application entry point
-├── config.py              # Production configuration
-├── requirements.txt       # Python package dependencies
-├── .env.example          # Environment variables template
-├── DEPLOYMENT.md         # Production deployment guide
-├── games/                 # Game modules directory
-│   ├── charades/         # Charades game module
-│   │   ├── models.py     # Game logic
-│   │   └── routes.py     # Socket events
-│   ├── pictionary/       # Pictionary game module
-│   │   └── models.py     # Game logic
-│   └── trivia/           # Trivia game module
-│       ├── models.py     # Game logic
-│       └── questions.json # Question bank
-├── services/             # Data management services
-│   ├── data_service.py   # Main data service
-│   ├── data_manager.py   # Database operations
-│   └── fetchers/         # Content fetchers
-│       ├── charades_fetcher.py
-│       ├── pictionary_fetcher.py
-│       └── trivia_fetcher.py
-├── models/               # Data models
-│   └── game_items.py     # SQLAlchemy models
+├── app.py                      # Flask page server (routes only)
+├── convex/                     # Convex serverless functions
+│   ├── schema.ts               # DB schema (rooms, players, gameState, gameItems, reactions)
+│   ├── rooms.ts                # Room CRUD mutations
+│   ├── gameState.ts            # Game lifecycle + state queries
+│   ├── contentSeeder.ts        # Idempotent content import mutation
+│   ├── games/                  # Game-specific logic (8 files)
+│   │   ├── charades.ts
+│   │   ├── pictionary.ts
+│   │   ├── trivia.ts
+│   │   ├── rapidFire.ts
+│   │   ├── twentyQuestions.ts
+│   │   ├── riddles.ts
+│   │   ├── busComplete.ts
+│   │   └── whoAmI.ts
+│   └── _generated/             # Auto-generated Convex API
 ├── static/
-│   ├── css/
-│   │   └── style.css     # Main stylesheet
+│   ├── css/style.css           # Full CSS with dark mode, animations, mobile
 │   ├── js/
-│   │   └── charades.js   # Game logic & UI
-│   ├── sounds/           # Audio files
-│   └── data/             # Static game data
+│   │   ├── convexClient.js     # Convex browser SDK singleton
+│   │   ├── lobby.js            # Room create/join via Convex
+│   │   ├── gameController.js   # Main orchestrator + state subscriptions
+│   │   ├── gameUI.js           # Shared DOM helpers (players, scores, end-game)
+│   │   ├── timer.js            # Countdown with color-coded progress bar
+│   │   ├── sound.js            # Sound effects + mute toggle
+│   │   ├── reactions.js        # Floating emoji reactions
+│   │   ├── enhancements.js     # Confetti, score animations, rules, shortcuts, avatars
+│   │   └── renderers/          # 8 game-specific UI renderers
+│   ├── data/                   # Static JSON content files
+│   │   ├── charades_items.json
+│   │   ├── riddles.json
+│   │   ├── twenty_questions_words.json
+│   │   └── who_am_i_characters.json
+│   └── sounds/                 # Audio files
+├── scripts/
+│   └── seedContent.mjs         # Content seeder (Convex HTTP API)
 ├── templates/
-│   ├── base.html         # Base template
-│   ├── index.html        # Landing page
-│   └── game.html         # Game interface
-├── Log/                  # Application logs (gitignored)
-└── game_data.db          # SQLite database (gitignored)
+│   ├── base.html               # Layout + Convex SDK + dark mode toggle
+│   ├── index.html              # Game catalog + create modal + avatar picker
+│   └── game.html               # Game board + sidebar + controls
+└── .env.example                # Environment variables template
 ```
 
 ## Features
 
-### 1. Three Game Modes
-   - **Charades**: 70+ items across multiple categories
-   - **Pictionary**: 400+ items with drawing canvas and category hints
-   - **Trivia**: 150+ questions with AI-powered Arabic translation
+### Real-time Multiplayer
+- Convex subscriptions for instant state sync (no polling)
+- Room creation with unique IDs, host/guest roles
+- Player reconnection support
+- Automatic stale room cleanup
 
-### 2. Real-time Multiplayer
-   - Socket.IO for real-time communication
-   - Multiple players in the same game room
-   - Host/Guest player roles
-   - Team mode support
+### UX Enhancements
+- **Dark mode** with system preference detection + manual toggle (T key)
+- **Confetti celebrations** on game end (canvas-confetti)
+- **Animated score changes** (+X fly-up with glow)
+- **Floating emoji reactions** (😂 👏 🔥 😱 ❤️)
+- **Game rules modal** for all 8 games ("كيف تلعب؟")
+- **Copy room code** button with clipboard API
+- **Avatar picker** (20 emoji avatars)
+- **Keyboard shortcuts** (T=theme, M=mute, H=help, ?=shortcuts, Esc=close)
+- **Haptic feedback** on mobile (correct/wrong/win patterns)
+- **Toast notifications** replacing all alerts
+- **Enhanced end-game screen** with winner spotlight, highlights, stats, play again
 
-### 3. Smart Data Management
-   - SQLite database with 620+ total items
-   - Automatic caching and pre-fetching
-   - No item repetition within rooms
-   - Usage tracking and analytics
-   - Automatic cleanup on game end
+### Mobile Optimizations
+- 44px minimum touch targets
+- Swipe-to-dismiss modals
+- Responsive sidebar reordering
+- Bootstrap 5 RTL layout
 
-### 4. Game Management
-   - Create/Join game rooms with unique IDs
-   - Player score tracking (individual + team)
-   - Round-based gameplay with timer
-   - Difficulty levels (easy/medium/hard)
-   - Host controls (force next, close room)
+### Content Pipeline
+- 224 Arabic game items across 4 content types
+- Idempotent seeding via `node scripts/seedContent.mjs`
+- Content deduplication by hash
+- Anti-repetition tracking per room
 
-### 5. User Interface
-   - Modern, playful design with animations
-   - Full Arabic language support (RTL)
-   - Real-time score updates
-   - Timer with visual warnings
-   - Sound effects for game events
-   - Responsive design for mobile/desktop
+## Setup
 
-### 6. Pictionary Features
-   - HTML5 canvas for drawing
-   - Color picker and brush size controls
-   - Real-time stroke synchronization
-   - Category hints (difficulty-based)
-   - Clear canvas functionality
+### Prerequisites
+- Python 3.11+ with [uv](https://docs.astral.sh/uv/)
+- Node.js 18+ with npm
+- [Convex account](https://convex.dev) (free tier)
 
-## Checkpoints
+### Installation
 
-### Checkpoint 1 (2025-02-02 22:56)
-- Refactored game code into modular structure
-- Moved game logic to dedicated charades module
-- Enhanced URL parameters for player tracking
-- Improved error handling and logging
-- Updated templates for conditional rendering
-- Command to revert: `git checkout 6e9a0d2`
-
-### Checkpoint 2 (2025-02-22 02:30)
-- Enhanced game screen UI/UX
-- Improved WebSocket connection handling
-- Fixed player session management
-- Added responsive design for mobile devices
-- Enhanced visual feedback and animations
-- Improved Arabic text rendering
-- Command to revert: `git checkout $(git rev-parse HEAD)`
-
-### Checkpoint 3 (2025-02-23 00:37)
-- Enhanced player identification in game UI
-- Added visual indicators for current player's turn
-- Improved player list display with own player marking
-- Enhanced score display with player highlighting
-- Added smooth transitions for state changes
-- Improved game status visibility
-- Command to revert: `git checkout $(git rev-parse HEAD)`
-
-### Checkpoint 4 (2025-02-24 00:06)
-- Fixed item display for current player's turn
-- Enhanced game state synchronization
-- Improved item and category visibility handling
-- Fixed parameter order in displayItem function
-- Updated player turn management
-- Added proper display toggling for game items
-- Command to revert: `git checkout $(git rev-parse HEAD)`
-
-### Checkpoint 5 (2025-02-24 02:45)
-- Implemented proper timer display in minutes:seconds format (e.g. "2:00" instead of 120)
-- Timer now shows countdown properly for all players
-- Timer triggers round end and player switch when time is up
-- Successfully tested timer synchronization between players
-- To revert to this checkpoint:
 ```powershell
-git checkout checkpoint-5
+# Clone and enter project
+git clone <repo-url> && cd FamilyGamesII
+
+# Python dependencies
+uv venv && .venv\Scripts\activate
+uv pip install -r requirements.txt
+
+# Convex setup
+npm install
+npx convex dev   # Creates .env.local with CONVEX_URL
+
+# Seed game content
+node scripts/seedContent.mjs
+
+# Copy env template
+copy .env.example .env
+# Edit .env with your SECRET_KEY and GROQ_API_KEY
+
+# Run Flask
+flask run
 ```
 
-## Development Guidelines
-1. Code Style
-   - Clean, Pythonic code
-   - Comprehensive documentation
-   - Meaningful variable names
-   - Descriptive error messages
+### Environment Variables
+| Variable | Source | Purpose |
+|----------|--------|---------|
+| `SECRET_KEY` | `.env` | Flask session signing |
+| `GROQ_API_KEY` | `.env` | Trivia AI translation |
+| `CONVEX_URL` | `.env.local` (auto-generated) | Convex deployment URL |
 
-2. Architecture
-   - Modular design
-   - Separation of concerns
-   - Client-side validation
-   - Minimal JavaScript usage
+## Architecture
 
-3. Version Control
-   - Regular Git commits
-   - Checkpoint system
-   - Log folder in .gitignore
+```
+Browser ←→ Convex (real-time subscriptions + mutations)
+Browser ←→ Flask  (page serving only, no WebSocket)
+```
 
-4. Error Handling
-   - User-friendly error messages
-   - Comprehensive logging
-   - Graceful fallbacks
+Flask serves HTML pages and injects `CONVEX_URL` into templates. All real-time game logic runs in Convex serverless functions. The browser connects directly to Convex via the browser SDK — Flask has no involvement in gameplay.
+
+## Development
+
+```powershell
+# Start Convex dev server (watches for changes, hot-deploys)
+npx convex dev
+
+# In another terminal, start Flask
+flask run --debug
+
+# Re-seed content after JSON changes
+node scripts/seedContent.mjs
+```
