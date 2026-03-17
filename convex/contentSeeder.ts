@@ -43,11 +43,11 @@ export const seedItems = mutation({
 
       await ctx.db.insert("gameItems", {
         gameType: args.gameType,
-        title: item.title,
         category: item.category || "",
-        content: item.content || {},
+        itemData: { title: item.title, ...(item.content || {}) },
         contentHash,
         lastUsed: 0,
+        useCount: 0,
       });
       added++;
     }
