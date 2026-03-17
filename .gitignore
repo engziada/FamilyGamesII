@@ -159,3 +159,5 @@ game_data.db
 # OS
 .DS_Store
 Thumbs.db
+
+.env.local
