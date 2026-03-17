@@ -119,26 +119,67 @@ const gameUI = (() => {
     const sorted = [...players].sort((a, b) => b.score - a.score);
     const winner = sorted[0];
     const isWinner = winner?.name === myName;
+    const totalPoints = sorted.reduce((s, p) => s + p.score, 0);
+
+    // Player highlights
+    const highlights = [];
+    if (winner) highlights.push({ emoji: '🏆', label: 'البطل', name: winner.name });
+    if (sorted.length >= 2) highlights.push({ emoji: '🥈', label: 'الوصيف', name: sorted[1].name });
+    const mvp = sorted.find(p => p.score > 0 && p.name !== winner?.name);
+    if (mvp) highlights.push({ emoji: '⭐', label: 'نجم اللعبة', name: mvp.name });
 
     gameArea.innerHTML = `
-      <div class="text-center py-5">
-        <h2 class="mb-4">🎉 انتهت اللعبة!</h2>
-        <div class="card mx-auto" style="max-width: 400px;">
+      <div class="text-center py-4 animate__animated animate__fadeIn">
+        <h2 class="mb-3">🎉 انتهت اللعبة!</h2>
+
+        <!-- Winner spotlight -->
+        <div class="card mx-auto mb-3 border-warning" style="max-width: 420px;">
           <div class="card-body">
-            <h4 class="card-title">${isWinner ? '🏆 مبروك! أنت الفائز!' : `🏆 الفائز: ${winner?.name}`}</h4>
-            <p class="display-4 fw-bold text-primary">${winner?.score || 0} نقطة</p>
-            <hr>
-            <table class="table table-sm">
-              <thead><tr><th>اللاعب</th><th class="text-center">النقاط</th></tr></thead>
+            <div class="display-1 mb-2">${winner?.avatar || '🏆'}</div>
+            <h4 class="card-title">${isWinner ? 'مبروك! أنت الفائز!' : `الفائز: ${winner?.name}`}</h4>
+            <p class="display-4 fw-bold text-primary mb-0">${winner?.score || 0}</p>
+            <small class="text-muted">نقطة</small>
+          </div>
+        </div>
+
+        <!-- Highlights -->
+        ${highlights.length > 0 ? `
+        <div class="d-flex justify-content-center gap-3 mb-3 flex-wrap">
+          ${highlights.map(h => `
+            <div class="text-center px-3">
+              <div class="fs-3">${h.emoji}</div>
+              <div class="fw-bold small">${h.label}</div>
+              <div class="text-muted small">${h.name}</div>
+            </div>
+          `).join('')}
+        </div>` : ''}
+
+        <!-- Stats -->
+        <div class="d-flex justify-content-center gap-4 mb-3 text-muted small">
+          <span><i class="fas fa-users"></i> ${sorted.length} لاعبين</span>
+          <span><i class="fas fa-star"></i> ${totalPoints} نقطة إجمالي</span>
+        </div>
+
+        <!-- Leaderboard -->
+        <div class="card mx-auto" style="max-width: 420px;">
+          <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+              <thead><tr><th>#</th><th>اللاعب</th><th class="text-center">النقاط</th></tr></thead>
               <tbody>
                 ${sorted.map((p, i) => `<tr${p.name === myName ? ' class="table-primary"' : ''}>
-                  <td>${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : ''} ${p.name}</td>
+                  <td>${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`}</td>
+                  <td>${p.avatar || ''} ${p.name}</td>
                   <td class="text-center fw-bold">${p.score}</td>
                 </tr>`).join('')}
               </tbody>
             </table>
-            <a href="/" class="btn btn-primary mt-3">العودة للرئيسية</a>
           </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex justify-content-center gap-2 mt-3">
+          <a href="/" class="btn btn-primary"><i class="fas fa-home"></i> الرئيسية</a>
+          <button class="btn btn-success" onclick="location.reload()"><i class="fas fa-redo"></i> العب مرة تانية</button>
         </div>
       </div>
     `;

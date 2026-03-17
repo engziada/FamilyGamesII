@@ -19,8 +19,11 @@
                     {% endif %}
                     <div class="mt-auto">
                         <span class="text-muted d-block mb-2"><i class="fas fa-users"></i> 2 - 8 لاعبين</span>
-                        <button class="btn btn-primary w-100 create-game-btn" data-game-type="{{ key }}">
+                        <button class="btn btn-primary w-100 create-game-btn mb-1" data-game-type="{{ key }}">
                             <i class="fas fa-plus"></i> لعبة جديدة
+                        </button>
+                        <button class="btn btn-outline-info btn-sm w-100 rules-btn" data-game-type="{{ key }}">
+                            <i class="fas fa-question-circle"></i> كيف تلعب؟
                         </button>
                     </div>
                 </div>
@@ -110,6 +113,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Enter key on name input
   document.getElementById('host-name').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') document.getElementById('btn-create-room').click();
+  });
+
+  // "How to play?" buttons on game cards
+  document.querySelectorAll('.rules-btn').forEach(btn => {
+    btn.addEventListener('click', () => enhancements.showGameRules(btn.dataset.gameType));
   });
 });
 </script>
