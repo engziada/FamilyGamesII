@@ -20,6 +20,33 @@
 </head>
 <body>
     <a href="#main-content" class="skip-link">تخطي إلى المحتوى الرئيسي</a>
+    <!-- Dark mode toggle (top-left corner) -->
+    <button id="dark-mode-toggle" class="btn btn-sm position-fixed" style="top: 10px; left: 10px; z-index: 1050; opacity: 0.7;"
+      title="تبديل الوضع الداكن">
+      <i class="fas fa-moon"></i>
+    </button>
+    <script>
+      (function() {
+        const saved = localStorage.getItem('theme');
+        if (saved) document.documentElement.setAttribute('data-theme', saved);
+        document.addEventListener('DOMContentLoaded', function() {
+          const btn = document.getElementById('dark-mode-toggle');
+          if (!btn) return;
+          function updateIcon() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            btn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+          }
+          updateIcon();
+          btn.addEventListener('click', function() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            updateIcon();
+          });
+        });
+      })();
+    </script>
     <main id="main-content">
     {% block content %}{% endblock %}
     </main>

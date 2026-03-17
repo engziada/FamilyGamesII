@@ -15,6 +15,47 @@
     --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
+/* ── Dark Mode ───────────────────────────────────────────────────── */
+[data-theme="dark"] {
+    --bg-main: #1a1a2e;
+    --text: #e0e0e0;
+    --text-light: #a0a0a0;
+    --surface: #16213e;
+    --shadow-pop: 5px 5px 0 rgba(0,0,0,0.3);
+    --shadow-heavy: 8px 8px 0 rgba(0,0,0,0.4);
+}
+
+[data-theme="dark"] .card,
+[data-theme="dark"] .modal-content {
+    background-color: var(--surface);
+    color: var(--text);
+    border-color: #2a2a4a;
+}
+
+[data-theme="dark"] .btn-outline {
+    color: var(--text);
+    border-color: #3a3a5a;
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+    background-color: #0f3460;
+    color: var(--text);
+    border-color: #2a2a4a;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --bg-main: #1a1a2e;
+        --text: #e0e0e0;
+        --text-light: #a0a0a0;
+        --surface: #16213e;
+        --shadow-pop: 5px 5px 0 rgba(0,0,0,0.3);
+        --shadow-heavy: 8px 8px 0 rgba(0,0,0,0.4);
+    }
+}
+
 * {
     margin: 0;
     padding: 0;
