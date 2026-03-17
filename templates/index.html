@@ -181,7 +181,8 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const preview = await lobby.getRoomPreview(roomId);
       if (preview) {
-        previewEl.innerHTML = `<i class="fas fa-gamepad"></i> <strong>${preview.gameTitle || preview.gameType}</strong> — ${preview.playerCount || 0} لاعبين`;
+        const blocked = !preview.joinAllowed ? `<br><span class="text-danger"><i class="fas fa-ban"></i> ${preview.joinBlockReason}</span>` : '';
+        previewEl.innerHTML = `<i class="fas fa-gamepad"></i> <strong>${preview.gameTitle}</strong> — ${preview.playersCount} لاعبين${blocked}`;
         previewEl.classList.remove('d-none');
       }
     } catch (e) { /* ignore preview errors */ }

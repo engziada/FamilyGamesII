@@ -90,19 +90,21 @@
                 <div class="card-body text-center py-2">
                     <small class="text-muted">رقم الغرفة</small>
                     <div class="d-flex align-items-center justify-content-center gap-2">
-                        <span id="room-id-display" class="fw-bold text-primary">{{ room_id[:8] }}...</span>
-                        <button class="btn btn-outline-secondary btn-sm" data-copy-target="room-id-display" title="نسخ رقم الغرفة">
-                            <i class="fas fa-copy"></i>
-                        </button>
+                        <span class="fw-bold text-primary" style="font-size:0.8rem;">{{ room_id[:10] }}…</span>
                     </div>
                     <small class="text-muted">أنت: <strong>{{ player_name }}</strong></small>
-                    <div class="mt-2">
-                        <button class="btn btn-outline-info btn-sm w-100" id="btn-show-rules">
+                    <div class="mt-2 d-grid gap-1">
+                        <button class="btn btn-outline-secondary btn-sm" id="btn-share-link">
+                            <i class="fas fa-share-alt"></i> شارك رابط الغرفة
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" id="btn-show-rules">
                             <i class="fas fa-question-circle"></i> كيف تلعب؟
                         </button>
                     </div>
                 </div>
             </div>
+            <!-- Hidden full room ID for JS use -->
+            <span id="full-room-id" class="d-none">{{ room_id }}</span>
 
             {% if mouth_based %}
             <!-- Mouth-based game notice -->
@@ -155,6 +157,17 @@
     const rulesBtn = document.getElementById('btn-show-rules');
     if (rulesBtn) {
       rulesBtn.addEventListener('click', () => enhancements.showGameRules("{{ game_type }}"));
+    }
+
+    // Wire "Share Link" button — copies the bare game URL (no player_name)
+    // so the recipient lands on the join modal
+    const shareBtn = document.getElementById('btn-share-link');
+    if (shareBtn) {
+      shareBtn.addEventListener('click', () => {
+        const roomId = document.getElementById('full-room-id')?.textContent.trim();
+        const joinUrl = `${window.location.origin}/game/${roomId}`;
+        enhancements.copyToClipboard(joinUrl, shareBtn);
+      });
     }
   });
 </script>
