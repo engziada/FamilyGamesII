@@ -161,3 +161,7 @@ game_data.db
 Thumbs.db
 
 .env.local
+
+# Node.js / Convex
+node_modules/
+convex/_generated/
