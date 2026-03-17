@@ -1,244 +1,112 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container">
-    <header>
-        <h1>أهلاً بكم في ألعاب العيلة!</h1>
-        <p>استمتع بأجمل الألعاب مع العائلة والأصدقاء في مكان واحد</p>
+<div class="container py-4">
+    <header class="text-center mb-4">
+        <h1 class="display-5 fw-bold">أهلاً بكم في ألعاب العيلة!</h1>
+        <p class="lead text-muted">استمتع بأجمل الألعاب مع العائلة والأصدقاء في مكان واحد</p>
     </header>
 
-    <div class="card join-hub-card animate-bounce-down">
-        <div class="game-icon">
-            <i class="fas fa-door-open"></i>
-        </div>
-        <h3>انضم إلى غرفة موجودة</h3>
-        <p>اكتب رقم الغرفة وسنعرض لك نوع اللعبة وصاحب الغرفة قبل الانضمام.</p>
-        <div class="buttons">
-            <button class="btn btn-secondary" onclick="Utils.showGameModal(null, 'join')">
-                <i class="fas fa-sign-in-alt"></i> انضمام إلى غرفة
-            </button>
-        </div>
-    </div>
-
-    <div class="games-grid">
-        <!-- Charades Card -->
-        <div class="card game-card animate-bounce-down">
-            <div class="game-icon">
-                <i class="fas fa-mask"></i>
-            </div>
-            <h3>بدون كلام</h3>
-            <p>قم بتمثيل الكلمة بدون استخدام الكلام وخلي صحابك يخمنوا! اللعبة الأشهر في كل تجمعاتنا.</p>
-            <div class="game-meta">
-                <span><i class="fas fa-users"></i> 2 - 8 لاعبين</span>
-            </div>
-            <div class="buttons">
-                <button class="btn btn-primary" onclick="Utils.showGameModal('charades', 'create')">
-                    <i class="fas fa-plus"></i> لعبة جديدة
-                </button>
+    <!-- Game catalog grid -->
+    <div class="row g-4">
+        {% for key, game in game_catalog.items() %}
+        <div class="col-sm-6 col-lg-4 col-xl-3">
+            <div class="card h-100 game-card animate__animated animate__fadeInUp">
+                <div class="card-body text-center d-flex flex-column">
+                    <div class="mb-3"><i class="fas {{ game.icon }} fa-3x text-primary"></i></div>
+                    <h5 class="card-title">{{ game.title }}</h5>
+                    {% if game.mouthBased %}
+                    <span class="badge bg-info mb-2"><i class="fas fa-users"></i> وجهاً لوجه</span>
+                    {% endif %}
+                    <div class="mt-auto">
+                        <span class="text-muted d-block mb-2"><i class="fas fa-users"></i> 2 - 8 لاعبين</span>
+                        <button class="btn btn-primary w-100 create-game-btn" data-game-type="{{ key }}">
+                            <i class="fas fa-plus"></i> لعبة جديدة
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <!-- Pictionary Card -->
-        <div class="card game-card animate-bounce-down">
-            <div class="game-icon">
-                <i class="fas fa-paint-brush"></i>
-            </div>
-            <h3>ارسم وخمن</h3>
-            <p>لعبة الرسم والذكاء. ارسم الكلمة وحاول تخلي صحابك يعرفوها في أسرع وقت!</p>
-            <div class="game-meta">
-                <span><i class="fas fa-users"></i> 2 - 8 لاعبين</span>
-            </div>
-            <div class="buttons">
-                <button class="btn btn-primary" onclick="Utils.showGameModal('pictionary', 'create')">
-                    <i class="fas fa-plus"></i> لعبة جديدة
-                </button>
-            </div>
-        </div>
-
-        <!-- Trivia Card -->
-        <div class="card game-card animate-bounce-down">
-            <div class="game-icon">
-                <i class="fas fa-lightbulb"></i>
-            </div>
-            <h3>بنك المعلومات</h3>
-            <p>اختبر معلوماتك العامة مع أهلك وأصحابك في مسابقة ثقافية ممتعة. أسئلة في كل المجالات!</p>
-            <div class="game-meta">
-                <span><i class="fas fa-users"></i> 2 - 8 لاعبين</span>
-            </div>
-            <div class="buttons">
-                <button class="btn btn-primary" onclick="Utils.showGameModal('trivia', 'create')">
-                    <i class="fas fa-plus"></i> لعبة جديدة
-                </button>
-            </div>
-        </div>
-
-        <!-- Rapid Fire Card -->
-        <div class="card game-card animate-bounce-down">
-            <div class="game-icon">
-                <i class="fas fa-bolt"></i>
-            </div>
-            <h3>الأسئلة السريعة</h3>
-            <p>اضغط الجرس بسرعة وجاوب قبل غيرك! لعبة سرعة بديهة وتنافس حقيقي.</p>
-            <div class="game-meta">
-                <span><i class="fas fa-users"></i> 2 - 8 لاعبين</span>
-            </div>
-            <div class="buttons">
-                <button class="btn btn-primary" onclick="Utils.showGameModal('rapid_fire', 'create')">
-                    <i class="fas fa-plus"></i> لعبة جديدة
-                </button>
-            </div>
-        </div>
-
-        <!-- Twenty Questions Card -->
-        <div class="card game-card animate-bounce-down">
-            <div class="game-icon">
-                <i class="fas fa-question-circle"></i>
-            </div>
-            <h3>عشرين سؤال</h3>
-            <p>خمن الكلمة السرية في 20 سؤال! لعبة استدلال وذكاء مع أصدقائك.</p>
-            <div class="game-meta">
-                <span><i class="fas fa-users"></i> 2 - 8 لاعبين</span>
-            </div>
-            <div class="buttons">
-                <button class="btn btn-primary" onclick="Utils.showGameModal('twenty_questions', 'create')">
-                    <i class="fas fa-plus"></i> لعبة جديدة
-                </button>
-            </div>
-        </div>
-
-        <!-- Riddles Card -->
-        <div class="card game-card animate-bounce-down">
-            <div class="game-icon">
-                <i class="fas fa-brain"></i>
-            </div>
-            <h3>الألغاز</h3>
-            <p>حل الألغاز والفوازير! استخدم ذكاءك والتلميحات للوصول للإجابة الصحيحة.</p>
-            <div class="game-meta">
-                <span><i class="fas fa-users"></i> 2 - 8 لاعبين</span>
-            </div>
-            <div class="buttons">
-                <button class="btn btn-primary" onclick="Utils.showGameModal('riddles', 'create')">
-                    <i class="fas fa-plus"></i> لعبة جديدة
-                </button>
-            </div>
-        </div>
-
-        <!-- Bus Complete Card -->
-        <div class="card game-card animate-bounce-down">
-            <div class="game-icon">
-                <i class="fas fa-bus"></i>
-            </div>
-            <h3>أتوبيس كومبليت</h3>
-            <p>اللعبة الكلاسيكية! اختبر سرعة بديهتك ومعلوماتك في الكلمات التي تبدأ بحرف معين.</p>
-            <div class="game-meta">
-                <span><i class="fas fa-users"></i> 2 - 8 لاعبين</span>
-            </div>
-            <div class="buttons">
-                <button class="btn btn-primary" onclick="Utils.showGameModal('bus_complete', 'create')">
-                    <i class="fas fa-plus"></i> لعبة جديدة
-                </button>
-            </div>
-        </div>
+        {% endfor %}
     </div>
 </div>
 
 <!-- Create Game Modal -->
-<div id="create-game-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-    <input type="hidden" id="modal-game-type" value="charades">
-    <div class="modal-content animate-bounce-down">
-        <h2 id="modal-title">إنشاء غرفة جديدة</h2>
-        <div id="create-error-message" class="error-message badge badge-team-1 u-hidden u-full-width u-margin-bottom"></div>
-        <div class="input-group">
-            <label for="host-name">اسمك</label>
-            <input type="text" id="host-name" placeholder="اكتب اسمك هنا...">
-        </div>
-        <div class="input-group u-hidden">
-            <label>نظام اللعب</label>
-            <select id="game-teams" class="input-control">
-                <option value="false">فردي (كل واحد لنفسه)</option>
-                <option value="true">فرق (فريقين ضد بعض)</option>
-            </select>
-        </div>
-        <div class="input-group u-hidden">
-            <label>وقت الجولة (الصعوبة)</label>
-            <select id="game-difficulty" class="input-control">
-                <option value="easy">سهل (120 ثانية)</option>
-                <option value="medium">متوسط (90 ثانية)</option>
-                <option value="hard">صعب (60 ثانية)</option>
-            </select>
-        </div>
-        <div id="room-info" class="card u-hidden u-full-width u-margin-bottom" style="padding: 1.5rem;">
-            <p>رقم الغرفة: <span id="room-id" style="font-weight: 800; color: var(--primary); font-size: 1.5rem;"></span>
-                <button id="copy-room-id-lobby" class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; margin-right: 0.5rem;" onclick="const roomId = document.getElementById('room-id').textContent; navigator.clipboard.writeText(roomId).then(() => Utils.showMessage('تم نسخ رقم الغرفة', 'info'))">
-                    <i class="fas fa-copy"></i>
+<div class="modal fade" id="createGameModal" tabindex="-1" aria-labelledby="createGameModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createGameModalLabel">إنشاء غرفة جديدة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="modal-game-type">
+                <div id="create-error" class="alert alert-danger d-none"></div>
+                <div class="mb-3">
+                    <label for="host-name" class="form-label">اسمك</label>
+                    <input type="text" id="host-name" class="form-control text-end" placeholder="اكتب اسمك هنا..." dir="rtl" autofocus>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" id="btn-create-room">
+                    <i class="fas fa-plus"></i> أنشئ الغرفة
                 </button>
-            </p>
-            <p style="font-size: 0.9rem; color: var(--text-light);">شارك هذا الرقم مع أصدقائك للإنضمام</p>
-        </div>
-        <div class="players-list u-hidden u-full-width">
-            <h4>اللاعبين في الغرفة:</h4>
-            <ul id="host-players-list"></ul>
-        </div>
-        <div class="buttons u-flex-center u-full-width">
-            <button type="button" class="btn btn-primary" style="flex: 2;" onclick="Lobby.createGame()">أنشئ الغرفة</button>
-            <button type="button" class="btn btn-outline" style="flex: 1;" onclick="Utils.hideModal('create-game-modal')">إلغاء</button>
-        </div>
-    </div>
-</div>
-
-<!-- Join Game Modal -->
-<div id="join-game-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="join-modal-title">
-    <div class="modal-content animate-bounce-down">
-        <div id="join-form" class="u-full-width">
-            <h2 id="join-modal-title" class="u-margin-bottom">انضمام للعبة</h2>
-            <div id="join-error-message" class="error-message badge badge-team-1 u-hidden u-full-width u-margin-bottom"></div>
-            <div class="input-group">
-                <label for="player-name">اسمك</label>
-                <input type="text" id="player-name" placeholder="اكتب اسمك...">
-            </div>
-            <div class="input-group">
-                <label for="room-code">رقم الغرفة</label>
-                <input type="text" id="room-code" inputmode="numeric" pattern="[0-9]*" placeholder="اكتب رقم الغرفة...">
-            </div>
-            <div class="buttons u-flex-center u-full-width">
-                <button type="button" class="btn btn-primary" style="flex: 2;" onclick="Lobby.previewRoom()">عرض الغرفة</button>
-                <button type="button" class="btn btn-outline" style="flex: 1;" onclick="Utils.hideModal('join-game-modal')">إلغاء</button>
-            </div>
-        </div>
-        <div id="join-preview" class="u-hidden u-full-width">
-            <h2 class="u-margin-bottom">تأكيد الغرفة</h2>
-            <div class="card u-full-width join-preview-card">
-                <p>رقم الغرفة: <strong id="preview-room-id"></strong></p>
-                <p>نوع اللعبة: <strong id="preview-game-title"></strong></p>
-                <p>المضيف: <strong id="preview-host-name"></strong></p>
-                <p>عدد اللاعبين: <strong id="preview-players-count"></strong></p>
-                <p id="preview-room-status" class="u-margin-top"></p>
-            </div>
-            <div class="buttons u-flex-center u-full-width">
-                <button type="button" id="confirm-join-btn" class="btn btn-primary" style="flex: 2;" onclick="Lobby.joinGame()">تأكيد الانضمام</button>
-                <button type="button" class="btn btn-outline" style="flex: 1;" onclick="Lobby.backToJoinForm()">رجوع</button>
-            </div>
-        </div>
-        <div id="join-lobby" class="u-hidden u-full-width">
-            <h2 class="u-margin-bottom">في انتظار البداية</h2>
-            <p class="u-margin-bottom" style="color: var(--secondary); font-weight: 700; font-size: 1.05rem;">اللعبة: <span id="join-game-title"></span></p>
-            <p class="u-margin-bottom" style="color: var(--primary); font-weight: 700; font-size: 1.2rem;">رقم الغرفة: <span id="join-room-id"></span></p>
-            <div class="players-list u-full-width u-margin-bottom">
-                <h4>اللاعبين الموجودين:</h4>
-                <ul id="join-players-list"></ul>
-            </div>
-            <p class="animate-heartbeat" style="color: var(--secondary); font-weight: 800; font-size: 1.1rem;">
-                في انتظار المضيف لبدء اللعبة...
-            </p>
-            <div class="buttons u-full-width u-margin-top">
-                <button type="button" class="btn btn-outline" onclick="Lobby.leaveGame()">خروج</button>
             </div>
         </div>
     </div>
 </div>
 
-<div id="error-message"></div>
+<!-- Join Game Modal (future: join by room code — currently Convex IDs are long) -->
+<!-- For now, players join via shared link from host -->
+
+<div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1100;"></div>
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/charades.js') }}"></script>
+<script src="{{ url_for('static', filename='js/lobby.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Init Convex client
+  convex.init(window.__CONVEX_URL__);
+
+  // Create game buttons
+  document.querySelectorAll('.create-game-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('modal-game-type').value = btn.dataset.gameType;
+      document.getElementById('createGameModalLabel').textContent =
+        btn.closest('.card').querySelector('.card-title').textContent + ' — غرفة جديدة';
+      document.getElementById('create-error').classList.add('d-none');
+      new bootstrap.Modal(document.getElementById('createGameModal')).show();
+    });
+  });
+
+  // Create room action
+  document.getElementById('btn-create-room').addEventListener('click', async () => {
+    const gameType = document.getElementById('modal-game-type').value;
+    const playerName = document.getElementById('host-name').value.trim();
+    const errEl = document.getElementById('create-error');
+
+    if (!playerName) {
+      errEl.textContent = 'اكتب اسمك!';
+      errEl.classList.remove('d-none');
+      return;
+    }
+
+    try {
+      errEl.classList.add('d-none');
+      const roomId = await lobby.createRoom(gameType, playerName);
+      // Navigate to game page
+      lobby.navigateToGame(roomId, playerName, gameType);
+    } catch (e) {
+      errEl.textContent = e.message || 'حدث خطأ';
+      errEl.classList.remove('d-none');
+    }
+  });
+
+  // Enter key on name input
+  document.getElementById('host-name').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('btn-create-room').click();
+  });
+});
+</script>
 {% endblock %}
