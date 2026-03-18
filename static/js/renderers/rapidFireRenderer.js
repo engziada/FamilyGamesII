@@ -15,6 +15,46 @@ window.rapidFireRenderer = (() => {
     const area = document.getElementById('game-area');
     if (!area) return;
 
+    // Check for lastResult first
+    if (gs.lastResult) {
+      const lr = gs.lastResult;
+      area.innerHTML = `
+        <div class="text-center py-4">
+          ${lr.timeout ? '<h4 class="text-warning">انتهى الوقت!</h4>' :
+            lr.allWrong ? '<h4 class="text-danger">كل اللاعبين جاوبوا غلط!</h4>' :
+            lr.correct ? `<h4 class="text-success">${lr.player} جاوب صح! 🎉</h4>` : ''}
+          ${lr.correctAnswer ? `<p>الإجابة: <strong>${lr.correctAnswer}</strong></p>` : ''}
+        </div>`;
+      return;
+    }
+
+    // Check if we need to start the round (no question loaded)
+    if (state.status === 'round_active' && !gs.currentQuestion) {
+      const isHost = state.host === myName;
+      if (isHost) {
+        area.innerHTML = `
+          <div class="text-center py-4">
+            <h4>السؤال ${gs.questionIndex + 1} / ${gs.maxQuestions}</h4>
+            <button id="btn-start-rf-round" class="btn btn-primary btn-lg mt-3">ابدأ السؤال</button>
+          </div>`;
+        document.getElementById('btn-start-rf-round')?.addEventListener('click', async () => {
+          const items = gs.questions || [];
+          const q = items.length > 0 ? items[gs.questionIndex] : {
+            question: "ما هي عاصمة فرنسا؟",
+            options: ["باريس", "ليون", "مرسيليا", "نيس"],
+            answer: 0,
+          };
+          await convex.mutate(api.games.rapidFire.loadQuestion, { roomId, question: q });
+        });
+      } else {
+        area.innerHTML = `
+          <div class="text-center py-4">
+            <h4>في انتظار السؤال...</h4>
+          </div>`;
+      }
+      return;
+    }
+
     const q = gs.currentQuestion;
     if (!q) return;
 
@@ -25,27 +65,30 @@ window.rapidFireRenderer = (() => {
         timer.start(gs.timeLimit || 30, { onComplete: () => sound.play('timeout') });
       }
 
-      const canBuzz = !gs.buzzFailed.includes(myName);
-      area.innerHTML = `
-        <div class="text-center py-3">
-          <h5>السؤال ${gs.questionIndex + 1} / ${gs.maxQuestions}</h5>
-          <div class="card mx-auto" style="max-width: 600px;">
-            <div class="card-body">
-              <h4 class="mb-4">${q.question}</h4>
-              <div class="d-grid gap-2 mb-3">
-                ${(q.options || []).map((opt) => `<div class="btn btn-outline-secondary btn-lg text-end" disabled>${opt}</div>`).join('')}
+      // Only re-render if the buzz button doesn't exist
+      const existingBuzz = area.querySelector('#btn-buzz');
+      if (!existingBuzz) {
+        const canBuzz = !gs.buzzFailed.includes(myName);
+        area.innerHTML = `
+          <div class="text-center py-3">
+            <h5>السؤال ${gs.questionIndex + 1} / ${gs.maxQuestions}</h5>
+            <div class="card mx-auto" style="max-width: 600px;">
+              <div class="card-body">
+                <h4 class="mb-4">${q.question}</h4>
+                <div class="d-grid gap-2 mb-3">
+                  ${(q.options || []).map((opt) => `<div class="btn btn-outline-secondary btn-lg text-end" disabled>${opt}</div>`).join('')}
+                </div>
+                ${canBuzz ? `<button id="btn-buzz" class="btn btn-danger btn-lg pulse-animation">
+                  <i class="fas fa-bell"></i> اضغط الجرس!
+                </button>` : '<p class="text-muted">لقد أجبت خطأ — انتظر السؤال التالي</p>'}
               </div>
-              ${canBuzz ? `<button id="btn-buzz" class="btn btn-danger btn-lg pulse-animation">
-                <i class="fas fa-bell"></i> اضغط الجرس!
-              </button>` : '<p class="text-muted">لقد أجبت خطأ — انتظر السؤال التالي</p>'}
             </div>
-          </div>
-        </div>`;
+          </div>`;
 
-      document.getElementById('btn-buzz')?.addEventListener('click', () => {
-        convex.mutate(api.games.rapidFire.buzzIn, { roomId, playerName: myName });
-      });
-
+        document.getElementById('btn-buzz')?.addEventListener('click', () => {
+          convex.mutate(api.games.rapidFire.buzzIn, { roomId, playerName: myName });
+        });
+      }
     } else if (state.status === 'buzzed' && gs.buzzedPlayer) {
       // Someone buzzed — show options
       const isBuzzer = gs.buzzedPlayer === myName;

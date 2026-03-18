@@ -64,6 +64,22 @@ const gameController = (() => {
     if (state.stateVersion <= _lastVersion) return;
     _lastVersion = state.stateVersion;
 
+    // Store state for debugging
+    window.__lastGameState = state;
+
+    // Determine if current player is host
+    const isHost = state.host === _playerName;
+
+    // Set isHost attribute on host-only buttons for visibility control
+    const startBtn = document.getElementById('btn-start-game');
+    if (startBtn) {
+      startBtn.dataset.isHost = isHost.toString();
+    }
+    const closeBtn = document.getElementById('btn-close-room');
+    if (closeBtn) {
+      closeBtn.dataset.isHost = isHost.toString();
+    }
+
     // Update common UI elements
     gameUI.updatePlayerList(state.players, _playerName);
     gameUI.updateScoreboard(state.players);

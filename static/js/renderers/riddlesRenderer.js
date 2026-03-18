@@ -14,6 +14,48 @@ window.riddlesRenderer = (() => {
     if (!area) return;
     const isHost = state.host === myName;
 
+    // Check for lastResult first
+    if (gs.lastResult) {
+      const lr = gs.lastResult;
+      area.innerHTML = `
+        <div class="text-center py-4">
+          ${lr.correct ? `<h4 class="text-success">${lr.player} حل اللغز! 🎉 (+${lr.points})</h4>` : ''}
+          <p>الإجابة: <strong>${lr.answer}</strong></p>
+          ${isHost ? `<button id="btn-next-riddle-result" class="btn btn-primary mt-3">اللغز التالي</button>` : ''}
+        </div>`;
+      document.getElementById('btn-next-riddle-result')?.addEventListener('click', () => {
+        convex.mutate(api.games.riddles.nextRiddle, { roomId, playerName: myName });
+      });
+      return;
+    }
+
+    // Check if we need to start the round (no riddle loaded)
+    if (state.status === 'round_active' && !gs.currentRiddle) {
+      if (isHost) {
+        area.innerHTML = `
+          <div class="text-center py-4">
+            <h4>اللغز ${gs.riddleIndex + 1} / ${gs.maxRiddles}</h4>
+            <button id="btn-start-riddle-round" class="btn btn-primary btn-lg mt-3">ابدأ اللغز</button>
+          </div>`;
+        document.getElementById('btn-start-riddle-round')?.addEventListener('click', async () => {
+          const items = gs.riddles || [];
+          const riddle = items.length > 0 ? items[gs.riddleIndex] : {
+            question: "ما هو الشيء الذي يمشي بلا أرجل؟",
+            answer: "الماء",
+            category: "طبيعي",
+            hints: ["يسقط من السماء", "نجده في البحار"],
+          };
+          await convex.mutate(api.games.riddles.loadRiddle, { roomId, riddle });
+        });
+      } else {
+        area.innerHTML = `
+          <div class="text-center py-4">
+            <h4>في انتظار اللغز...</h4>
+          </div>`;
+      }
+      return;
+    }
+
     if (state.status === 'round_active' && gs.currentRiddle) {
       const riddle = gs.currentRiddle;
       const myAttempts = (gs.playersAnswered || {})[myName] || 0;
@@ -97,18 +139,6 @@ window.riddlesRenderer = (() => {
         convex.mutate(api.games.riddles.skipRiddle, { roomId, playerName: myName });
       });
       document.getElementById('btn-next-riddle')?.addEventListener('click', () => {
-        convex.mutate(api.games.riddles.nextRiddle, { roomId, playerName: myName });
-      });
-
-    } else if (gs.lastResult) {
-      const lr = gs.lastResult;
-      area.innerHTML = `
-        <div class="text-center py-4">
-          ${lr.correct ? `<h4 class="text-success">${lr.player} حل اللغز! 🎉 (+${lr.points})</h4>` : ''}
-          <p>الإجابة: <strong>${lr.answer}</strong></p>
-          ${isHost ? `<button id="btn-next-riddle-result" class="btn btn-primary mt-3">اللغز التالي</button>` : ''}
-        </div>`;
-      document.getElementById('btn-next-riddle-result')?.addEventListener('click', () => {
         convex.mutate(api.games.riddles.nextRiddle, { roomId, playerName: myName });
       });
     }

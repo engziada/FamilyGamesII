@@ -70,10 +70,18 @@ const gameUI = (() => {
 
     el.textContent = statusMap[status] || status;
 
-    // Show/hide start button
+    // Show/hide start button (only for host during waiting phase)
     const startBtn = document.getElementById('btn-start-game');
     if (startBtn) {
-      startBtn.style.display = status === 'waiting' ? '' : 'none';
+      const isHost = startBtn.dataset.isHost === 'true';
+      startBtn.style.display = (status === 'waiting' && isHost) ? '' : 'none';
+    }
+
+    // Show/hide close room button (only for host)
+    const closeBtn = document.getElementById('btn-close-room');
+    if (closeBtn) {
+      const isHost = closeBtn.dataset.isHost === 'true';
+      closeBtn.style.display = isHost ? '' : 'none';
     }
   }
 

@@ -12,6 +12,18 @@ from playwright.sync_api import Browser, Page, Playwright, sync_playwright
 BASE_URL = os.getenv('FAMILY_GAMES_SMOKE_BASE_URL', 'http://127.0.0.1:5005')
 OUTPUT_PATH = Path(os.getenv('FAMILY_GAMES_SMOKE_OUTPUT', 'smoke-findings.json'))
 
+# Maps game_type key → Arabic card title in the catalog grid
+GAME_TITLES: dict[str, str] = {
+    'charades': 'بدون كلام',
+    'pictionary': 'ارسم وخمن',
+    'trivia': 'بنك المعلومات',
+    'rapid_fire': 'الأسئلة السريعة',
+    'twenty_questions': 'عشرين سؤال',
+    'riddles': 'الألغاز',
+    'bus_complete': 'أتوبيس كومبليت',
+    'who_am_i': 'من أنا؟',
+}
+
 
 @dataclass
 class StepFinding:
@@ -40,15 +52,7 @@ class SmokeRunner:
 
     def run(self) -> List[GameFinding]:
         findings: List[GameFinding] = []
-        for game_type in [
-            'charades',
-            'pictionary',
-            'trivia',
-            'rapid_fire',
-            'twenty_questions',
-            'riddles',
-            'bus_complete',
-        ]:
+        for game_type in GAME_TITLES:
             findings.append(self.run_for_game(game_type))
         return findings
 
@@ -68,10 +72,14 @@ class SmokeRunner:
             self.join_room(guest_two, room_id, 'Player-C')
             finding.add('join_guest_2', 'passed', 'Player-C joined room')
 
-            self.start_room(host_page)
+            self.start_game(host_page)
             finding.add('start_game', 'passed', 'Host started the game')
 
-            finding.add('interaction', 'manual_check', 'Complete one correct path, one wrong path, and one withdrawal path for this game in-browser if needed')
+            finding.add(
+                'interaction',
+                'manual_check',
+                'Run tests/e2e/ for automated interaction coverage',
+            )
         except Exception as exc:
             finding.add('runner', 'failed', str(exc))
         finally:
@@ -81,37 +89,61 @@ class SmokeRunner:
         return finding
 
     def new_page(self) -> Page:
+        """Open a fresh browser context and navigate to the home page."""
         context = self.browser.new_context(viewport={'width': 430, 'height': 932})
         page = context.new_page()
-        page.goto(BASE_URL)
+        page.goto(BASE_URL, wait_until='domcontentloaded')
         return page
 
     def create_room(self, page: Page, game_type: str, player_name: str) -> str:
-        game_titles = {
-            'charades': 'بدون كلام',
-            'pictionary': 'ارسم وخمن',
-            'trivia': 'بنك المعلومات',
-            'rapid_fire': 'الأسئلة السريعة',
-            'twenty_questions': 'عشرين سؤال',
-            'riddles': 'الألغاز',
-            'bus_complete': 'أتوبيس كومبليت',
-        }
-        page.get_by_role('heading', name=game_titles[game_type]).locator('..').get_by_role('button', name='+ لعبة جديدة').click()
-        page.get_by_role('textbox', name='اسمك').fill(player_name)
-        page.get_by_role('button', name='أنشئ الغرفة').click()
-        room_text = page.locator('#room-id').inner_text()
-        return room_text.strip()
+        """Create a game room and return the Convex room ID.
+
+        Uses the live selectors from the current templates:
+          - .game-card filtered by title → 'لعبة جديدة' button
+          - #createGameModal → #host-name → 'أنشئ الغرفة' button
+          - #full-room-id hidden span on the game page
+        """
+        title = GAME_TITLES[game_type]
+        card = page.locator('.game-card').filter(has_text=title)
+        card.get_by_role('button', name='لعبة جديدة').click()
+
+        modal = page.locator('#createGameModal')
+        modal.wait_for(state='visible', timeout=8_000)
+        modal.locator('#host-name').fill(player_name)
+        modal.get_by_role('button', name='أنشئ الغرفة').click()
+
+        # Wait for navigation to the game page
+        page.wait_for_url('**/game/**', timeout=15_000)
+
+        # Extract room ID from the hidden span injected by Flask template
+        room_id = page.locator('#full-room-id').text_content(timeout=10_000).strip()
+        return room_id
 
     def join_room(self, page: Page, room_id: str, player_name: str) -> None:
-        page.get_by_role('button', name='انضمام إلى غرفة').click()
-        textboxes = page.get_by_role('textbox')
-        textboxes.nth(0).fill(player_name)
-        textboxes.nth(1).fill(room_id)
-        page.get_by_role('button', name='عرض الغرفة').click()
-        page.get_by_role('button', name='تأكيد الانضمام').click()
+        """Join an existing room as a non-host player.
 
-    def start_room(self, page: Page) -> None:
-        page.get_by_role('button', name='يالا نبدأ').click()
+        Pastes the full game URL into #join-room-input, opens the join modal,
+        fills #join-name, and clicks #btn-join-confirm.
+        """
+        join_url = f'{BASE_URL}/game/{room_id}'
+        page.locator('#join-room-input').fill(join_url)
+        page.locator('#btn-open-join').click()
+
+        modal = page.locator('#joinGameModal')
+        modal.wait_for(state='visible', timeout=8_000)
+        modal.locator('#join-name').fill(player_name)
+        modal.locator('#btn-join-confirm').click()
+
+        page.wait_for_url('**/game/**', timeout=15_000)
+
+    def start_game(self, page: Page) -> None:
+        """Click the start game button (visible only for the host).
+
+        Waits for #btn-start-game to become visible before clicking.
+        """
+        btn = page.locator('#btn-start-game')
+        btn.wait_for(state='visible', timeout=10_000)
+        btn.click()
 
 
 def main() -> None:
@@ -122,16 +154,21 @@ def main() -> None:
         finally:
             runner.close()
     OUTPUT_PATH.write_text(
-        json.dumps([
-            {
-                'game_type': finding.game_type,
-                'room_id': finding.room_id,
-                'steps': [asdict(step) for step in finding.steps],
-            }
-            for finding in findings
-        ], ensure_ascii=False, indent=2),
+        json.dumps(
+            [
+                {
+                    'game_type': finding.game_type,
+                    'room_id': finding.room_id,
+                    'steps': [asdict(step) for step in finding.steps],
+                }
+                for finding in findings
+            ],
+            ensure_ascii=False,
+            indent=2,
+        ),
         encoding='utf-8',
     )
+    print(f'Smoke findings written to {OUTPUT_PATH}')
 
 
 if __name__ == '__main__':

@@ -17,7 +17,8 @@ window.busCompleteRenderer = (() => {
     if (!area) return;
     const isHost = state.host === myName;
 
-    if (state.status === 'waiting' && isHost && !gs.currentLetter) {
+    // Show start-round button when game started but no letter yet (host initiates round)
+    if ((state.status === 'waiting' || state.status === 'round_active') && isHost && !gs.currentLetter) {
       area.innerHTML = `
         <div class="text-center py-4">
           <h4>أتوبيس كومبليت</h4>
@@ -61,7 +62,8 @@ window.busCompleteRenderer = (() => {
           _debounceTimer = setTimeout(() => {
             const answers = {};
             area.querySelectorAll('.bus-input').forEach(inp => {
-              answers[inp.dataset.category] = inp.value.trim();
+              // Encode category key to avoid Convex field name restrictions (ASCII only)
+              answers[encodeURIComponent(inp.dataset.category)] = inp.value.trim();
             });
             convex.mutate(api.games.busComplete.submitAnswers, {
               roomId, playerName: myName, answers,
@@ -74,7 +76,8 @@ window.busCompleteRenderer = (() => {
       document.getElementById('btn-stop-bus')?.addEventListener('click', () => {
         const answers = {};
         area.querySelectorAll('.bus-input').forEach(inp => {
-          answers[inp.dataset.category] = inp.value.trim();
+          // Encode category key to avoid Convex field name restrictions (ASCII only)
+          answers[encodeURIComponent(inp.dataset.category)] = inp.value.trim();
         });
         convex.mutate(api.games.busComplete.stopBus, {
           roomId, playerName: myName, answers,
@@ -109,8 +112,10 @@ window.busCompleteRenderer = (() => {
       html += `<div class="card mb-3"><div class="card-header fw-bold">${player}</div>`;
       html += `<ul class="list-group list-group-flush">`;
       for (const cat of cats) {
-        const answer = (answers)[cat] || '';
-        const key = `${player}|${cat}`;
+        // Decode category key (encoded in submitAnswers/stopBus)
+        const encodedCat = encodeURIComponent(cat);
+        const answer = (answers)[encodedCat] || '';
+        const key = `${player}|${encodedCat}`;
         const status = validation[key] || 'pending';
         const statusBadge = status === 'valid' ? '<span class="badge bg-success">✓</span>' :
           status === 'invalid' ? '<span class="badge bg-danger">✗</span>' :

@@ -144,7 +144,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       errEl.classList.add('d-none');
-      const roomId = await lobby.createRoom(gameType, playerName, avatar);
+      const roomId = await lobby.createRoom(gameType, playerName, {});
+      // Set avatar after room creation (separate mutation)
+      await convex.mutate(api.rooms.setAvatar, { roomId, playerName, avatar });
       lobby.navigateToGame(roomId, playerName, gameType);
     } catch (e) {
       errEl.textContent = e.message || 'حدث خطأ';

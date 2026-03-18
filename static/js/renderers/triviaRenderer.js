@@ -15,6 +15,50 @@ window.triviaRenderer = (() => {
     const area = document.getElementById('game-area');
     if (!area) return;
 
+    // Check for lastResult first (shows after answering before next question)
+    if (gs.lastResult) {
+      // Show result between questions
+      const lr = gs.lastResult;
+      area.innerHTML = `
+        <div class="text-center py-4">
+          ${lr.timeout ? '<h4 class="text-warning">انتهى الوقت!</h4>' :
+            lr.allWrong ? '<h4 class="text-danger">كل اللاعبين جاوبوا غلط!</h4>' :
+            lr.correct ? `<h4 class="text-success">${lr.player} جاوب صح! 🎉</h4>` : ''}
+          ${lr.correctAnswer ? `<p>الإجابة الصحيحة: <strong>${lr.correctAnswer}</strong></p>` : ''}
+        </div>`;
+      return;
+    }
+
+    // Check if we're in round_active but no question yet (waiting for host to start round)
+    if (state.status === 'round_active' && (!gs.currentQuestion || !gs.questionActive)) {
+      const isHost = state.host === myName;
+      if (isHost && !gs.currentQuestion) {
+        // Host needs to start the round (load first question)
+        area.innerHTML = `
+          <div class="text-center py-4">
+            <h4>السؤال ${gs.questionIndex + 1} / ${gs.maxQuestions}</h4>
+            <button id="btn-start-trivia-round" class="btn btn-primary btn-lg mt-3">ابدأ السؤال</button>
+          </div>`;
+        document.getElementById('btn-start-trivia-round')?.addEventListener('click', async () => {
+          // Load a default question or pick from items
+          const items = gs.questions || [];
+          const q = items.length > 0 ? items[gs.questionIndex] : {
+            question: "ما هي عاصمة مصر؟",
+            options: ["القاهرة", "الإسكندرية", "أسوان", "طنطا"],
+            answer: 0,
+          };
+          await convex.mutate(api.games.trivia.loadQuestion, { roomId, question: q });
+        });
+      } else {
+        // Non-host waiting for question
+        area.innerHTML = `
+          <div class="text-center py-4">
+            <h4>في انتظار السؤال...</h4>
+          </div>`;
+      }
+      return;
+    }
+
     if (state.status === 'round_active' && gs.currentQuestion && gs.questionActive) {
       // New question — start timer
       if (gs.questionIndex !== _lastQuestionIdx) {

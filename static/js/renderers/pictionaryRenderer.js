@@ -13,6 +13,9 @@ window.pictionaryRenderer = (() => {
   let _drawing = false;
   let _lastRoundStart = null;
   let _lastStrokeCount = -1;
+  let _listenersWired = false;
+  let _drawerButtonsWired = false;
+  let _guesserButtonsWired = false;
 
   function render(state, myName, roomId) {
     const gs = state.state;
@@ -23,7 +26,30 @@ window.pictionaryRenderer = (() => {
     const isMyTurn = state.currentPlayer === myName;
 
     if (state.status === 'playing' || state.status === 'round_active') {
+      // Drawer needs to click "ready" first (like charades)
+      if (isMyTurn && !gs.currentItem && !gs.roundStartTime) {
+        area.innerHTML = `
+          <div class="text-center py-4">
+            <h4>دورك! استعد للرسم</h4>
+            <button id="btn-ready-pic" class="btn btn-success btn-lg mt-3">أنا جاهز</button>
+          </div>`;
+        document.getElementById('btn-ready-pic')?.addEventListener('click', () => {
+          convex.mutate(api.games.pictionary.playerReady, { roomId, playerName: myName });
+        });
+        return;
+      }
+
       // Ensure canvas exists
+      const canvasExisted = !!area.querySelector('#pictionary-canvas');
+      const wasMyTurn = area.dataset.wasMyTurn === 'true';
+      
+      // Force re-render if turn changed (drawer <-> guesser)
+      if (canvasExisted && wasMyTurn !== isMyTurn.toString()) {
+        area.innerHTML = '';
+        _listenersWired = false;
+        _lastStrokeCount = -1;
+      }
+      
       if (!area.querySelector('#pictionary-canvas')) {
         area.innerHTML = `
           <div class="py-3">
@@ -37,27 +63,48 @@ window.pictionaryRenderer = (() => {
             </div>
             ${isMyTurn ? `
               <div class="d-flex justify-content-center gap-2 mt-2">
-                <button id="btn-undo" class="btn btn-sm btn-outline-secondary"><i class="fas fa-undo"></i> تراجع</button>
-                <button id="btn-clear" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i> مسح</button>
-                <button id="btn-pass-pic" class="btn btn-sm btn-outline-warning"><i class="fas fa-forward"></i> تخطي</button>
+                <button id="btn-undo" class="btn btn-sm btn-outline-secondary" onclick="window.pictionaryRenderer.undo('${roomId}', '${myName}')"><i class="fas fa-undo"></i> تراجع</button>
+                <button id="btn-clear" class="btn btn-sm btn-outline-danger" onclick="window.pictionaryRenderer.clear('${roomId}', '${myName}')"><i class="fas fa-trash"></i> مسح</button>
+                <button id="btn-pass-pic" class="btn btn-sm btn-outline-warning" onclick="window.pictionaryRenderer.pass('${roomId}', '${myName}')"><i class="fas fa-forward"></i> تخطي</button>
               </div>
             ` : `
               <div class="text-center mt-3">
-                <button id="btn-guess-correct-pic" class="btn btn-success btn-lg">
+                <button id="btn-guess-correct-pic" class="btn btn-success btn-lg" onclick="window.pictionaryRenderer.guessCorrect('${roomId}', '${myName}')">
                   <i class="fas fa-check"></i> خمّنت صح!
                 </button>
               </div>
             `}
           </div>`;
 
+        // Reset listeners flag when creating new canvas
+        _listenersWired = false;
+        initCanvas(isMyTurn, roomId, myName);
+      } else {
+        // Canvas exists - update title and ensure event listeners are wired
+        const titleEl = area.querySelector('h5');
+        if (titleEl) {
+          titleEl.innerHTML = isMyTurn && gs.currentItem 
+            ? `ارسم: <span class="text-primary fw-bold">${gs.currentItem.title || gs.currentItem.name || '...'}</span>` 
+            : `${state.currentPlayer} يرسم...`;
+        }
         initCanvas(isMyTurn, roomId, myName);
       }
+      
+      // Store current turn state for next render comparison
+      area.dataset.wasMyTurn = isMyTurn.toString();
 
-      // Replay strokes from state (for non-drawers and reconnection)
+      // Replay strokes from state (for guessers only - drawers see their own strokes)
       const strokes = gs.canvasStrokes || [];
       if (strokes.length !== _lastStrokeCount) {
         _lastStrokeCount = strokes.length;
-        replayStrokes(strokes);
+        // Only clear and replay for non-drawers (guessers)
+        // Drawer draws locally and strokes are synced via addStroke mutation
+        if (!isMyTurn && _ctx && _canvas) {
+          _ctx.clearRect(0, 0, _canvas.width, _canvas.height);
+          if (strokes.length > 0) {
+            replayStrokes(strokes);
+          }
+        }
       }
 
       // Timer
@@ -67,23 +114,6 @@ window.pictionaryRenderer = (() => {
         const remaining = Math.max(0, (gs.timeLimit || 90) - elapsed);
         timer.start(remaining, { onComplete: () => sound.play('timeout') });
       }
-
-      // Wire guesser button
-      document.getElementById('btn-guess-correct-pic')?.addEventListener('click', () => {
-        convex.mutate(api.games.pictionary.guessCorrect, { roomId, guesserName: myName });
-        sound.play('correct');
-      });
-
-      // Wire drawer controls
-      document.getElementById('btn-undo')?.addEventListener('click', () => {
-        convex.mutate(api.games.pictionary.undoStroke, { roomId, playerName: myName });
-      });
-      document.getElementById('btn-clear')?.addEventListener('click', () => {
-        convex.mutate(api.games.pictionary.clearCanvas, { roomId, playerName: myName });
-      });
-      document.getElementById('btn-pass-pic')?.addEventListener('click', () => {
-        convex.mutate(api.games.charades.passTurn, { roomId, playerName: myName });
-      });
     }
   }
 
@@ -97,6 +127,10 @@ window.pictionaryRenderer = (() => {
     _ctx.strokeStyle = '#333';
 
     if (!isDrawer) return;
+
+    // Only wire listeners once
+    if (_listenersWired) return;
+    _listenersWired = true;
 
     let currentStroke = [];
 
@@ -152,5 +186,17 @@ window.pictionaryRenderer = (() => {
     }
   }
 
-  return { render };
+  return { 
+    render,
+    undo: (roomId, playerName) => convex.mutate(api.games.pictionary.undoStroke, { roomId, playerName }),
+    clear: (roomId, playerName) => {
+      if (_ctx && _canvas) _ctx.clearRect(0, 0, _canvas.width, _canvas.height);
+      convex.mutate(api.games.pictionary.clearCanvas, { roomId, playerName });
+    },
+    pass: (roomId, playerName) => convex.mutate(api.games.pictionary.passTurn, { roomId, playerName }),
+    guessCorrect: (roomId, guesserName) => {
+      convex.mutate(api.games.pictionary.guessCorrect, { roomId, guesserName });
+      sound.play('correct');
+    },
+  };
 })();

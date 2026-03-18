@@ -150,12 +150,14 @@ export const beginValidation = internalMutation({
     const state = gs.state as any;
 
     // Build initial validation state: all answers marked as pending
+    // Category keys are URI-encoded to avoid Convex field name restrictions
     const validationState: Record<string, string> = {};
     for (const [playerName, answers] of Object.entries(state.submissions)) {
       const playerAnswers = answers as Record<string, string>;
-      for (const [category, answer] of Object.entries(playerAnswers)) {
+      for (const [encodedCategory, answer] of Object.entries(playerAnswers)) {
         if (answer && answer.trim()) {
-          const key = `${playerName}|${category}`;
+          // Key format: playerName|encodedCategory
+          const key = `${playerName}|${encodedCategory}`;
           validationState[key] = "pending";
         }
       }
@@ -243,15 +245,16 @@ export const finalizeValidation = mutation({
 
     for (const [key, status] of Object.entries(state.validationState)) {
       if (status !== "valid") continue;
-      const [playerName, category] = (key as string).split("|");
-      const answer = (state.submissions[playerName] as any)?.[category];
+      // Key format: playerName|encodedCategory
+      const [playerName, encodedCategory] = (key as string).split("|");
+      const answer = (state.submissions[playerName] as any)?.[encodedCategory];
       if (!answer) continue;
 
       // Check for unique answers (10 pts) vs duplicate (5 pts)
       let isUnique = true;
       for (const [otherPlayer, otherAnswers] of Object.entries(state.submissions)) {
         if (otherPlayer === playerName) continue;
-        const otherAnswer = (otherAnswers as any)?.[category];
+        const otherAnswer = (otherAnswers as any)?.[encodedCategory];
         if (otherAnswer && otherAnswer.trim().toLowerCase() === answer.trim().toLowerCase()) {
           isUnique = false;
           break;

@@ -67,18 +67,15 @@ export const getPublicGameState = query({
     const room = await ctx.db.get(args.roomId);
     if (!room) return null;
 
-    const gs = await getGameStateForRoom(ctx, args.roomId);
-    if (!gs) return null;
-
     const players = await getPlayersInRoom(ctx, args.roomId);
 
+    // Get game state if exists (null during waiting phase)
+    const gs = await getGameStateForRoom(ctx, args.roomId);
+
     // Build public state (filter secrets per game type)
-    const publicState = filterStateForPlayer(
-      room.gameType,
-      gs.state,
-      args.playerName ?? "",
-      room
-    );
+    const publicState = gs
+      ? filterStateForPlayer(room.gameType, gs.state, args.playerName ?? "", room)
+      : null;
 
     return {
       roomId: args.roomId,
