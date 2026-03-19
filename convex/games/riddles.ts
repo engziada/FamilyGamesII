@@ -5,17 +5,18 @@
  * Fix B6-MAJOR-02: Load riddles in startGame only (no double fetch).
  * Fix B6-MINOR-01: Track hint requester, cost only to that player.
  */
-import { mutation } from "../_generated/server";
+import { mutation, internalMutation } from "../_generated/server";
 import { v } from "convex/values";
+import { internal } from "../_generated/api";
 import { getGameStateForRoom, findPlayer, normalizeArabic } from "../helpers";
 
 /**
- * Load a riddle into the game state.
+ * Load a riddle into the game state from gameItems (auto-fetch with anti-repetition).
  */
 export const loadRiddle = mutation({
   args: {
     roomId: v.id("rooms"),
-    riddle: v.any(),
+    riddle: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
     const gs = await getGameStateForRoom(ctx, args.roomId);
@@ -25,14 +26,28 @@ export const loadRiddle = mutation({
     if (!room) return;
 
     const state = gs.state as any;
+    let riddle = args.riddle;
+
+    // If no riddle passed, fetch from gameItems
+    if (!riddle) {
+      riddle = await fetchNextRiddle(ctx, args.roomId);
+      if (!riddle) {
+        await ctx.db.patch(args.roomId, {
+          status: "ended",
+          stateVersion: room.stateVersion + 1,
+        });
+        return { gameEnded: true };
+      }
+    }
 
     await ctx.db.patch(gs._id, {
       state: {
         ...state,
-        currentRiddle: args.riddle,
+        currentRiddle: riddle,
         playersAnswered: {},
         hintsRevealed: 0,
         hintRequestedBy: [],
+        lastResult: null,
       },
     });
 
@@ -42,6 +57,52 @@ export const loadRiddle = mutation({
     });
   },
 });
+
+/**
+ * Helper: fetch next riddle from gameItems with anti-repetition.
+ */
+async function fetchNextRiddle(ctx: any, roomId: any) {
+  const usedRecords = await ctx.db
+    .query("roomItemUsage")
+    .withIndex("by_room", (q: any) => q.eq("roomId", roomId))
+    .collect();
+  const usedIds = new Set(usedRecords.map((r: any) => r.itemId));
+
+  const allItems = await ctx.db
+    .query("gameItems")
+    .withIndex("by_type_lastUsed", (q: any) => q.eq("gameType", "riddles"))
+    .collect();
+
+  const candidates = allItems.filter((i: any) => !usedIds.has(i._id));
+  const pool = candidates.length > 0 ? candidates : allItems;
+  const topN = pool.slice(0, Math.min(10, pool.length));
+  const picked = topN[Math.floor(Math.random() * topN.length)];
+
+  if (!picked) return null;
+
+  const data = picked.itemData as any;
+  const riddle = {
+    riddle: data.title || data.riddle || "لغز",
+    answer: data.answer || "",
+    accepted_answers: data.accepted_answers || [],
+    hints: data.hints || [],
+    category: picked.category || "",
+    difficulty: data.difficulty || "medium",
+  };
+
+  // Record usage
+  await ctx.db.insert("roomItemUsage", {
+    roomId,
+    itemId: picked._id,
+    usedAt: Date.now(),
+  });
+  await ctx.db.patch(picked._id, {
+    lastUsed: Date.now(),
+    useCount: (picked.useCount ?? 0) + 1,
+  });
+
+  return riddle;
+}
 
 /**
  * Submit an answer to the current riddle.
@@ -188,21 +249,37 @@ export const skipRiddle = mutation({
 
     const state = gs.state as any;
     const riddleIndex = state.riddleIndex + 1;
+    const skippedAnswer = state.currentRiddle?.answer;
+
+    // Auto-fetch next riddle from gameItems
+    const nextRiddle = riddleIndex < state.maxRiddles ? await fetchNextRiddle(ctx, args.roomId) : null;
+
+    if (!nextRiddle || riddleIndex >= state.maxRiddles) {
+      await ctx.db.patch(args.roomId, {
+        status: "ended",
+        stateVersion: room.stateVersion + 1,
+      });
+      return { skippedAnswer, gameEnded: true };
+    }
 
     await ctx.db.patch(gs._id, {
       state: {
         ...state,
-        currentRiddle: null,
+        currentRiddle: nextRiddle,
         riddleIndex,
         playersAnswered: {},
         hintsRevealed: 0,
         hintRequestedBy: [],
+        lastResult: null,
       },
     });
 
-    await ctx.db.patch(args.roomId, { stateVersion: room.stateVersion + 1 });
+    await ctx.db.patch(args.roomId, {
+      currentRound: riddleIndex + 1,
+      stateVersion: room.stateVersion + 1,
+    });
 
-    return { skippedAnswer: state.currentRiddle?.answer };
+    return { skippedAnswer, gameEnded: false };
   },
 });
 
@@ -232,14 +309,25 @@ export const nextRiddle = mutation({
       return { gameEnded: true };
     }
 
+    // Auto-fetch next riddle from gameItems
+    const nextRiddle = await fetchNextRiddle(ctx, args.roomId);
+    if (!nextRiddle) {
+      await ctx.db.patch(args.roomId, {
+        status: "ended",
+        stateVersion: room.stateVersion + 1,
+      });
+      return { gameEnded: true };
+    }
+
     await ctx.db.patch(gs._id, {
       state: {
         ...state,
-        currentRiddle: null,
+        currentRiddle: nextRiddle,
         riddleIndex,
         playersAnswered: {},
         hintsRevealed: 0,
         hintRequestedBy: [],
+        lastResult: null,
       },
     });
 

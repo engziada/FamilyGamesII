@@ -11,6 +11,7 @@ export default defineSchema({
     status: v.union(
       v.literal("waiting"),
       v.literal("playing"),
+      v.literal("preparing"),
       v.literal("round_active"),
       v.literal("thinking"),
       v.literal("asking"),
@@ -26,9 +27,11 @@ export default defineSchema({
     currentPlayer: v.optional(v.string()),
     currentRound: v.optional(v.number()),
     stateVersion: v.number(),
+    roomCode: v.optional(v.string()),
   })
     .index("by_status", ["status"])
-    .index("by_gameType", ["gameType"]),
+    .index("by_gameType", ["gameType"])
+    .index("by_roomCode", ["roomCode"]),
 
   /**
    * Players — one record per player per room.

@@ -43,7 +43,7 @@ CONVEX_URL = os.getenv('CONVEX_URL', '')
 # ── Game catalog (static metadata — mirrors convex/helpers.ts) ──────────
 GAME_CATALOG = {
     'charades':          {'title': 'بدون كلام',        'icon': 'fa-mask',            'mouthBased': False},
-    'pictionary':        {'title': 'ارسم وخمن',        'icon': 'fa-paint-brush',     'mouthBased': False},
+    'pictionary':        {'title': 'ارسم وخمن',        'icon': 'fa-paint-brush',     'mouthBased': False, 'disabled': True},
     'trivia':            {'title': 'بنك المعلومات',     'icon': 'fa-lightbulb',       'mouthBased': False},
     'rapid_fire':        {'title': 'الأسئلة السريعة',   'icon': 'fa-bolt',            'mouthBased': False},
     'twenty_questions':  {'title': 'عشرين سؤال',       'icon': 'fa-question-circle', 'mouthBased': True},

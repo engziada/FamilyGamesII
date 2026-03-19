@@ -42,11 +42,22 @@ window.triviaRenderer = (() => {
         document.getElementById('btn-start-trivia-round')?.addEventListener('click', async () => {
           // Load a default question or pick from items
           const items = gs.questions || [];
-          const q = items.length > 0 ? items[gs.questionIndex] : {
-            question: "ما هي عاصمة مصر؟",
-            options: ["القاهرة", "الإسكندرية", "أسوان", "طنطا"],
-            answer: 0,
-          };
+          let q;
+          if (items.length > 0) {
+            const item = items[gs.questionIndex];
+            // Transform gameItem to question format expected by backend
+            q = {
+              question: item.title || item.question,
+              options: item.content?.options || item.options || [],
+              answer: item.content?.answer ?? item.answer ?? 0,
+            };
+          } else {
+            q = {
+              question: "ما هي عاصمة مصر؟",
+              options: ["القاهرة", "الإسكندرية", "أسوان", "طنطا"],
+              answer: 0,
+            };
+          }
           await convex.mutate(api.games.trivia.loadQuestion, { roomId, question: q });
         });
       } else {
@@ -74,7 +85,7 @@ window.triviaRenderer = (() => {
           <h5 class="mb-3">السؤال ${gs.questionIndex + 1} / ${gs.maxQuestions}</h5>
           <div class="card mx-auto" style="max-width: 600px;">
             <div class="card-body">
-              <h4 class="card-title mb-4">${q.question}</h4>
+              <h4 class="card-title mb-4">${q.question || q.text || '...'}</h4>
               <div class="d-grid gap-2" id="trivia-options">
                 ${(q.options || []).map((opt, i) => `
                   <button class="btn btn-outline-primary btn-lg text-end trivia-opt" data-idx="${i}" ${alreadyAnswered ? 'disabled' : ''}>

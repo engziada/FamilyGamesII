@@ -6,8 +6,9 @@
  * "خمنت صح" button when a player guesses correctly.
  * 10 points per correct guess. Fewer rounds = bonus.
  */
-import { mutation } from "../_generated/server";
+import { mutation, internalMutation } from "../_generated/server";
 import { v } from "convex/values";
+import { internal } from "../_generated/api";
 import { getGameStateForRoom, findPlayer, getPlayersInRoom } from "../helpers";
 
 /**
@@ -17,7 +18,6 @@ import { getGameStateForRoom, findPlayer, getPlayersInRoom } from "../helpers";
 export const startRound = mutation({
   args: {
     roomId: v.id("rooms"),
-    characters: v.array(v.object({ name: v.string(), category: v.optional(v.string()) })),
   },
   handler: async (ctx, args) => {
     const room = await ctx.db.get(args.roomId);
@@ -29,11 +29,47 @@ export const startRound = mutation({
     const players = await getPlayersInRoom(ctx, args.roomId);
     const state = gs.state as any;
 
-    // Randomly assign characters to players
-    const shuffled = [...args.characters].sort(() => Math.random() - 0.5);
-    const assignments: Record<string, string> = {};
+    // Fetch characters from gameItems with anti-repetition (LRU)
+    const usedRecords = await ctx.db
+      .query("roomItemUsage")
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+      .collect();
+    const usedIds = new Set(usedRecords.map((r) => r.itemId));
+
+    const allItems = await ctx.db
+      .query("gameItems")
+      .withIndex("by_type_lastUsed", (q) => q.eq("gameType", "who_am_i"))
+      .collect();
+
+    // Prefer items not yet used in this room
+    const candidates = allItems.filter((i) => !usedIds.has(i._id));
+    const pool = candidates.length >= players.length ? candidates : allItems;
+
+    // Shuffle and pick enough for all players
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    const picked = shuffled.slice(0, players.length);
+
+    // Build assignments: { playerName: { name, category, hint } }
+    const assignments: Record<string, any> = {};
     players.forEach((p, i) => {
-      assignments[p.name] = shuffled[i % shuffled.length].name;
+      const item = picked[i % picked.length];
+      const data = item.itemData as any;
+      assignments[p.name] = {
+        name: data?.title || data?.name || "مجهول",
+        category: item.category || "",
+        hint: data?.hint || "",
+      };
+
+      // Record usage
+      ctx.db.insert("roomItemUsage", {
+        roomId: args.roomId,
+        itemId: item._id,
+        usedAt: Date.now(),
+      });
+      ctx.db.patch(item._id, {
+        lastUsed: Date.now(),
+        useCount: (item.useCount ?? 0) + 1,
+      });
     });
 
     await ctx.db.patch(gs._id, {
@@ -91,6 +127,15 @@ export const guessedCorrectly = mutation({
 
     // Check if all players have guessed
     if (guessedPlayers.length >= players.length) {
+      const newVersion = room.stateVersion + 1;
+      await ctx.db.patch(args.roomId, { stateVersion: newVersion });
+
+      // Auto-advance to next round after 3s
+      await ctx.scheduler.runAfter(3000, internal.games.whoAmI.autoAdvance, {
+        roomId: args.roomId,
+        expectedVersion: newVersion,
+      });
+
       return { allGuessed: true, character: state.assignments[args.guesserName] };
     }
 
@@ -99,6 +144,52 @@ export const guessedCorrectly = mutation({
       character: state.assignments[args.guesserName],
       remaining: players.length - guessedPlayers.length,
     };
+  },
+});
+
+/**
+ * Auto-advance: start a new round with fresh character assignments.
+ */
+export const autoAdvance = internalMutation({
+  args: {
+    roomId: v.id("rooms"),
+    expectedVersion: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const room = await ctx.db.get(args.roomId);
+    if (!room) return;
+    if (room.stateVersion !== args.expectedVersion) return;
+    if (room.status === "ended") return;
+
+    const gs = await getGameStateForRoom(ctx, args.roomId);
+    if (!gs) return;
+
+    const state = gs.state as any;
+    const roundsPlayed = (state.roundsPlayed ?? 0) + 1;
+
+    if (roundsPlayed >= (state.maxRounds ?? 10)) {
+      await ctx.db.patch(args.roomId, {
+        status: "ended",
+        stateVersion: room.stateVersion + 1,
+      });
+      return;
+    }
+
+    // Clear assignments so renderer shows "start round" button for host
+    await ctx.db.patch(gs._id, {
+      state: {
+        ...state,
+        assignments: {},
+        guessedPlayers: [],
+        roundsPlayed,
+      },
+    });
+
+    await ctx.db.patch(args.roomId, {
+      status: "playing",
+      currentRound: roundsPlayed + 1,
+      stateVersion: room.stateVersion + 1,
+    });
   },
 });
 

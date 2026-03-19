@@ -79,6 +79,7 @@ export const getPublicGameState = query({
 
     return {
       roomId: args.roomId,
+      roomCode: room.roomCode ?? null,
       gameType: room.gameType,
       status: room.status,
       currentPlayer: room.currentPlayer,
@@ -149,7 +150,9 @@ export const addScore = mutation({
 
 // ─── Helper functions ───────────────────────────────────────────────
 
-function getStartStatus(gameType: string): string {
+type RoomStatus = "waiting" | "playing" | "preparing" | "round_active" | "thinking" | "asking" | "buzzed" | "validating" | "scoring" | "ended";
+
+function getStartStatus(gameType: string): RoomStatus {
   switch (gameType) {
     case "twenty_questions":
       return "thinking";
@@ -239,19 +242,28 @@ function buildInitialState(
         timeLimit,
       };
 
-    case "bus_complete":
+    case "bus_complete": {
+      // Shuffle Arabic alphabet for per-session letter pool (no repeats)
+      const arabicLetters = "أبتثجحخدذرزسشصضطظعغفقكلمنهوي".split("");
+      for (let i = arabicLetters.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arabicLetters[i], arabicLetters[j]] = [arabicLetters[j], arabicLetters[i]];
+      }
       return {
         categories: ["اسم", "حيوان", "نبات", "جماد", "بلاد", "مهنة", "فاكهة"],
         currentLetter: null,
+        letterPool: arabicLetters,
+        usedLetters: [] as string[],
         submissions: {},
         validationState: {},
         validationVotes: {},
         stoppedBy: null,
         roundsPlayed: 0,
-        maxRounds: rounds,
+        maxRounds: Math.min(rounds, arabicLetters.length),
         scoresCalculated: false,
         timeLimit,
       };
+    }
 
     case "who_am_i":
       return {
@@ -319,9 +331,9 @@ function filterStateForPlayer(
     case "who_am_i": {
       // Each player sees everyone's character EXCEPT their own
       if (state.assignments) {
-        const filtered: Record<string, string | null> = {};
+        const filtered: Record<string, any> = {};
         for (const [name, character] of Object.entries(state.assignments)) {
-          filtered[name] = name === playerName ? null : (character as string);
+          filtered[name] = name === playerName ? null : character;
         }
         return { ...state, assignments: filtered };
       }

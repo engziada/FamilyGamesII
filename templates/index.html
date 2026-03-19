@@ -6,22 +6,47 @@
         <p class="lead text-muted">استمتع بأجمل الألعاب مع العائلة والأصدقاء في مكان واحد</p>
     </header>
 
+    <!-- Join Game Card (moved to top) -->
+    <div class="card border-success mb-4">
+        <div class="card-body py-3 d-flex align-items-center gap-3 flex-wrap justify-content-center">
+            <i class="fas fa-sign-in-alt fa-lg text-success"></i>
+            <span class="fw-bold">لديك رقم غرفة؟</span>
+            <input type="text" id="join-room-input" class="form-control text-center"
+                   style="max-width:150px; font-size:1.4rem; letter-spacing:4px;" 
+                   placeholder="XXXX" maxlength="4" inputmode="numeric">
+            <button class="btn btn-success" id="btn-open-join">
+                <i class="fas fa-arrow-left"></i> انضم
+            </button>
+        </div>
+    </div>
+
     <!-- Game catalog grid -->
     <div class="row g-4">
         {% for key, game in game_catalog.items() %}
         <div class="col-sm-6 col-lg-4 col-xl-3">
-            <div class="card h-100 game-card animate__animated animate__fadeInUp">
+            <div class="card h-100 game-card animate__animated animate__fadeInUp {{ 'opacity-50' if game.get('disabled') }}" style="position:relative;overflow:hidden;">
+                {% if game.get('disabled') %}
+                <div style="position:absolute;top:12px;right:-35px;transform:rotate(45deg);background:#dc3545;color:#fff;padding:2px 40px;font-size:0.75rem;font-weight:700;z-index:2;box-shadow:0 2px 4px rgba(0,0,0,.2);">
+                    تحت الصيانة
+                </div>
+                {% endif %}
                 <div class="card-body text-center d-flex flex-column">
-                    <div class="mb-3"><i class="fas {{ game.icon }} fa-3x text-primary"></i></div>
+                    <div class="mb-3"><i class="fas {{ game.icon }} fa-3x {{ 'text-muted' if game.get('disabled') else 'text-primary' }}"></i></div>
                     <h5 class="card-title">{{ game.title }}</h5>
                     {% if game.mouthBased %}
                     <span class="badge bg-info mb-2"><i class="fas fa-users"></i> وجهاً لوجه</span>
                     {% endif %}
                     <div class="mt-auto">
                         <span class="text-muted d-block mb-2"><i class="fas fa-users"></i> 2 - 8 لاعبين</span>
+                        {% if game.get('disabled') %}
+                        <button class="btn btn-secondary w-100 mb-1" disabled>
+                            <i class="fas fa-wrench"></i> تحت الصيانة
+                        </button>
+                        {% else %}
                         <button class="btn btn-primary w-100 create-game-btn mb-1" data-game-type="{{ key }}">
                             <i class="fas fa-plus"></i> لعبة جديدة
                         </button>
+                        {% endif %}
                         <button class="btn btn-outline-info btn-sm w-100 rules-btn" data-game-type="{{ key }}">
                             <i class="fas fa-question-circle"></i> كيف تلعب؟
                         </button>
@@ -30,48 +55,6 @@
             </div>
         </div>
         {% endfor %}
-    </div>
-</div>
-
-<!-- Join Game Card (always visible) -->
-<div class="container py-2">
-    <div class="card border-success">
-        <div class="card-body py-2 d-flex align-items-center gap-3 flex-wrap">
-            <i class="fas fa-sign-in-alt fa-lg text-success"></i>
-            <span class="fw-bold">لديك رابط غرفة؟</span>
-            <input type="text" id="join-room-input" class="form-control text-end flex-grow-1"
-                   style="max-width:320px;" placeholder="الصق رابط الغرفة أو معرّفها هنا..." dir="rtl">
-            <button class="btn btn-success" id="btn-open-join">
-                <i class="fas fa-arrow-left"></i> انضم
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Join Game Modal -->
-<div class="modal fade" id="joinGameModal" tabindex="-1" aria-labelledby="joinGameModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="joinGameModalLabel"><i class="fas fa-sign-in-alt"></i> الانضمام لغرفة</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div id="join-error" class="alert alert-danger d-none"></div>
-                <div id="join-room-preview" class="alert alert-info d-none mb-3"></div>
-                <div class="mb-3">
-                    <label for="join-name" class="form-label">اسمك</label>
-                    <input type="text" id="join-name" class="form-control text-end" placeholder="اكتب اسمك هنا..." dir="rtl" autofocus>
-                </div>
-                <input type="hidden" id="join-room-id">
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                <button type="button" class="btn btn-success" id="btn-join-confirm">
-                    <i class="fas fa-sign-in-alt"></i> انضم للغرفة
-                </button>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -102,8 +85,34 @@
     </div>
 </div>
 
-<!-- Join Game Modal (future: join by room code — currently Convex IDs are long) -->
-<!-- For now, players join via shared link from host -->
+<!-- Join Game Modal -->
+<div class="modal fade" id="joinGameModal" tabindex="-1" aria-labelledby="joinGameModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="joinGameModalLabel"><i class="fas fa-sign-in-alt"></i> انضم إلى غرفة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="join-room-id">
+                <div id="join-room-preview" class="alert alert-info d-none mb-3 text-center"></div>
+                <div id="join-error" class="alert alert-danger d-none mb-3"></div>
+                <div class="mb-3">
+                    <label for="join-name" class="form-label">اسمك</label>
+                    <input type="text" id="join-name" class="form-control text-end"
+                           placeholder="اكتب اسمك هنا..." dir="rtl" autofocus>
+                </div>
+                <div id="join-avatar-picker-slot"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-success" id="btn-join-confirm">
+                    <i class="fas fa-arrow-left"></i> انضم الآن
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1100;"></div>
 {% endblock %}
@@ -115,8 +124,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Init Convex client
   convex.init(window.__CONVEX_URL__);
 
-  // Avatar picker
+  // Avatar pickers
   const getAvatar = enhancements.createAvatarPicker('host-name');
+  const getJoinAvatar = enhancements.createAvatarPicker('join-name');
 
   // Create game buttons
   document.querySelectorAll('.create-game-btn').forEach(btn => {
@@ -171,13 +181,31 @@ document.addEventListener('DOMContentLoaded', () => {
     return urlMatch ? urlMatch[1] : input.trim();
   }
 
-  async function openJoinModal(roomId) {
+  async function openJoinModal(rawInput) {
     const modal = new bootstrap.Modal(document.getElementById('joinGameModal'));
     const previewEl = document.getElementById('join-room-preview');
     const errEl = document.getElementById('join-error');
-    document.getElementById('join-room-id').value = roomId;
     errEl.classList.add('d-none');
     previewEl.classList.add('d-none');
+
+    let roomId = rawInput;
+
+    // Resolve 4-digit room code to full Convex room ID
+    if (/^\d{4,5}$/.test(rawInput)) {
+      try {
+        const result = await lobby.getRoomByCode(rawInput);
+        if (!result) {
+          gameUI.showToast('رقم الغرفة غير موجود', 'error');
+          return;
+        }
+        roomId = result.roomId;
+      } catch (e) {
+        gameUI.showToast('تعذر العثور على الغرفة', 'error');
+        return;
+      }
+    }
+
+    document.getElementById('join-room-id').value = roomId;
 
     // Fetch room preview
     try {
@@ -218,6 +246,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const preview = await lobby.getRoomPreview(roomId);
       if (!preview) throw new Error('الغرفة غير موجودة أو انتهت');
       await lobby.joinRoom(roomId, playerName);
+      // Set avatar after joining
+      const joinAvatar = getJoinAvatar();
+      if (joinAvatar) {
+        await convex.mutate(api.rooms.setAvatar, { roomId, playerName, avatar: joinAvatar });
+      }
       lobby.navigateToGame(roomId, playerName, preview.gameType);
     } catch (e) {
       errEl.textContent = e.message || 'حدث خطأ عند الانضمام';

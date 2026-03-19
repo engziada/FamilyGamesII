@@ -2,8 +2,8 @@
 Charades (بدون كلام) E2E tests.
 
 Game flow:
-  waiting → currentPlayer sees "أنا جاهز" → clicks ready → item shown
-  → round_active: performer sees item + pass button
+  waiting → currentPlayer sees "أنا جاهز" → clicks ready → preparing: item shown
+  → performer clicks "ابدأ التمثيل" → round_active: performer sees item + pass button
                   guessers see "خمّنت صح!" button
   → correct guess → scores update → next player's turn
 
@@ -92,7 +92,13 @@ class TestCharadesPerformerFlow:
 
         performer_page.locator('#btn-ready').click()
 
-        # Item title or pass button should appear
+        # Preparing phase: item shown with "ابدأ التمثيل" button
+        performer_page.wait_for_selector('#btn-start-performing', timeout=10_000)
+        area_text = performer_page.locator('#game-area').text_content(timeout=5_000)
+        assert 'ستمثل' in area_text or 'ابدأ' in area_text
+
+        # Click to enter round_active
+        performer_page.locator('#btn-start-performing').click()
         performer_page.wait_for_function(
             "document.querySelector('#btn-pass') || "
             "document.querySelector('#game-area')?.textContent?.includes('مثّل')",
@@ -113,6 +119,8 @@ class TestCharadesPerformerFlow:
             performer_page = guest
 
         performer_page.locator('#btn-ready').click()
+        performer_page.wait_for_selector('#btn-start-performing', timeout=10_000)
+        performer_page.locator('#btn-start-performing').click()
         expect(performer_page.locator('#btn-pass')).to_be_visible(timeout=10_000)
 
 
@@ -129,6 +137,9 @@ class TestCharadesGuesserFlow:
             performer, guesser = guest, host
 
         performer.locator('#btn-ready').click()
+        # Two-phase: preparing → click start → round_active
+        performer.wait_for_selector('#btn-start-performing', timeout=10_000)
+        performer.locator('#btn-start-performing').click()
         return performer, guesser
 
     def test_guesser_sees_guess_correct_button(self, started_charades) -> None:
@@ -167,6 +178,8 @@ class TestCharadesGuesserFlow:
             raise AssertionError('Neither player has the ready button')
 
         performer.locator('#btn-ready').click()
+        performer.wait_for_selector('#btn-start-performing', timeout=10_000)
+        performer.locator('#btn-start-performing').click()
 
         # Guesser clicks correct
         expect(guesser.locator('#btn-guess-correct')).to_be_visible(timeout=10_000)
@@ -192,6 +205,8 @@ class TestCharadesGuesserFlow:
             performer = guest
 
         performer.locator('#btn-ready').click()
+        performer.wait_for_selector('#btn-start-performing', timeout=10_000)
+        performer.locator('#btn-start-performing').click()
         pass_btn = performer.locator('#btn-pass')
         expect(pass_btn).to_be_visible(timeout=10_000)
         pass_btn.click()
@@ -223,6 +238,8 @@ class TestCharadesTimer:
             performer = guest
 
         performer.locator('#btn-ready').click()
+        performer.wait_for_selector('#btn-start-performing', timeout=10_000)
+        performer.locator('#btn-start-performing').click()
         # Wait for pass button (round_active)
         performer.wait_for_selector('#btn-pass', timeout=10_000)
 

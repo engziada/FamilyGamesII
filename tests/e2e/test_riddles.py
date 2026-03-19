@@ -238,12 +238,11 @@ class TestRiddlesHints:
 # ── Host controls ─────────────────────────────────────────────────────────────
 
 class TestRiddlesHostControls:
-    def test_host_sees_skip_and_next_buttons(self, started_riddles) -> None:
-        """Host sees both 'تخطي اللغز' and 'اللغز التالي' buttons."""
+    def test_host_sees_skip_button(self, started_riddles) -> None:
+        """Host sees consolidated 'تخطي ← التالي' button (Fix 6.2)."""
         host, _ = started_riddles
         host.wait_for_selector('#btn-skip-riddle', timeout=15_000)
         expect(host.locator('#btn-skip-riddle')).to_be_visible()
-        expect(host.locator('#btn-next-riddle')).to_be_visible()
 
     def test_guest_does_not_see_host_controls(self, started_riddles) -> None:
         """Non-host player does not see skip/next riddle controls."""
@@ -266,15 +265,16 @@ class TestRiddlesHostControls:
         new_text = host.locator('#game-area').text_content(timeout=3_000)
         assert new_text.strip() != ''
 
-    def test_host_next_riddle_changes_state(self, started_riddles) -> None:
-        """Host clicking 'اللغز التالي' advances to the next riddle."""
+    def test_host_skip_advances_riddle(self, started_riddles) -> None:
+        """Host clicking consolidated skip button advances to next riddle (Fix 6.2)."""
         host, _ = started_riddles
-        host.wait_for_selector('#btn-next-riddle', timeout=15_000)
-        host.locator('#btn-next-riddle').click()
+        host.wait_for_selector('#btn-skip-riddle', timeout=15_000)
+        initial_text = host.locator('#game-area').text_content(timeout=3_000)
+        host.locator('#btn-skip-riddle').click()
 
         host.wait_for_function(
-            "document.querySelector('#game-area')?.textContent?.includes('اللغز')",
+            f"document.querySelector('#game-area')?.textContent?.trim() !== {repr(initial_text.strip())}",
             timeout=10_000,
         )
         area_text = host.locator('#game-area').text_content(timeout=3_000)
-        assert 'اللغز' in area_text
+        assert area_text.strip() != ''

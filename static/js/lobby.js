@@ -51,6 +51,15 @@ const lobby = (() => {
   }
 
   /**
+   * Get room by short code (for join by code feature).
+   * @param {string} roomCode - 4-digit room code.
+   * @returns {Promise<object|null>} Room preview data with roomId.
+   */
+  async function getRoomByCode(roomCode) {
+    return await convex.query(api.rooms.getRoomByCode, { roomCode });
+  }
+
+  /**
    * Navigate to the game page.
    * @param {string} roomId - Convex room ID.
    * @param {string} playerName - Player name.
@@ -87,5 +96,5 @@ const lobby = (() => {
     }
   }
 
-  return { createRoom, joinRoom, getRoomPreview, navigateToGame, leaveRoom, closeRoom };
+  return { createRoom, joinRoom, getRoomPreview, getRoomByCode, navigateToGame, leaveRoom, closeRoom };
 })();

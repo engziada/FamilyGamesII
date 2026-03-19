@@ -13,6 +13,8 @@ const gameController = (() => {
   let _gameType = null;
   let _lastVersion = -1;
   let _unsub = null;
+  let _lastHost = null;
+  let _lastStatus = null;
 
   /**
    * Initialize the game controller.
@@ -58,7 +60,12 @@ const gameController = (() => {
    * @param {object|null} state - Public game state.
    */
   function handleStateUpdate(state) {
-    if (!state) return;
+    // Fix 1.6: null state means room was deleted → redirect
+    if (!state) {
+      gameUI.showToast('تم إغلاق الغرفة', 'warning');
+      setTimeout(() => { window.location.href = '/'; }, 2000);
+      return;
+    }
 
     // Skip stale updates
     if (state.stateVersion <= _lastVersion) return;
@@ -67,17 +74,47 @@ const gameController = (() => {
     // Store state for debugging
     window.__lastGameState = state;
 
+    // Fix 1.4: Host transfer notification
+    if (_lastHost && _lastHost !== state.host) {
+      gameUI.showToast(`${state.host} أصبح المضيف الجديد`, 'info');
+    }
+    _lastHost = state.host;
+
+    // Fix 1.3: Detect game reset to waiting (player left during game)
+    if (_lastStatus && _lastStatus !== 'waiting' && state.status === 'waiting' && state.players.length < 2) {
+      gameUI.showToast('لاعب غادر — في انتظار لاعبين', 'warning');
+    }
+    _lastStatus = state.status;
+
     // Determine if current player is host
     const isHost = state.host === _playerName;
 
-    // Set isHost attribute on host-only buttons for visibility control
+    // Update room code display
+    const roomCodeDisplay = document.getElementById('room-code-display');
+    if (roomCodeDisplay && state.roomCode) {
+      roomCodeDisplay.textContent = state.roomCode;
+    }
+
+    // Start game button: visible only for host during waiting, disabled when < 2 players
     const startBtn = document.getElementById('btn-start-game');
     if (startBtn) {
       startBtn.dataset.isHost = isHost.toString();
+      startBtn.dataset.playerCount = state.players.length.toString();
+      if (isHost && state.status === 'waiting') {
+        startBtn.style.display = '';
+        const hasEnoughPlayers = state.players.length >= 2;
+        startBtn.disabled = !hasEnoughPlayers;
+        startBtn.title = hasEnoughPlayers ? '' : 'يجب انضمام لاعب آخر على الأقل للبدء';
+      } else {
+        startBtn.style.display = 'none';
+      }
     }
+
+    // Close room button: visible only for host
     const closeBtn = document.getElementById('btn-close-room');
     if (closeBtn) {
       closeBtn.dataset.isHost = isHost.toString();
+      closeBtn.style.display = isHost ? '' : 'none';
     }
 
     // Update common UI elements
@@ -107,6 +144,19 @@ const gameController = (() => {
         enhancements.haptic.vibrate('win');
       }
       sound.play('guessed');
+
+      // 5.1: Auto-redirect countdown
+      let secs = 5;
+      const cdEl = document.getElementById('end-countdown');
+      if (cdEl && !cdEl.dataset.started) {
+        cdEl.dataset.started = '1';
+        const iv = setInterval(() => {
+          secs--;
+          if (secs <= 0) { clearInterval(iv); window.location.href = '/'; return; }
+          const strong = cdEl.querySelector('strong');
+          if (strong) strong.textContent = String(secs);
+        }, 1000);
+      }
       return;
     }
 
@@ -174,6 +224,39 @@ const gameController = (() => {
           });
           window.location.href = '/';
         }
+      });
+    }
+
+    // Copy code button — copies the short 4-digit room code
+    const copyCodeBtn = document.getElementById('btn-copy-code');
+    if (copyCodeBtn) {
+      copyCodeBtn.addEventListener('click', () => {
+        const code = document.getElementById('room-code-display')?.textContent.trim();
+        if (code && code !== '----') {
+          enhancements.copyToClipboard(code, copyCodeBtn);
+        }
+      });
+    }
+
+    // Also copy code on clicking the code display itself
+    const roomCodeEl = document.getElementById('room-code-display');
+    if (roomCodeEl) {
+      roomCodeEl.addEventListener('click', () => {
+        const code = roomCodeEl.textContent.trim();
+        if (code && code !== '----') {
+          enhancements.copyToClipboard(code, roomCodeEl);
+        }
+      });
+    }
+
+    // Wire "Share Link" button — copies the bare game URL (no player_name)
+    // so the recipient lands on the join modal
+    const shareBtn = document.getElementById('btn-share-link');
+    if (shareBtn) {
+      shareBtn.addEventListener('click', () => {
+        const roomId = document.getElementById('full-room-id')?.textContent.trim();
+        const joinUrl = `${window.location.origin}/game/${roomId}`;
+        enhancements.copyToClipboard(joinUrl, shareBtn);
       });
     }
 

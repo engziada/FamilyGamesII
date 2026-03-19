@@ -36,6 +36,7 @@ export const setCurrentItem = mutation({
 
 /**
  * Player signals they are ready (starts the round timer).
+ * Fetches a random unused item from gameItems and sets currentItem atomically.
  * Fix B1-CRITICAL-01: Timer is server-side via scheduler.runAfter().
  */
 export const playerReady = mutation({
@@ -47,6 +48,79 @@ export const playerReady = mutation({
     const room = await ctx.db.get(args.roomId);
     if (!room) return;
     if (room.currentPlayer !== args.playerName) return;
+
+    const gs = await getGameStateForRoom(ctx, args.roomId);
+    if (!gs) return;
+
+    const state = gs.state as any;
+    const timeLimit = state.timeLimit ?? 90;
+
+    // Fetch IDs already used in this room (anti-repetition)
+    const usedRecords = await ctx.db
+      .query("roomItemUsage")
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+      .collect();
+    const usedIds = new Set(usedRecords.map((r) => r.itemId));
+
+    // Query all charades items sorted by lastUsed (LRU first)
+    const allItems = await ctx.db
+      .query("gameItems")
+      .withIndex("by_type_lastUsed", (q) => q.eq("gameType", "charades"))
+      .collect();
+
+    // Prefer items not yet used in this room; fall back to all items
+    const candidates = allItems.filter((i) => !usedIds.has(i._id));
+    const pool = candidates.length > 0 ? candidates : allItems;
+
+    // Pick a random item from the first 10 least-recently-used
+    const topN = pool.slice(0, Math.min(10, pool.length));
+    const picked = topN[Math.floor(Math.random() * topN.length)];
+
+    let currentItem: Record<string, any> | null = null;
+    if (picked) {
+      currentItem = {
+        id: picked._id,
+        title: picked.itemData?.title ?? picked.itemData,
+        category: picked.category ?? "",
+      };
+      // Record usage
+      await ctx.db.insert("roomItemUsage", {
+        roomId: args.roomId,
+        itemId: picked._id,
+        usedAt: Date.now(),
+      });
+      await ctx.db.patch(picked._id, {
+        lastUsed: Date.now(),
+        useCount: (picked.useCount ?? 0) + 1,
+      });
+    }
+
+    await ctx.db.patch(gs._id, {
+      state: { ...state, currentItem, roundStartTime: null },
+    });
+
+    // Phase 1: show item to performer (status = 'preparing', no timer yet)
+    await ctx.db.patch(args.roomId, {
+      status: "preparing",
+      stateVersion: room.stateVersion + 1,
+    });
+  },
+});
+
+/**
+ * Performer confirms they've seen the item — starts the round timer.
+ * Fix 2.1: Two-step flow: playerReady → see item → startPerforming → timer starts.
+ */
+export const startPerforming = mutation({
+  args: {
+    roomId: v.id("rooms"),
+    playerName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const room = await ctx.db.get(args.roomId);
+    if (!room) return;
+    if (room.currentPlayer !== args.playerName) return;
+    if (room.status !== "preparing") return;
 
     const gs = await getGameStateForRoom(ctx, args.roomId);
     if (!gs) return;

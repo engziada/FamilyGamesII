@@ -1,0 +1,22 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.4, pytest-8.4.2, pluggy-1.6.0 -- C:\Program Files\Python313\python.exe
+cachedir: .pytest_cache
+baseurl: http://127.0.0.1:5005
+rootdir: F:\PythonII\FamilyGamesII
+configfile: pyproject.toml
+plugins: anyio-4.11.0, Flask-Dance-7.1.0, asyncio-1.2.0, base-url-2.1.0, cov-7.0.0, flask-1.3.0, playwright-0.7.2, xdist-3.8.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 189 items
+
+tests/e2e/test_bus_complete.py::TestBusCompleteLobby::test_all_players_on_game_page[chromium] ERROR [  0%]
+tests/e2e/test_bus_complete.py::TestBusCompleteLobby::test_start_button_for_host[chromium] ERROR [  1%]
+tests/e2e/test_bus_complete.py::TestBusCompleteLobby::test_player_list_shows_all_three[chromium] ERROR [  1%]
+tests/e2e/test_bus_complete.py::TestBusCompleteRoundStart::test_host_sees_start_round_button[chromium] ERROR [  2%]
+tests/e2e/test_bus_complete.py::TestBusCompleteRoundStart::test_guests_do_not_see_start_round_button[chromium] ERROR [  2%]
+tests/e2e/test_bus_complete.py::TestBusCompleteRoundStart::test_start_round_reveals_letter[chromium] ERROR [  3%]
+tests/e2e/test_bus_complete.py::TestBusCompleteRoundStart::test_category_inputs_rendered[chromium] ERROR [  3%]
+tests/e2e/test_bus_complete.py::TestBusCompleteRoundStart::test_stop_bus_button_visible[chromium] ERROR [  4%]
+tests/e2e/test_bus_complete.py::TestBusCompleteRoundActive::test_all_players_see_same_letter[chromium] ERROR [  4%]
+tests/e2e/test_bus_complete.py::TestBusCompleteRoundActive::test_input_accepts_text[chromium] ERROR [  5%]
+tests/e2e/test_bus_complete.py::TestBusCompleteRoundActive::test_multiple_inputs_per_player[chromium] ERROR [  5%]
+tests/e2e/test_bus_complete.py::TestBusCompleteRoundActive::test_stop_bus_transitions_to_validation[chromium] ERROR [  6%]

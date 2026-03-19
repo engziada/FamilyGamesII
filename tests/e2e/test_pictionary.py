@@ -24,6 +24,8 @@ from tests.e2e.helpers import (
 
 GAME_TYPE = 'pictionary'
 
+pytestmark = pytest.mark.skip(reason='Pictionary is disabled in game catalog')
+
 
 @pytest.fixture
 def pic_room(require_convex, host_page: Page, player_b_page: Page, base_url: str):

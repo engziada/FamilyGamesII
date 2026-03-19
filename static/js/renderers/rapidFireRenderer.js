@@ -39,11 +39,22 @@ window.rapidFireRenderer = (() => {
           </div>`;
         document.getElementById('btn-start-rf-round')?.addEventListener('click', async () => {
           const items = gs.questions || [];
-          const q = items.length > 0 ? items[gs.questionIndex] : {
-            question: "ما هي عاصمة فرنسا؟",
-            options: ["باريس", "ليون", "مرسيليا", "نيس"],
-            answer: 0,
-          };
+          let q;
+          if (items.length > 0) {
+            const item = items[gs.questionIndex];
+            // Transform gameItem to question format expected by backend
+            q = {
+              question: item.title || item.question,
+              options: item.content?.options || item.options || [],
+              answer: item.content?.answer ?? item.answer ?? 0,
+            };
+          } else {
+            q = {
+              question: "ما هي عاصمة فرنسا؟",
+              options: ["باريس", "ليون", "مرسيليا", "نيس"],
+              answer: 0,
+            };
+          }
           await convex.mutate(api.games.rapidFire.loadQuestion, { roomId, question: q });
         });
       } else {
@@ -74,11 +85,8 @@ window.rapidFireRenderer = (() => {
             <h5>السؤال ${gs.questionIndex + 1} / ${gs.maxQuestions}</h5>
             <div class="card mx-auto" style="max-width: 600px;">
               <div class="card-body">
-                <h4 class="mb-4">${q.question}</h4>
-                <div class="d-grid gap-2 mb-3">
-                  ${(q.options || []).map((opt) => `<div class="btn btn-outline-secondary btn-lg text-end" disabled>${opt}</div>`).join('')}
-                </div>
-                ${canBuzz ? `<button id="btn-buzz" class="btn btn-danger btn-lg pulse-animation">
+                <h4 class="mb-4">${q.question || q.text || '...'}</h4>
+                ${canBuzz ? `<button id="btn-buzz" class="btn btn-danger btn-lg pulse-animation mt-3">
                   <i class="fas fa-bell"></i> اضغط الجرس!
                 </button>` : '<p class="text-muted">لقد أجبت خطأ — انتظر السؤال التالي</p>'}
               </div>
@@ -97,7 +105,7 @@ window.rapidFireRenderer = (() => {
           <h5>${gs.buzzedPlayer} ضغط الجرس! 🔔</h5>
           <div class="card mx-auto" style="max-width: 600px;">
             <div class="card-body">
-              <h4 class="mb-4">${q.question}</h4>
+              <h4 class="mb-4">${q.question || q.text || '...'}</h4>
               <div class="d-grid gap-2" id="buzz-options">
                 ${(q.options || []).map((opt, i) => `
                   <button class="btn ${isBuzzer ? 'btn-outline-primary' : 'btn-outline-secondary'} btn-lg text-end buzz-opt"

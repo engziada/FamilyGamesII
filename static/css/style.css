@@ -215,17 +215,21 @@ header h1 {
 
 /* --- Modals --- */
 
-.modal {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
+/* Bootstrap modal backdrop override */
+.modal-backdrop {
     background: rgba(78, 205, 196, 0.4);
     backdrop-filter: blur(8px);
+}
+
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1055;
+    display: none;
     align-items: center;
     justify-content: center;
     padding: clamp(1rem, 3vw, 2.5rem);
-    overflow-y: auto; /* Allow modal container to scroll */
+    overflow-y: auto;
 }
 
 .modal-content {
@@ -234,7 +238,7 @@ header h1 {
     padding: clamp(2rem, 4vw, 3.2rem);
     background: var(--surface);
     width: min(90vw, 640px);
-    margin: auto; /* Centering with scroll support */
+    margin: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -242,8 +246,10 @@ header h1 {
     text-align: center;
     position: relative;
     animation: zoomIn 0.3s ease-out;
-    max-height: 90vh; /* Prevent modal from exceeding viewport */
-    overflow-y: auto; /* Allow content inside modal to scroll */
+    max-height: 90vh;
+    overflow-y: auto;
+    z-index: 1055;
+    pointer-events: auto;
 }
 
 .input-group {
@@ -1207,15 +1213,16 @@ kbd {
     color: var(--text);
 }
 
+.card-body {
+    /* Override Bootstrap padding */
+    padding: 0 !important;
+}
+
 /* ── Mobile optimizations (4.6) ──────────────────────────────────── */
 @media (max-width: 768px) {
     .btn {
         min-height: 44px;
         min-width: 44px;
-    }
-
-    .game-card .card-body {
-        padding: 1rem;
     }
 
     #game-area {
@@ -1231,9 +1238,16 @@ kbd {
     .display-5 {
         font-size: 1.6rem;
     }
+}
+
+/* Fix 1.7: On mobile/tablet, game area appears ABOVE sidebar */
+@media (max-width: 991px) {
+    .col-lg-9 {
+        order: -1;
+    }
 
     .col-lg-3 {
-        order: -1;
+        order: 1;
     }
 }
 

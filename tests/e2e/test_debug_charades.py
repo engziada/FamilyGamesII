@@ -36,8 +36,10 @@ def test_debug_charades_scores(host_page: Page, player_b_page: Page, base_url: s
     print(f"\n=== PERFORMER: {performer.url.split('?')[0].split('/')[-1]} ===")
     print(f"=== GUESSER: {guesser.url.split('?')[0].split('/')[-1]} ===")
     
-    # Click ready
+    # Click ready → preparing phase → click start performing
     performer.locator('#btn-ready').click()
+    performer.wait_for_selector('#btn-start-performing', timeout=10_000)
+    performer.locator('#btn-start-performing').click()
     
     # Wait for guess correct button
     guesser.wait_for_selector('#btn-guess-correct', timeout=10_000)

@@ -38,14 +38,7 @@ window.riddlesRenderer = (() => {
             <button id="btn-start-riddle-round" class="btn btn-primary btn-lg mt-3">ابدأ اللغز</button>
           </div>`;
         document.getElementById('btn-start-riddle-round')?.addEventListener('click', async () => {
-          const items = gs.riddles || [];
-          const riddle = items.length > 0 ? items[gs.riddleIndex] : {
-            question: "ما هو الشيء الذي يمشي بلا أرجل؟",
-            answer: "الماء",
-            category: "طبيعي",
-            hints: ["يسقط من السماء", "نجده في البحار"],
-          };
-          await convex.mutate(api.games.riddles.loadRiddle, { roomId, riddle });
+          await convex.mutate(api.games.riddles.loadRiddle, { roomId });
         });
       } else {
         area.innerHTML = `
@@ -66,7 +59,7 @@ window.riddlesRenderer = (() => {
           <h5 class="text-center mb-3">اللغز ${(gs.riddleIndex || 0) + 1} / ${gs.maxRiddles}</h5>
           <div class="card mx-auto" style="max-width: 600px;">
             <div class="card-body">
-              <h4 class="card-title text-center mb-4">${riddle.question || riddle.text}</h4>
+              <h4 class="card-title text-center mb-4">${riddle.riddle || riddle.question || riddle.text || '...'}</h4>
               ${riddle.category ? `<p class="text-muted text-center">التصنيف: ${riddle.category}</p>` : ''}
 
               <!-- Hints -->
@@ -83,10 +76,11 @@ window.riddlesRenderer = (() => {
 
               <!-- Answer input -->
               ${canAnswer ? `
-                <div class="input-group mb-3">
-                  <input type="text" id="riddle-answer" class="form-control text-end" 
-                    placeholder="اكتب إجابتك..." dir="rtl" autofocus>
-                  <button id="btn-submit-answer" class="btn btn-primary">
+                <div class="d-flex flex-column flex-sm-row gap-2 mb-3">
+                  <input type="text" id="riddle-answer" class="form-control flex-grow-1 text-end" 
+                    placeholder="اكتب إجابتك..." dir="rtl" autofocus
+                    style="min-height:48px;font-size:1.1rem;">
+                  <button id="btn-submit-answer" class="btn btn-primary" style="min-height:48px;">
                     <i class="fas fa-paper-plane"></i> إرسال
                   </button>
                 </div>
@@ -96,9 +90,10 @@ window.riddlesRenderer = (() => {
               <!-- Host controls -->
               ${isHost ? `
                 <hr>
-                <div class="d-flex justify-content-center gap-2">
-                  <button id="btn-skip-riddle" class="btn btn-outline-secondary btn-sm">تخطي اللغز</button>
-                  <button id="btn-next-riddle" class="btn btn-outline-primary btn-sm">اللغز التالي</button>
+                <div class="d-flex justify-content-center">
+                  <button id="btn-skip-riddle" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-forward"></i> تخطي ← التالي
+                  </button>
                 </div>
               ` : ''}
             </div>
@@ -134,12 +129,9 @@ window.riddlesRenderer = (() => {
         convex.mutate(api.games.riddles.revealHint, { roomId, playerName: myName });
       });
 
-      // Host controls
+      // Host skip control (consolidated — 6.2)
       document.getElementById('btn-skip-riddle')?.addEventListener('click', () => {
         convex.mutate(api.games.riddles.skipRiddle, { roomId, playerName: myName });
-      });
-      document.getElementById('btn-next-riddle')?.addEventListener('click', () => {
-        convex.mutate(api.games.riddles.nextRiddle, { roomId, playerName: myName });
       });
     }
   }

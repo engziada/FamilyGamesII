@@ -70,11 +70,19 @@ const gameUI = (() => {
 
     el.textContent = statusMap[status] || status;
 
-    // Show/hide start button (only for host during waiting phase)
+    // Show/hide start button (only for host during waiting phase, with 2+ players)
     const startBtn = document.getElementById('btn-start-game');
     if (startBtn) {
       const isHost = startBtn.dataset.isHost === 'true';
+      const playerCount = parseInt(startBtn.dataset.playerCount || '0', 10);
+      const canStart = status === 'waiting' && isHost && playerCount >= 2;
       startBtn.style.display = (status === 'waiting' && isHost) ? '' : 'none';
+      startBtn.disabled = !canStart;
+      if (status === 'waiting' && isHost && playerCount < 2) {
+        startBtn.title = 'يجب أن يكون هناك لاعبان على الأقل';
+      } else {
+        startBtn.title = '';
+      }
     }
 
     // Show/hide close room button (only for host)
@@ -184,10 +192,10 @@ const gameUI = (() => {
           </div>
         </div>
 
-        <!-- Actions -->
-        <div class="d-flex justify-content-center gap-2 mt-3">
+        <!-- Auto-redirect countdown -->
+        <div class="d-flex justify-content-center gap-2 mt-3 align-items-center">
           <a href="/" class="btn btn-primary"><i class="fas fa-home"></i> الرئيسية</a>
-          <button class="btn btn-success" onclick="location.reload()"><i class="fas fa-redo"></i> العب مرة تانية</button>
+          <span class="text-muted small" id="end-countdown">العودة للرئيسية خلال <strong>5</strong> ثوانٍ...</span>
         </div>
       </div>
     `;

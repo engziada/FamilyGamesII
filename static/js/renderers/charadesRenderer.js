@@ -21,11 +21,14 @@ window.charadesRenderer = (() => {
     const area = document.getElementById('game-area');
     if (!area) return;
 
+    // Stop timer if not in round_active status
+    if (state.status !== 'round_active') {
+      timer.stop();
+    }
+
     if (state.status === 'waiting' || state.status === 'playing') {
-      // Waiting for host to pick item / player to get ready
-      if (isMyTurn && gs.currentItem) {
-        renderPerformerView(area, gs, roomId, myName);
-      } else if (isMyTurn && !gs.currentItem) {
+      // Waiting for performer to click ready
+      if (isMyTurn && !gs.currentItem) {
         area.innerHTML = `
           <div class="text-center py-4">
             <h4>دورك! استعد للتمثيل</h4>
@@ -37,6 +40,27 @@ window.charadesRenderer = (() => {
       } else {
         area.innerHTML = `<div class="text-center py-4"><h4>دور ${state.currentPlayer} للتمثيل...</h4></div>`;
       }
+
+    } else if (state.status === 'preparing') {
+      // Fix 2.1: Show item to performer before timer starts
+      if (isMyTurn && gs.currentItem) {
+        const item = gs.currentItem;
+        area.innerHTML = `
+          <div class="text-center py-4">
+            <h4 class="text-muted mb-2">ستمثل:</h4>
+            <div class="display-4 fw-bold text-primary mb-3">${item?.title || item?.name || '...'}</div>
+            ${item?.category ? `<p class="text-muted mb-3">التصنيف: ${item.category}</p>` : ''}
+            <button id="btn-start-performing" class="btn btn-success btn-lg">
+              <i class="fas fa-play"></i> ابدأ التمثيل
+            </button>
+          </div>`;
+        document.getElementById('btn-start-performing')?.addEventListener('click', () => {
+          convex.mutate(api.games.charades.startPerforming, { roomId, playerName: myName });
+        });
+      } else {
+        area.innerHTML = `<div class="text-center py-4"><h4>${state.currentPlayer} يستعد للتمثيل...</h4></div>`;
+      }
+
     } else if (state.status === 'round_active') {
       if (isMyTurn) {
         renderPerformerView(area, gs, roomId, myName);

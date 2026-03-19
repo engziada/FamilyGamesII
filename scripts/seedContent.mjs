@@ -99,6 +99,10 @@ async function seedWhoAmI() {
   const items = raw.characters.map((c) => ({
     title: c.name,
     category: c.category || "",
+    content: {
+      name_en: c.name_en || "",
+      hint: c.hint || "",
+    },
   }));
   await seedBatch("who_am_i", items);
 }
@@ -114,6 +118,46 @@ async function seedTwentyQuestions() {
   await seedBatch("twenty_questions", items);
 }
 
+// ── Trivia ───────────────────────────────────────────────────────────
+async function seedTrivia() {
+  const filePath = path.join(DATA_DIR, "trivia_questions.json");
+  if (!fs.existsSync(filePath)) {
+    console.log("[trivia] No trivia_questions.json found — skipping.");
+    return;
+  }
+  const raw = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+  const questions = raw.questions || [];
+
+  // Split: 'faris' source → rapid_fire, 'islamicQuizAPI' → trivia
+  const triviaItems = [];
+  const rapidFireItems = [];
+
+  for (const q of questions) {
+    // Compute answer index from correctAnswer text
+    const options = q.options || [];
+    const correctAnswer = q.correctAnswer || "";
+    const answer = options.findIndex(opt => opt === correctAnswer);
+    
+    const item = {
+      title: q.question,
+      category: q.category || "معلومات عامة",
+      content: {
+        options: options,
+        correctAnswer: correctAnswer,
+        answer: answer >= 0 ? answer : 0, // Store index for backend
+      },
+    };
+    if (q.source === "faris") {
+      rapidFireItems.push(item);
+    } else {
+      triviaItems.push(item);
+    }
+  }
+
+  if (triviaItems.length > 0) await seedBatch("trivia", triviaItems);
+  if (rapidFireItems.length > 0) await seedBatch("rapid_fire", rapidFireItems);
+}
+
 // ── Main ──────────────────────────────────────────────────────────────
 (async () => {
   console.log("Seeding content into Convex...\n");
@@ -121,6 +165,7 @@ async function seedTwentyQuestions() {
   await seedRiddles();
   await seedWhoAmI();
   await seedTwentyQuestions();
+  await seedTrivia();
   console.log("\nDone! All content seeded.");
 })().catch((err) => {
   console.error("Seeding failed:", err);

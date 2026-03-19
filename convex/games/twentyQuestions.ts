@@ -6,8 +6,9 @@
  * Question counter + answer history displayed to all.
  * "خمنت صح" button for thinker when someone guesses correctly verbally.
  */
-import { mutation } from "../_generated/server";
+import { mutation, internalMutation } from "../_generated/server";
 import { v } from "convex/values";
+import { internal } from "../_generated/api";
 import { getGameStateForRoom, findPlayer, getPlayersInRoom } from "../helpers";
 
 /**
@@ -83,9 +84,27 @@ export const recordAnswer = mutation({
       const thinker = await findPlayer(ctx, args.roomId, state.thinker);
       if (thinker) await ctx.db.patch(thinker._id, { score: thinker.score + 10 });
 
-      await ctx.db.patch(args.roomId, {
-        status: "ended",
-        stateVersion: room.stateVersion + 2,
+      await ctx.db.patch(gs._id, {
+        state: {
+          ...state,
+          questionCount,
+          answerHistory,
+          lastResult: {
+            noOneGuessed: true,
+            word: state.secretWord,
+            thinker: state.thinker,
+            points: 10,
+          },
+        },
+      });
+
+      const newVersion = room.stateVersion + 2;
+      await ctx.db.patch(args.roomId, { stateVersion: newVersion });
+
+      // Auto-advance to next round after 3s
+      await ctx.scheduler.runAfter(3000, internal.games.twentyQuestions.autoAdvance, {
+        roomId: args.roomId,
+        expectedVersion: newVersion,
       });
 
       return { maxReached: true, word: state.secretWord };
@@ -133,12 +152,70 @@ export const guessedCorrectly = mutation({
       },
     });
 
-    await ctx.db.patch(args.roomId, {
-      status: "ended",
-      stateVersion: room.stateVersion + 1,
+    const newVersion = room.stateVersion + 1;
+    await ctx.db.patch(args.roomId, { stateVersion: newVersion });
+
+    // Auto-advance to next round after 3s
+    await ctx.scheduler.runAfter(3000, internal.games.twentyQuestions.autoAdvance, {
+      roomId: args.roomId,
+      expectedVersion: newVersion,
     });
 
     return { word: state.secretWord, guesser: args.guesserName, points };
+  },
+});
+
+/**
+ * Auto-advance: rotate thinker to next player for a new round.
+ */
+export const autoAdvance = internalMutation({
+  args: {
+    roomId: v.id("rooms"),
+    expectedVersion: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const room = await ctx.db.get(args.roomId);
+    if (!room) return;
+    if (room.stateVersion !== args.expectedVersion) return;
+    if (room.status === "ended") return;
+
+    const gs = await getGameStateForRoom(ctx, args.roomId);
+    if (!gs) return;
+
+    const state = gs.state as any;
+    const roundsPlayed = (state.roundsPlayed ?? 0) + 1;
+
+    if (roundsPlayed >= (state.maxRounds ?? 10)) {
+      await ctx.db.patch(args.roomId, {
+        status: "ended",
+        stateVersion: room.stateVersion + 1,
+      });
+      return;
+    }
+
+    const nextThinkerIndex = ((state.thinkerIndex ?? 0) + 1) % state.playerOrder.length;
+    const nextThinker = state.playerOrder[nextThinkerIndex];
+
+    await ctx.db.patch(gs._id, {
+      state: {
+        ...state,
+        thinker: nextThinker,
+        thinkerIndex: nextThinkerIndex,
+        secretWord: null,
+        secretCategory: null,
+        questionCount: 0,
+        answerHistory: [],
+        roundsPlayed,
+        lastResult: null,
+      },
+    });
+
+    await ctx.db.patch(args.roomId, {
+      status: "thinking",
+      currentPlayer: nextThinker,
+      currentRound: roundsPlayed + 1,
+      stateVersion: room.stateVersion + 1,
+    });
   },
 });
 

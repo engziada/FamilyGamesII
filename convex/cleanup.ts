@@ -1,7 +1,8 @@
 /**
  * Scheduled cleanup functions for stale rooms and old reactions.
  */
-import { internalMutation } from "./_generated/server";
+import { internalMutation, mutation } from "./_generated/server";
+import { v } from "convex/values";
 
 /**
  * Delete rooms inactive for 2+ hours and their associated data.
@@ -56,6 +57,33 @@ export const cleanupStaleRooms = internalMutation({
 /**
  * Delete reactions older than 1 minute.
  */
+/**
+ * Delete gameItems matching excluded categories (e.g. Islamic questions).
+ * Call once to purge unwanted content from the DB.
+ */
+export const purgeExcludedCategories = mutation({
+  args: {
+    gameType: v.string(),
+    categories: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const excludedSet = new Set(args.categories);
+    const allItems = await ctx.db
+      .query("gameItems")
+      .withIndex("by_type", (q) => q.eq("gameType", args.gameType))
+      .collect();
+
+    let deleted = 0;
+    for (const item of allItems) {
+      if (excludedSet.has(item.category)) {
+        await ctx.db.delete(item._id);
+        deleted++;
+      }
+    }
+    return { deleted, total: allItems.length };
+  },
+});
+
 export const cleanupOldReactions = internalMutation({
   args: {},
   handler: async (ctx) => {

@@ -25,20 +25,8 @@ window.whoAmIRenderer = (() => {
           <p class="text-muted">اضغط لبدء الجولة — سيتم توزيع الشخصيات</p>
           <button id="btn-start-who" class="btn btn-primary btn-lg">ابدأ الجولة</button>
         </div>`;
-      // Start round will need characters — for now we pass empty
-      // and let the frontend fetch from content
       document.getElementById('btn-start-who')?.addEventListener('click', async () => {
-        // TODO: Fetch characters from Convex gameItems
-        const defaultChars = [
-          { name: 'محمد صلاح' }, { name: 'عمرو دياب' }, { name: 'أحمد زكي' },
-          { name: 'نجيب محفوظ' }, { name: 'أم كلثوم' }, { name: 'فيروز' },
-          { name: 'طه حسين' }, { name: 'عبد الحليم حافظ' }, { name: 'سميرة سعيد' },
-          { name: 'أحمد حلمي' }, { name: 'ليلى مراد' }, { name: 'يوسف شاهين' },
-        ];
-        await convex.mutate(api.games.whoAmI.startRound, {
-          roomId,
-          characters: defaultChars,
-        });
+        await convex.mutate(api.games.whoAmI.startRound, { roomId });
       });
 
     } else if (state.status === 'round_active' && gs.assignments) {
@@ -52,22 +40,28 @@ window.whoAmIRenderer = (() => {
             <i class="fas fa-users"></i> اسألوا بعض أسئلة نعم/لا شفهياً لمعرفة شخصيتكم!
           </div>
 
-          <div class="row g-3">
+          <div class="d-flex gap-2 pb-2 wai-cards" style="overflow-x:auto;">
             ${state.players.map(p => {
-              const char = assignments[p.name];
+              const charData = assignments[p.name];
               const hasGuessed = guessed.includes(p.name);
               const isMe = p.name === myName;
 
+              // charData can be string (legacy) or object { name, category, hint }
+              const charName = charData ? (typeof charData === 'string' ? charData : charData.name) : '?';
+              const charCategory = charData && typeof charData === 'object' ? charData.category : '';
+              const charHint = charData && typeof charData === 'object' ? charData.hint : '';
+
               return `
-                <div class="col-6 col-md-4">
-                  <div class="card ${hasGuessed ? 'border-success' : ''} ${isMe ? 'bg-light' : ''}">
-                    <div class="card-body text-center">
-                      <h6 class="card-title">${p.avatar || ''} ${p.name}</h6>
-                      ${isMe ? 
-                        `<p class="display-6">❓</p><small class="text-muted">شخصيتك مخفية عنك</small>` :
-                        `<p class="display-6 fw-bold text-primary">${char || '?'}</p>`}
-                      ${hasGuessed ? '<span class="badge bg-success">خمّن صح ✓</span>' : ''}
-                    </div>
+                <div class="card flex-shrink-0 ${hasGuessed ? 'border-success' : ''} ${isMe ? 'bg-light' : ''}"
+                  style="min-width:140px;max-width:200px;">
+                  <div class="card-body text-center p-2">
+                    <h6 class="card-title mb-1" style="font-size:0.85rem">${p.avatar || ''} ${p.name}</h6>
+                    ${isMe ? 
+                      `<p class="fs-3 mb-0">❓</p><small class="text-muted" style="font-size:0.7rem">مخفية عنك</small>` :
+                      `<p class="fw-bold text-primary mb-1" style="font-size:1rem">${charName}</p>
+                       ${charCategory ? `<span class="badge bg-info mb-1" style="font-size:0.65rem">${charCategory}</span>` : ''}
+                       ${charHint ? `<small class="d-block text-muted" style="font-size:0.65rem">${charHint}</small>` : ''}`}
+                    ${hasGuessed ? '<span class="badge bg-success mt-1" style="font-size:0.65rem">خمّن صح ✓</span>' : ''}
                   </div>
                 </div>`;
             }).join('')}

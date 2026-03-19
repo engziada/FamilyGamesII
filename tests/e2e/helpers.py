@@ -77,6 +77,8 @@ def join_room(page: Page, room_id: str, player_name: str, base_url: str) -> None
         base_url: App base URL (e.g. 'http://127.0.0.1:5005').
     """
     join_url = f'{base_url}/game/{room_id}'
+    # Remove maxlength (UI limits to 4 chars for short codes; tests use full URLs)
+    page.evaluate("document.getElementById('join-room-input').removeAttribute('maxlength')")
     page.locator('#join-room-input').fill(join_url)
     page.locator('#btn-open-join').click()
 

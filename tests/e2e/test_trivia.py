@@ -120,10 +120,19 @@ class TestTriviaAnswerSubmission:
         host.wait_for_selector('#trivia-options', timeout=15_000)
         options = host.locator('.trivia-opt')
         options.first.click()
-        # All options should now be disabled
+        # Wait for Convex re-render: either alreadyAnswered view or lastResult screen
+        host.wait_for_function(
+            "document.querySelector('#game-area')?.textContent?.includes('تم إرسال') || "
+            "document.querySelector('#game-area')?.textContent?.includes('جاوب') || "
+            "document.querySelector('#game-area')?.textContent?.includes('انتهى') || "
+            "document.querySelector('#game-area')?.textContent?.includes('الإجابة')",
+            timeout=10_000,
+        )
+        # If game moved to result screen, options are gone — that's fine
         count = options.count()
-        for i in range(count):
-            expect(options.nth(i)).to_be_disabled(timeout=5_000)
+        if count > 0:
+            for i in range(count):
+                expect(options.nth(i)).to_be_disabled(timeout=5_000)
 
     def test_selected_option_gets_active_class(self, started_trivia) -> None:
         """The clicked option gets 'active' class."""

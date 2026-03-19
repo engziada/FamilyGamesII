@@ -10,6 +10,27 @@ import {
 } from "./helpers";
 
 /**
+ * Generate a unique 4-digit room code.
+ */
+async function generateRoomCode(ctx: any): Promise<string> {
+  // Generate random 4-digit code (1000-9999)
+  let code: string;
+  let attempts = 0;
+  do {
+    code = Math.floor(1000 + Math.random() * 9000).toString();
+    // Check if code exists
+    const existing = await ctx.db
+      .query("rooms")
+      .withIndex("by_roomCode", (q: any) => q.eq("roomCode", code))
+      .first();
+    if (!existing) return code;
+    attempts++;
+  } while (attempts < 10);
+  // Fallback: use timestamp if collisions persist
+  return Math.floor(1000 + (Date.now() % 9000)).toString();
+}
+
+/**
  * Create a new game room. Returns the room ID (Convex-generated, no collision).
  */
 export const createRoom = mutation({
@@ -39,6 +60,7 @@ export const createRoom = mutation({
       currentPlayer: undefined,
       currentRound: 0,
       stateVersion: 0,
+      roomCode: await generateRoomCode(ctx),
     });
 
     await ctx.db.insert("players", {
@@ -65,7 +87,8 @@ export const joinRoom = mutation({
   handler: async (ctx, args) => {
     const room = await ctx.db.get(args.roomId);
     if (!room) throw new Error("الغرفة غير موجودة");
-    if (room.status !== "waiting") throw new Error("اللعبة بدأت بالفعل");
+    // Fix 1.2: Allow joining non-ended rooms (new players join as spectators)
+    if (room.status === "ended") throw new Error("اللعبة انتهت");
 
     const players = await getPlayersInRoom(ctx, args.roomId);
     if (players.length >= MAX_PLAYERS) throw new Error("غرفة اللعب ممتلئة");
@@ -121,36 +144,63 @@ export const leaveRoom = mutation({
       return { roomClosed: true, reason: "no_players" };
     }
 
-    if (remaining.length === 1) {
-      // Only 1 player left — close room
+    // Fix 1.3: When 1 player remains during active game, reset to waiting
+    if (remaining.length === 1 && room.status !== "waiting") {
       const gs = await getGameStateForRoom(ctx, args.roomId);
       if (gs) await ctx.db.delete(gs._id);
-      const usages = await ctx.db
-        .query("roomItemUsage")
-        .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
-        .collect();
-      for (const u of usages) await ctx.db.delete(u._id);
-      // Delete remaining player and room
-      await ctx.db.delete(remaining[0]._id);
-      await ctx.db.delete(args.roomId);
-      return { roomClosed: true, reason: "last_player_left" };
+      // Reset scores
+      await ctx.db.patch(remaining[0]._id, { score: 0 });
     }
 
     // Transfer host if the leaving player was host
+    const roomPatch: Record<string, any> = {
+      stateVersion: room.stateVersion + 1,
+    };
     if (args.playerName === room.host) {
       const newHost = remaining[0];
       await ctx.db.patch(newHost._id, { isHost: true });
-      await ctx.db.patch(args.roomId, {
-        host: newHost.name,
-        stateVersion: room.stateVersion + 1,
-      });
-    } else {
-      await ctx.db.patch(args.roomId, {
-        stateVersion: room.stateVersion + 1,
-      });
+      roomPatch.host = newHost.name;
     }
 
-    return { roomClosed: false };
+    // Fix 1.3: If only 1 player remains, revert to waiting
+    if (remaining.length === 1 && room.status !== "waiting") {
+      roomPatch.status = "waiting";
+      roomPatch.currentPlayer = undefined;
+      roomPatch.currentRound = 0;
+    }
+
+    // Fix 1.5: If the leaving player was the currentPlayer, advance turn
+    if (
+      remaining.length >= 2 &&
+      room.currentPlayer === args.playerName &&
+      room.status !== "waiting" &&
+      room.status !== "ended"
+    ) {
+      const gs = await getGameStateForRoom(ctx, args.roomId);
+      if (gs) {
+        const state = gs.state as any;
+        const oldOrder: string[] = state.playerOrder || [];
+        const newOrder = oldOrder.filter((n: string) => n !== args.playerName);
+        const currentIdx = oldOrder.indexOf(args.playerName);
+        const nextPlayer = newOrder[currentIdx % newOrder.length] || newOrder[0];
+
+        // Reset turn-specific state
+        await ctx.db.patch(gs._id, {
+          state: {
+            ...state,
+            playerOrder: newOrder,
+            currentItem: null,
+            canvasStrokes: state.canvasStrokes !== undefined ? [] : undefined,
+            roundStartTime: null,
+          },
+        });
+        roomPatch.currentPlayer = nextPlayer;
+      }
+    }
+
+    await ctx.db.patch(args.roomId, roomPatch);
+
+    return { roomClosed: false, playersRemaining: remaining.length };
   },
 });
 
@@ -169,22 +219,25 @@ export const closeRoom = mutation({
       throw new Error("المضيف فقط يمكنه إغلاق الغرفة");
     }
 
-    // Delete all players
+    // Fix 1.6: Set status to "ended" first so all clients detect it
+    await ctx.db.patch(args.roomId, {
+      status: "ended",
+      stateVersion: room.stateVersion + 1,
+    });
+
+    // Then clean up all data
     const players = await getPlayersInRoom(ctx, args.roomId);
     for (const p of players) await ctx.db.delete(p._id);
 
-    // Delete game state
     const gs = await getGameStateForRoom(ctx, args.roomId);
     if (gs) await ctx.db.delete(gs._id);
 
-    // Delete room item usage
     const usages = await ctx.db
       .query("roomItemUsage")
       .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
       .collect();
     for (const u of usages) await ctx.db.delete(u._id);
 
-    // Delete room
     await ctx.db.delete(args.roomId);
   },
 });
@@ -231,10 +284,11 @@ export const getRoomPreview = query({
         isHost: p.isHost,
         avatar: p.avatar,
       })),
-      joinAllowed: room.status === "waiting" && players.length < MAX_PLAYERS,
+      // Fix 1.2: Allow joining any non-ended room
+      joinAllowed: room.status !== "ended" && players.length < MAX_PLAYERS,
       joinBlockReason:
-        room.status !== "waiting"
-          ? "اللعبة بدأت بالفعل"
+        room.status === "ended"
+          ? "اللعبة انتهت"
           : players.length >= MAX_PLAYERS
             ? "غرفة اللعب ممتلئة"
             : "",
@@ -278,5 +332,41 @@ export const getGameCatalog = query({
   args: {},
   handler: async () => {
     return GAME_CATALOG;
+  },
+});
+
+/**
+ * Get room by short code (for join by code feature).
+ */
+export const getRoomByCode = query({
+  args: { roomCode: v.string() },
+  handler: async (ctx, args) => {
+    const room = await ctx.db
+      .query("rooms")
+      .withIndex("by_roomCode", (q) => q.eq("roomCode", args.roomCode))
+      .first();
+    if (!room) return null;
+    
+    const players = await getPlayersInRoom(ctx, room._id);
+    const meta = GAME_CATALOG[room.gameType as keyof typeof GAME_CATALOG];
+    
+    return {
+      roomId: room._id,
+      gameType: room.gameType,
+      gameTitle: meta?.title ?? room.gameType,
+      gameIcon: meta?.icon ?? "fa-gamepad",
+      host: room.host,
+      status: room.status,
+      playersCount: players.length,
+      roomCode: room.roomCode,
+      // Fix 1.2: Allow joining any non-ended room
+      joinAllowed: room.status !== "ended" && players.length < MAX_PLAYERS,
+      joinBlockReason:
+        room.status === "ended"
+          ? "اللعبة انتهت"
+          : players.length >= MAX_PLAYERS
+            ? "غرفة اللعب ممتلئة"
+            : "",
+    };
   },
 });

@@ -14,7 +14,7 @@ import { getGameStateForRoom, findPlayer, getPlayersInRoom } from "../helpers";
 const ARABIC_LETTERS = "أبتثجحخدذرزسشصضطظعغفقكلمنهوي".split("");
 
 /**
- * Start a new round — pick a random letter.
+ * Start a new round — pop next letter from shuffled pool (no repeats).
  */
 export const startRound = mutation({
   args: {
@@ -29,12 +29,28 @@ export const startRound = mutation({
     if (!gs) return;
 
     const state = gs.state as any;
-    const letter = ARABIC_LETTERS[Math.floor(Math.random() * ARABIC_LETTERS.length)];
+    const pool: string[] = state.letterPool ?? [];
+    const usedLetters: string[] = state.usedLetters ?? [];
+
+    // If pool is empty, game should end
+    if (pool.length === 0) {
+      await ctx.db.patch(args.roomId, {
+        status: "ended",
+        stateVersion: room.stateVersion + 1,
+      });
+      return { gameEnded: true };
+    }
+
+    // Pop next letter from the pre-shuffled pool
+    const letter = pool[0];
+    const remainingPool = pool.slice(1);
 
     await ctx.db.patch(gs._id, {
       state: {
         ...state,
         currentLetter: letter,
+        letterPool: remainingPool,
+        usedLetters: [...usedLetters, letter],
         submissions: {},
         validationState: {},
         validationVotes: {},
@@ -48,7 +64,7 @@ export const startRound = mutation({
       stateVersion: room.stateVersion + 1,
     });
 
-    return { letter };
+    return { letter, remainingLetters: remainingPool.length };
   },
 });
 
@@ -302,8 +318,10 @@ export const nextRound = mutation({
 
     const state = gs.state as any;
     const roundsPlayed = state.roundsPlayed + 1;
+    const pool: string[] = state.letterPool ?? [];
 
-    if (roundsPlayed >= state.maxRounds) {
+    // End game if max rounds reached OR letter pool exhausted
+    if (roundsPlayed >= state.maxRounds || pool.length === 0) {
       await ctx.db.patch(args.roomId, {
         status: "ended",
         stateVersion: room.stateVersion + 1,
@@ -330,6 +348,6 @@ export const nextRound = mutation({
       stateVersion: room.stateVersion + 1,
     });
 
-    return { gameEnded: false };
+    return { gameEnded: false, remainingLetters: pool.length };
   },
 });

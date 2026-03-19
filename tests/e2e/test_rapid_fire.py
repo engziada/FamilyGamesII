@@ -80,14 +80,13 @@ class TestRapidFireBuzzPhase:
         host.wait_for_selector('#btn-buzz', timeout=15_000)
         expect(host.locator('#btn-buzz')).to_be_enabled()
 
-    def test_options_shown_but_disabled_before_buzz(self, started_rf) -> None:
-        """Answer options are visible but disabled (greyed out) before any buzz."""
+    def test_options_hidden_before_buzz(self, started_rf) -> None:
+        """Answer options are hidden before any player buzzes in (Fix 3.3)."""
         host, _ = started_rf
         host.wait_for_selector('#btn-buzz', timeout=15_000)
-        # In the pre-buzz phase options are rendered as divs (not buttons) with disabled
-        option_divs = host.locator('#game-area .btn-outline-secondary')
-        count = option_divs.count()
-        assert count > 0, 'Expected option placeholders to be rendered'
+        # Options should NOT be visible before buzz
+        options = host.locator('.buzz-opt')
+        assert options.count() == 0, 'Options should be hidden before buzz'
 
     def test_timer_visible_during_buzz_phase(self, started_rf) -> None:
         """Timer shows a non-placeholder value during buzz phase."""
@@ -176,9 +175,19 @@ class TestRapidFireBuzzIn:
         options = host.locator('.buzz-opt')
         options.first.click()
 
-        count = options.count()
+        # Wait for Convex re-render after answer submission
+        host.wait_for_function(
+            "document.querySelector('#game-area')?.textContent?.includes('جاوب') || "
+            "document.querySelector('#game-area')?.textContent?.includes('انتهى') || "
+            "document.querySelector('#game-area')?.textContent?.includes('الإجابة') || "
+            "document.querySelector('#btn-buzz')",
+            timeout=10_000,
+        )
+        # If options are still rendered, they should be disabled
+        remaining = host.locator('.buzz-opt')
+        count = remaining.count()
         for i in range(count):
-            expect(options.nth(i)).to_be_disabled(timeout=5_000)
+            expect(remaining.nth(i)).to_be_disabled(timeout=5_000)
 
 
 # ── Failed buzz (wrong answer penalty) ───────────────────────────────────────

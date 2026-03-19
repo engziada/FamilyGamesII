@@ -21,10 +21,10 @@ export type GameType = (typeof GAME_TYPES)[number];
 /** Game metadata for the catalog */
 export const GAME_CATALOG: Record<
   GameType,
-  { title: string; icon: string; mouthBased: boolean }
+  { title: string; icon: string; mouthBased: boolean; disabled?: boolean }
 > = {
   charades: { title: "بدون كلام", icon: "fa-mask", mouthBased: false },
-  pictionary: { title: "ارسم وخمن", icon: "fa-paint-brush", mouthBased: false },
+  pictionary: { title: "ارسم وخمن", icon: "fa-paint-brush", mouthBased: false, disabled: true },
   trivia: { title: "بنك المعلومات", icon: "fa-lightbulb", mouthBased: false },
   rapid_fire: { title: "الأسئلة السريعة", icon: "fa-bolt", mouthBased: false },
   twenty_questions: {
