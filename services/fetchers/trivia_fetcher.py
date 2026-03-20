@@ -37,11 +37,11 @@ class TriviaFetcher(BaseFetcher):
         
         try:
             # Distribute across diverse categories
-            items_per_category = max(1, count // 7)  # 7 categories
+            items_per_category = max(1, count // 6)  # 6 categories (removed Islamic)
             
-            # Fetch from Islamic questions
-            islamic_items = self._fetch_islamic_quiz(items_per_category)
-            items.extend(islamic_items)
+            # Skip Islamic questions - API causing undefined issues
+            # islamic_items = self._fetch_islamic_quiz(items_per_category)
+            # items.extend(islamic_items)
             
             # Fetch general knowledge
             general_items = self._fetch_general_knowledge(items_per_category)

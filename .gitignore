@@ -159,3 +159,9 @@ game_data.db
 # OS
 .DS_Store
 Thumbs.db
+
+.env.local
+
+# Node.js / Convex
+node_modules/
+convex/_generated/
