@@ -15,6 +15,47 @@
     --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
+/* ── Dark Mode ───────────────────────────────────────────────────── */
+[data-theme="dark"] {
+    --bg-main: #1a1a2e;
+    --text: #e0e0e0;
+    --text-light: #a0a0a0;
+    --surface: #16213e;
+    --shadow-pop: 5px 5px 0 rgba(0,0,0,0.3);
+    --shadow-heavy: 8px 8px 0 rgba(0,0,0,0.4);
+}
+
+[data-theme="dark"] .card,
+[data-theme="dark"] .modal-content {
+    background-color: var(--surface);
+    color: var(--text);
+    border-color: #2a2a4a;
+}
+
+[data-theme="dark"] .btn-outline {
+    color: var(--text);
+    border-color: #3a3a5a;
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+    background-color: #0f3460;
+    color: var(--text);
+    border-color: #2a2a4a;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --bg-main: #1a1a2e;
+        --text: #e0e0e0;
+        --text-light: #a0a0a0;
+        --surface: #16213e;
+        --shadow-pop: 5px 5px 0 rgba(0,0,0,0.3);
+        --shadow-heavy: 8px 8px 0 rgba(0,0,0,0.4);
+    }
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -174,17 +215,21 @@ header h1 {
 
 /* --- Modals --- */
 
-.modal {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
+/* Bootstrap modal backdrop override */
+.modal-backdrop {
     background: rgba(78, 205, 196, 0.4);
     backdrop-filter: blur(8px);
+}
+
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1055;
+    display: none;
     align-items: center;
     justify-content: center;
     padding: clamp(1rem, 3vw, 2.5rem);
-    overflow-y: auto; /* Allow modal container to scroll */
+    overflow-y: auto;
 }
 
 .modal-content {
@@ -193,7 +238,7 @@ header h1 {
     padding: clamp(2rem, 4vw, 3.2rem);
     background: var(--surface);
     width: min(90vw, 640px);
-    margin: auto; /* Centering with scroll support */
+    margin: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -201,8 +246,10 @@ header h1 {
     text-align: center;
     position: relative;
     animation: zoomIn 0.3s ease-out;
-    max-height: 90vh; /* Prevent modal from exceeding viewport */
-    overflow-y: auto; /* Allow content inside modal to scroll */
+    max-height: 90vh;
+    overflow-y: auto;
+    z-index: 1055;
+    pointer-events: auto;
 }
 
 .input-group {
@@ -1075,4 +1122,142 @@ header h1 {
 
 .skip-link:focus {
     top: 0;
+}
+
+/* ── Floating Reactions (F-04) ───────────────────────────────────── */
+.floating-reaction {
+    position: fixed;
+    bottom: 0;
+    font-size: 2.5rem;
+    pointer-events: none;
+    z-index: 9999;
+    animation: floatUp 3s ease-out forwards;
+}
+
+@keyframes floatUp {
+    0%   { opacity: 1; transform: translateY(0) scale(1); }
+    70%  { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-80vh) scale(1.3); }
+}
+
+/* ── Pulse animation for buzz button ─────────────────────────────── */
+.pulse-animation {
+    animation: pulseBtn 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseBtn {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.08); }
+}
+
+/* ── Player avatar ───────────────────────────────────────────────── */
+.player-avatar {
+    font-size: 1.3rem;
+    margin-inline-end: 0.3rem;
+}
+
+/* ── Score fly-up animation (1.4) ────────────────────────────────── */
+.score-fly-up {
+    position: absolute;
+    top: -5px;
+    right: 50%;
+    transform: translateX(50%);
+    color: var(--success);
+    font-weight: 800;
+    font-size: 1.1rem;
+    pointer-events: none;
+    animation: scoreFly 1.5s ease-out forwards;
+    z-index: 10;
+}
+
+@keyframes scoreFly {
+    0%   { opacity: 1; transform: translateX(50%) translateY(0); }
+    100% { opacity: 0; transform: translateX(50%) translateY(-40px); }
+}
+
+.score-highlight {
+    animation: scoreGlow 1s ease-out;
+}
+
+@keyframes scoreGlow {
+    0%, 100% { background-color: transparent; }
+    30%      { background-color: rgba(255, 230, 109, 0.35); }
+}
+
+/* ── Avatar picker (3.2) ─────────────────────────────────────────── */
+.avatar-picker .avatar-opt.active {
+    border-color: var(--primary);
+    background: rgba(255, 107, 107, 0.15);
+    box-shadow: 0 0 0 2px var(--primary);
+}
+
+/* ── Circular timer (4.1) ────────────────────────────────────────── */
+.circular-timer-text {
+    font-family: 'Lemonada', cursive;
+}
+
+/* ── Kbd shortcut badges ─────────────────────────────────────────── */
+kbd {
+    background: var(--surface);
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 0.8rem;
+    box-shadow: 0 1px 0 #aaa;
+}
+
+[data-theme="dark"] kbd {
+    background: #2a2a4a;
+    border-color: #444;
+    box-shadow: 0 1px 0 #333;
+    color: var(--text);
+}
+
+.card-body {
+    /* Override Bootstrap padding */
+    padding: 0 !important;
+}
+
+/* ── Mobile optimizations (4.6) ──────────────────────────────────── */
+@media (max-width: 768px) {
+    .btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    #game-area {
+        font-size: 0.95rem;
+    }
+
+    .circular-timer-text {
+        font-size: 0.9rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .display-5 {
+        font-size: 1.6rem;
+    }
+}
+
+/* Fix 1.7: On mobile/tablet, game area appears ABOVE sidebar */
+@media (max-width: 991px) {
+    .col-lg-9 {
+        order: -1;
+    }
+
+    .col-lg-3 {
+        order: 1;
+    }
+}
+
+/* ── Game rules modal icons ──────────────────────────────────────── */
+#rulesModalBody h6 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+#rulesModalBody ul li {
+    padding: 0.15rem 0;
 }

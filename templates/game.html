@@ -1,240 +1,179 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="game-container">
-    <!-- Hidden inputs for game data -->
-    <input type="hidden" id="game-id" value="{{ game_id }}">
-    <input type="hidden" id="player-name" value="{{ player_name }}">
-    <input type="hidden" id="transfer-id" value="{{ transfer_id }}">
-    <input type="hidden" id="is-host" value="{{ 'true' if is_host else 'false' }}">
-
-    <div class="game-board">
-        <div class="status-bar">
-            <div class="turn-indicator">
-                <i class="fas fa-user-circle"></i>
-                الدور على: <span id="current-turn">...</span>
+<div class="container-fluid py-3">
+    <div class="row g-3">
+        <!-- Main game area -->
+        <div class="col-lg-9">
+            <!-- Status bar -->
+            <div class="card mb-3">
+                <div class="card-body d-flex justify-content-between align-items-center py-2">
+                    <div>
+                        <i class="fas {{ game_icon }}"></i>
+                        <strong>{{ game_title }}</strong>
+                        <span class="text-muted mx-2">|</span>
+                        <span id="game-status">في انتظار اللاعبين...</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <span id="round-info" class="text-muted"></span>
+                        <span id="timer-display" class="fw-bold fs-5">--:--</span>
+                        <div class="progress" style="width: 100px; height: 8px;">
+                            <div id="timer-bar" class="progress-bar bg-success" role="progressbar" style="width: 100%;" aria-valuenow="100"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div id="timer" class="timer-box">
-                <i class="fas fa-clock"></i>
-                <span>--:--</span>
-                <div class="timer-progress-container">
-                    <div id="timer-progress" class="timer-progress-bar" style="width: 100%;"></div>
+
+            <!-- Dynamic game area — populated by renderers -->
+            <div class="card">
+                <div class="card-body" id="game-area">
+                    <div class="text-center py-5">
+                        <i class="fas fa-hourglass-half fa-3x text-muted mb-3 animate__animated animate__pulse animate__infinite"></i>
+                        <h4>في انتظار بدء اللعبة...</h4>
+                        <button id="btn-start-game" class="btn btn-primary btn-lg mt-3" style="display: none;">
+                            <i class="fas fa-play-circle"></i> ابدأ اللعبة
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game controls -->
+            <div class="card mt-3">
+                <div class="card-body d-flex justify-content-between align-items-center py-2 flex-wrap gap-2">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <!-- Reaction emojis -->
+                        <button class="btn btn-outline-secondary btn-sm" data-emoji="😂">😂</button>
+                        <button class="btn btn-outline-secondary btn-sm" data-emoji="👏">👏</button>
+                        <button class="btn btn-outline-secondary btn-sm" data-emoji="🔥">🔥</button>
+                        <button class="btn btn-outline-secondary btn-sm" data-emoji="😱">😱</button>
+                        <button class="btn btn-outline-secondary btn-sm" data-emoji="❤️">❤️</button>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button id="btn-sound-toggle" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-volume-up"></i>
+                        </button>
+                        <button id="btn-leave" class="btn btn-outline-danger btn-sm">
+                            <i class="fas fa-sign-out-alt"></i> خروج
+                        </button>
+                        <button id="btn-close-room" class="btn btn-danger btn-sm" style="display: none;">
+                            <i class="fas fa-times-circle"></i> إغلاق الغرفة
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="display-area card">
-            <div id="item-display" class="item-card animate-jelly u-hidden u-full-width">
-                <!-- Content populated by JS -->
+        <!-- Sidebar -->
+        <div class="col-lg-3">
+            <!-- Players -->
+            <div class="card mb-3">
+                <div class="card-header"><i class="fas fa-users"></i> اللاعبين</div>
+                <ul class="list-group list-group-flush" id="player-list">
+                    <!-- Populated by gameUI.js -->
+                </ul>
             </div>
 
-            <!-- Pictionary Canvas -->
-            <div id="pictionary-area" class="u-hidden u-full-width" style="position: relative;">
-                <div class="canvas-controls u-flex-center u-margin-bottom">
-                    <button class="btn btn-outline" onclick="window.gameInstance.clearCanvas()" id="clear-btn" style="padding: 0.8rem 1.2rem;"><i class="fas fa-eraser"></i> مسح</button>
-                    <input type="color" id="draw-color" value="#FF6B6B" style="width: 50px; height: 50px; border: 3px solid var(--text); border-radius: 15px; cursor: pointer; padding: 0;">
-                    <input type="range" id="draw-size" min="1" max="20" value="5" class="input-control" style="width: 120px; min-height: auto; padding: 0.5rem;">
+            <!-- Scoreboard -->
+            <div class="card mb-3">
+                <div class="card-header"><i class="fas fa-trophy"></i> النتائج</div>
+                <div class="card-body p-0">
+                    <table class="table table-sm mb-0">
+                        <tbody id="scoreboard">
+                            <!-- Populated by gameUI.js -->
+                        </tbody>
+                    </table>
                 </div>
-                <canvas id="game-canvas" width="600" height="400" style="border: 4px solid var(--text); border-radius: 20px 60px; background: white; cursor: crosshair; width: 100%; height: auto; touch-action: none; box-shadow: var(--shadow-pop);"></canvas>
             </div>
 
-            <!-- Bus Complete Area -->
-            <div id="bus-area" class="u-hidden u-full-width">
-                <div class="bus-header u-flex-center u-margin-bottom">
-                    <div class="letter-display">الحرف: <span id="current-letter" style="font-size: 3rem; color: var(--primary); font-weight: 800;">?</span></div>
-                </div>
-                <div class="bus-grid">
-                    <div class="input-group">
-                        <label>اسم</label>
-                        <input type="text" class="bus-input" data-category="اسم" placeholder="...">
+            <!-- Room info -->
+            <div class="card mb-3">
+                <div class="card-body text-center py-2">
+                    <small class="text-muted">رقم الغرفة</small>
+                    <div class="d-flex align-items-center justify-content-center gap-2 my-1">
+                        <span id="room-code-display" class="fw-bold text-primary"
+                              style="font-size:2rem; letter-spacing:6px; cursor:pointer;"
+                              title="اضغط للنسخ">----</span>
                     </div>
-                    <div class="input-group">
-                        <label>حيوان</label>
-                        <input type="text" class="bus-input" data-category="حيوان" placeholder="...">
-                    </div>
-                    <div class="input-group">
-                        <label>نبات</label>
-                        <input type="text" class="bus-input" data-category="نبات" placeholder="...">
-                    </div>
-                    <div class="input-group">
-                        <label>جماد</label>
-                        <input type="text" class="bus-input" data-category="جماد" placeholder="...">
-                    </div>
-                    <div class="input-group">
-                        <label>بلاد</label>
-                        <input type="text" class="bus-input" data-category="بلاد" placeholder="...">
-                    </div>
-                    <div class="input-group">
-                        <label>أكلة</label>
-                        <input type="text" class="bus-input" data-category="أكلة" placeholder="...">
-                    </div>
-                    <div class="input-group">
-                        <label>مهنة</label>
-                        <input type="text" class="bus-input" data-category="مهنة" placeholder="...">
+                    <small class="text-muted">أنت: <strong>{{ player_name }}</strong></small>
+                    <div class="mt-2 d-grid gap-1">
+                        <button class="btn btn-outline-primary btn-sm" id="btn-copy-code">
+                            <i class="fas fa-copy"></i> انسخ رقم الغرفة
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" id="btn-share-link">
+                            <i class="fas fa-share-alt"></i> شارك رابط الغرفة
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" id="btn-show-rules">
+                            <i class="fas fa-question-circle"></i> كيف تلعب؟
+                        </button>
                     </div>
                 </div>
-                <div class="u-flex-center u-margin-top">
-                    <button type="button" id="stopBusButton" class="btn btn-primary btn-large u-full-width animate-pulse" onclick="window.gameInstance.stopBus()">
-                        <i class="fas fa-hand-paper"></i> أتوبيس كومبليت!
-                    </button>
+            </div>
+            <!-- Hidden full room ID for JS use -->
+            <span id="full-room-id" class="d-none">{{ room_id }}</span>
+
+            {% if mouth_based %}
+            <!-- Mouth-based game notice -->
+            <div class="card border-info mb-3">
+                <div class="card-body text-center py-2 bg-info bg-opacity-10">
+                    <i class="fas fa-users"></i>
+                    <small>هذه اللعبة تُلعب وجهاً لوجه</small>
                 </div>
             </div>
-
-            <!-- Bus Results Area -->
-            <div id="bus-results-area" class="u-hidden u-full-width">
-                <h3 class="u-text-center u-margin-bottom">نتائج الجولة (حرف <span id="result-letter">?</span>)</h3>
-                <div class="table-responsive-wrapper">
-                    <div class="table-responsive">
-                        <table class="bus-results-table" style="width: 100%; border-collapse: separate; border-spacing: 0 10px;">
-                            <thead>
-                                <tr id="results-header">
-                                    <th style="padding: 1rem; min-width: 80px;">اللاعب</th>
-                                    <!-- Category headers will be injected -->
-                                    <th style="padding: 1rem; min-width: 60px;">المجموع</th>
-                                </tr>
-                            </thead>
-                            <tbody id="results-body">
-                                <!-- Rows will be injected -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div id="host-bus-actions" class="u-hidden u-flex-center u-margin-top">
-                    <button type="button" class="btn btn-primary" onclick="window.gameInstance.confirmBusScores()">
-                        الجولة التالية <i class="fas fa-chevron-left"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Bus Validation Area (Tier 3: Manual validation) -->
-            <div id="bus-validation-area" class="u-hidden u-full-width">
-                <div class="validation-header">
-                    <h3 class="u-text-center u-margin-bottom">التحقق من الإجابات</h3>
-                    <p class="u-text-center" style="color: var(--text-light); font-size: 0.9rem;">
-                        اضغط على أي كلمة للتصويت: صحيحة <i class="fas fa-check" style="color: var(--success);"></i> أو خاطئة <i class="fas fa-times" style="color: var(--danger);"></i>
-                    </p>
-                    <p class="u-text-center" style="color: var(--text-light); font-size: 0.85rem;">
-                        عندما يصوت أكثر من نصف اللاعبين، تتحول الكلمة للون الأخضر (صحيحة) أو الأحمر (خاطئة)
-                    </p>
-                </div>
-
-                <div id="validation-grid" class="validation-grid">
-                    <!-- Validation cards will be injected by JS -->
-                </div>
-
-                <div id="validation-progress" class="validation-progress">
-                    <div class="progress-bar-container">
-                        <div id="validation-progress-bar" class="progress-bar" style="width: 0%;"></div>
-                    </div>
-                    <p class="u-text-center" style="font-size: 0.85rem; margin-top: 0.5rem;">
-                        تم التصويت: <span id="votes-count">0</span> / <span id="total-answers">0</span>
-                    </p>
-                </div>
-
-                <div id="host-validation-actions" class="u-hidden u-flex-center u-margin-top">
-                    <button type="button" class="btn btn-primary btn-large" onclick="window.gameInstance.finalizeValidation()">
-                        <i class="fas fa-check-double"></i> تأكيد النتائج وحساب النقاط
-                    </button>
-                </div>
-            </div>
-
-            <div id="waiting-area" class="waiting-area u-text-center">
-                <i class="fas fa-hourglass-start fa-3x animate-heartbeat" style="color: var(--secondary); margin-bottom: 2rem;"></i>
-                <h3>في انتظار بدء الجولة...</h3>
-            </div>
-
-            <!-- Rapid Fire Buzz Area -->
-            <div id="rapid-fire-area" class="u-hidden u-full-width u-text-center u-margin-top">
-                <button type="button" id="buzzButton" class="btn btn-primary btn-large u-hidden animate-pulse" style="font-size: 1.5rem; padding: 1.5rem 3rem; border-radius: 50px;">
-                    <i class="fas fa-bell"></i> اضغط الجرس!
-                </button>
-                <div id="buzz-timer" style="display: none; font-size: 2rem; font-weight: 800; margin-top: 1rem; color: var(--primary);"></div>
-            </div>
-
-            <!-- Twenty Questions Area -->
-            <div id="twenty-questions-area" class="u-hidden u-full-width">
-                <!-- UI populated by JavaScript -->
-            </div>
-
-            <!-- Riddles Area -->
-            <div id="riddles-area" class="u-hidden u-full-width">
-                <!-- UI populated by JavaScript -->
-            </div>
-
-            <div class="game-actions u-flex-center u-full-width u-margin-top">
-                <button type="button" id="readyButton" class="btn btn-primary u-hidden">
-                    <i class="fas fa-play"></i> أنا جاهز!
-                </button>
-                <button type="button" id="passButton" class="btn btn-outline u-hidden">
-                    <i class="fas fa-forward"></i> تخطي
-                </button>
-                <button type="button" id="guessButton" class="btn btn-secondary u-hidden">
-                    <i class="fas fa-check"></i> عرفتها!
-                </button>
-            </div>
-        </div>
-
-        <div class="host-controls card u-flex-center" style="padding: 1.5rem;">
-            {% if is_host %}
-            <button type="button" id="startButton" class="btn btn-primary" style="display: none;">
-                <i class="fas fa-play-circle"></i> ابدأ اللعبة
-            </button>
-            <button type="button" id="nextButton" class="btn btn-secondary" style="display: none;">
-                <i class="fas fa-step-forward"></i> الجولة التالية
-            </button>
-            <button type="button" id="close-room" class="btn btn-outline" style="color: white; background-color: var(--danger);">
-                <i class="fas fa-times-circle"></i> إنهاء اللعبة
-            </button>
-            {% else %}
-            <button type="button" id="leaveButton" class="btn btn-outline">
-                <i class="fas fa-sign-out-alt"></i> انسحاب
-            </button>
             {% endif %}
         </div>
     </div>
-
-    <div class="sidebar">
-        <div class="card player-list-card">
-            <h4><i class="fas fa-users"></i> اللاعبين</h4>
-            <div id="players-list">
-                <!-- Populated by JS -->
-            </div>
-        </div>
-
-        <div class="card score-card">
-            <h4><i class="fas fa-trophy"></i> النتائج</h4>
-            <div id="scores">
-                <!-- Populated by JS -->
-            </div>
-        </div>
-
-        <div class="card info-card" style="padding: 1.2rem; font-size: 0.9rem; color: var(--text-light); text-align: center;">
-            <p>رقم الغرفة: <strong style="color: var(--primary);">{{ game_id }}</strong>
-                <button id="copy-room-id" class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; margin-right: 0.5rem;" onclick="navigator.clipboard.writeText('{{ game_id }}').then(() => Utils.showMessage('تم نسخ رقم الغرفة', 'info'))">
-                    <i class="fas fa-copy"></i>
-                </button>
-            </p>
-            <p>أنت تلعب بصفتك: <strong style="color: var(--secondary);">{{ player_name }}</strong></p>
-            <div id="round-indicator" class="u-hidden" style="margin-top: 0.5rem; font-weight: 700; color: var(--primary);"></div>
-        </div>
-        
-        <!-- Sound Toggle -->
-        <div class="card" style="padding: 1rem; text-align: center;">
-            <button id="sound-toggle" class="btn btn-outline" onclick="window.gameInstance?.toggleSound()">
-                <i class="fas fa-volume-up" id="sound-icon"></i>
-            </button>
-        </div>
-        
-        <div id="game-status" class="u-hidden">
-            <!-- Used for snackbar style notifications -->
-        </div>
-
-        <div id="error-message"></div>
-    </div>
 </div>
-
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/charades.js') }}"></script>
+<!-- Lobby module -->
+<script src="{{ url_for('static', filename='js/lobby.js') }}"></script>
+<!-- Game controller -->
+<script src="{{ url_for('static', filename='js/gameController.js') }}"></script>
+<!-- Game-specific renderer -->
+{% if game_type == 'charades' %}
+<script src="{{ url_for('static', filename='js/renderers/charadesRenderer.js') }}"></script>
+{% elif game_type == 'pictionary' %}
+<script src="{{ url_for('static', filename='js/renderers/pictionaryRenderer.js') }}"></script>
+{% elif game_type == 'trivia' %}
+<script src="{{ url_for('static', filename='js/renderers/triviaRenderer.js') }}"></script>
+{% elif game_type == 'rapid_fire' %}
+<script src="{{ url_for('static', filename='js/renderers/rapidFireRenderer.js') }}"></script>
+{% elif game_type == 'twenty_questions' %}
+<script src="{{ url_for('static', filename='js/renderers/twentyQRenderer.js') }}"></script>
+{% elif game_type == 'riddles' %}
+<script src="{{ url_for('static', filename='js/renderers/riddlesRenderer.js') }}"></script>
+{% elif game_type == 'bus_complete' %}
+<script src="{{ url_for('static', filename='js/renderers/busCompleteRenderer.js') }}"></script>
+{% elif game_type == 'who_am_i' %}
+<script src="{{ url_for('static', filename='js/renderers/whoAmIRenderer.js') }}"></script>
+{% endif %}
+<!-- Initialize game controller + enhancements -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    gameController.init({
+      roomId: "{{ room_id }}",
+      playerName: "{{ player_name }}",
+      gameType: "{{ game_type }}",
+      convexUrl: window.__CONVEX_URL__,
+    });
+
+    // Wire "How to play?" button
+    const rulesBtn = document.getElementById('btn-show-rules');
+    if (rulesBtn) {
+      rulesBtn.addEventListener('click', () => enhancements.showGameRules("{{ game_type }}"));
+    }
+
+    // Wire "Share Link" button — copies the bare game URL (no player_name)
+    // so the recipient lands on the join modal
+    const shareBtn = document.getElementById('btn-share-link');
+    if (shareBtn) {
+      shareBtn.addEventListener('click', () => {
+        const roomId = document.getElementById('full-room-id')?.textContent.trim();
+        const joinUrl = `${window.location.origin}/game/${roomId}`;
+        enhancements.copyToClipboard(joinUrl, shareBtn);
+      });
+    }
+  });
+</script>
 {% endblock %}
