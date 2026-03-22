@@ -57,7 +57,7 @@ export const createRoom = mutation({
       gameType: args.gameType,
       host: args.hostName,
       status: "waiting",
-      settings: args.settings ?? {},
+      settings: args.settings || {},
       currentPlayer: undefined,
       currentRound: 0,
       stateVersion: 0,

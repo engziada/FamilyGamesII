@@ -68,10 +68,6 @@ window.riddlesRenderer = (() => {
                   riddle.hints.slice(0, gs.hintsRevealed).map((h, i) => 
                     `<div class="alert alert-warning py-1 mb-1"><small>تلميح ${i+1}: ${h}</small></div>`
                   ).join('') : ''}
-                ${gs.hintsRevealed < 3 ? `
-                  <button id="btn-hint" class="btn btn-sm btn-outline-warning">
-                    <i class="fas fa-lightbulb"></i> تلميح (${3 - gs.hintsRevealed} متبقي)
-                  </button>` : ''}
               </div>
 
               <!-- Answer input -->
@@ -86,6 +82,14 @@ window.riddlesRenderer = (() => {
                 </div>
                 <p class="text-muted text-center">محاولة ${myAttempts + 1} من 3</p>
               ` : '<p class="text-center text-danger">استنفدت محاولاتك الثلاث</p>'}
+
+              <!-- Hint button at bottom -->
+              ${gs.hintsRevealed < 3 ? `
+                <div class="text-center mt-3">
+                  <button id="btn-hint" class="btn btn-sm btn-outline-warning">
+                    <i class="fas fa-lightbulb"></i> تلميح (${3 - gs.hintsRevealed} متبقي)
+                  </button>
+                </div>` : ''}
 
               <!-- Host controls -->
               ${isHost ? `
