@@ -13,16 +13,21 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
 const DATA_DIR = path.join(ROOT, "static", "data");
 
-// Read CONVEX_URL from .env.local
-const envPath = path.join(ROOT, ".env.local");
-let CONVEX_URL = "";
-if (fs.existsSync(envPath)) {
-  const content = fs.readFileSync(envPath, "utf-8");
-  const match = content.match(/CONVEX_URL=(.+)/);
-  if (match) CONVEX_URL = match[1].trim();
-}
+// Read CONVEX_URL from environment variable or .env.local
+let CONVEX_URL = process.env.CONVEX_URL || "";
+
 if (!CONVEX_URL) {
-  console.error("ERROR: CONVEX_URL not found in .env.local");
+  const envPath = path.join(ROOT, ".env.local");
+  if (fs.existsSync(envPath)) {
+    const content = fs.readFileSync(envPath, "utf-8");
+    const match = content.match(/CONVEX_URL=(.+)/);
+    if (match) CONVEX_URL = match[1].trim();
+  }
+}
+
+if (!CONVEX_URL) {
+  console.error("ERROR: CONVEX_URL not found in environment or .env.local");
+  console.error("Usage: CONVEX_URL=https://your-prod.convex.cloud node scripts/seedContent.mjs");
   process.exit(1);
 }
 
