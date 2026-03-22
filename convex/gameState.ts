@@ -35,6 +35,15 @@ export const startGame = mutation({
     // Build initial game state based on type
     const initialState = buildInitialState(room.gameType, players, room.settings);
 
+    // Defensive: delete any leftover game state from a previous game in this room
+    const existingStates = await ctx.db
+      .query("gameState")
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+      .collect();
+    for (const gs of existingStates) {
+      await ctx.db.delete(gs._id);
+    }
+
     // Insert game state
     await ctx.db.insert("gameState", {
       roomId: args.roomId,
@@ -93,6 +102,7 @@ export const getPublicGameState = query({
         score: p.score,
         avatar: p.avatar,
         connected: p.connected,
+        teamId: p.teamId,
       })),
       state: publicState,
     };
@@ -150,7 +160,7 @@ export const addScore = mutation({
 
 // ─── Helper functions ───────────────────────────────────────────────
 
-type RoomStatus = "waiting" | "playing" | "preparing" | "round_active" | "thinking" | "asking" | "buzzed" | "validating" | "scoring" | "ended";
+type RoomStatus = "waiting" | "playing" | "preparing" | "round_active" | "thinking" | "asking" | "buzzed" | "validating" | "scoring" | "bidding" | "performing" | "ended";
 
 function getStartStatus(gameType: string): RoomStatus {
   switch (gameType) {
@@ -162,6 +172,8 @@ function getStartStatus(gameType: string): RoomStatus {
     case "rapid_fire":
     case "riddles":
       return "round_active";
+    case "meen_yazood":
+      return "bidding";
     default:
       return "playing";
   }
@@ -275,6 +287,37 @@ function buildInitialState(
         timeLimit,
       };
 
+    case "meen_yazood":
+      return {
+        currentQuestion: null,
+        biddingPhase: {
+          active: false,
+          startTime: null,
+          currentHighestBid: 0,
+          leadingTeam: null,
+          bidHistory: [],
+        },
+        performancePhase: {
+          active: false,
+          performingTeam: null,
+          requiredCount: 0,
+          startTime: null,
+          duration: 0,
+          stopped: false,
+        },
+        validationPhase: {
+          active: false,
+          votes: {},
+        },
+        teamScores: {},
+        questionsUsed: [],
+        currentRound: 0,
+        maxRounds: Math.min(rounds, 30),
+        lastResult: null,
+        biddingTimeLimit: 35,
+        validationTimeLimit: 15,
+      };
+
     default:
       return {};
   }
@@ -339,6 +382,10 @@ function filterStateForPlayer(
       }
       return state;
     }
+
+    case "meen_yazood":
+      // No secrets to hide — all state is public (oral game)
+      return state;
 
     default:
       return state;

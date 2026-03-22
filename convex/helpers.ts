@@ -14,6 +14,7 @@ export const GAME_TYPES = [
   "riddles",
   "bus_complete",
   "who_am_i",
+  "meen_yazood",
 ] as const;
 
 export type GameType = (typeof GAME_TYPES)[number];
@@ -35,6 +36,7 @@ export const GAME_CATALOG: Record<
   riddles: { title: "الألغاز", icon: "fa-brain", mouthBased: false },
   bus_complete: { title: "أتوبيس كومبليت", icon: "fa-bus", mouthBased: false },
   who_am_i: { title: "من أنا؟", icon: "fa-user-secret", mouthBased: true },
+  meen_yazood: { title: "مين يزود؟", icon: "fa-gavel", mouthBased: true },
 };
 
 /** Max players per room */

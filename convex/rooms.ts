@@ -41,6 +41,7 @@ export const createRoom = mutation({
       v.object({
         rounds: v.optional(v.number()),
         time_limit: v.optional(v.number()),
+        teamCount: v.optional(v.number()),
       })
     ),
   },

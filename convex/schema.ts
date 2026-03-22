@@ -18,11 +18,14 @@ export default defineSchema({
       v.literal("buzzed"),
       v.literal("validating"),
       v.literal("scoring"),
+      v.literal("bidding"),
+      v.literal("performing"),
       v.literal("ended")
     ),
     settings: v.object({
       rounds: v.optional(v.number()),
       time_limit: v.optional(v.number()),
+      teamCount: v.optional(v.number()),
     }),
     currentPlayer: v.optional(v.string()),
     currentRound: v.optional(v.number()),
@@ -43,6 +46,7 @@ export default defineSchema({
     score: v.number(),
     avatar: v.optional(v.string()),
     connected: v.boolean(),
+    teamId: v.optional(v.number()),
   })
     .index("by_room", ["roomId"])
     .index("by_room_name", ["roomId", "name"]),

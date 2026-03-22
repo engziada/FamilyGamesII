@@ -50,6 +50,7 @@ GAME_CATALOG = {
     'riddles':           {'title': 'الألغاز',           'icon': 'fa-brain',           'mouthBased': False},
     'bus_complete':      {'title': 'أتوبيس كومبليت',    'icon': 'fa-bus',             'mouthBased': False},
     'who_am_i':          {'title': 'من أنا؟',           'icon': 'fa-user-secret',     'mouthBased': True},
+    'meen_yazood':       {'title': 'مين يزوّد؟',        'icon': 'fa-gavel',           'mouthBased': True},
 }
 
 

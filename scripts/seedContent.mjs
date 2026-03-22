@@ -147,15 +147,36 @@ async function seedTrivia() {
         answer: answer >= 0 ? answer : 0, // Store index for backend
       },
     };
+    // Seed into both trivia and rapid_fire — both use the same format
+    triviaItems.push(item);
     if (q.source === "faris") {
       rapidFireItems.push(item);
-    } else {
-      triviaItems.push(item);
     }
   }
 
   if (triviaItems.length > 0) await seedBatch("trivia", triviaItems);
   if (rapidFireItems.length > 0) await seedBatch("rapid_fire", rapidFireItems);
+}
+
+// ── Meen Yazood ─────────────────────────────────────────────────────
+async function seedMeenYazood() {
+  const filePath = path.join(DATA_DIR, "meen_yazood_questions.json");
+  if (!fs.existsSync(filePath)) {
+    console.log("[meen_yazood] No meen_yazood_questions.json found — skipping.");
+    return;
+  }
+  const raw = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+  const questions = raw.questions || [];
+
+  const items = questions.map((q) => ({
+    title: q.question,
+    category: q.category || "",
+    content: {
+      question: q.question,
+      difficulty: q.difficulty || "medium",
+    },
+  }));
+  await seedBatch("meen_yazood", items);
 }
 
 // ── Main ──────────────────────────────────────────────────────────────
@@ -166,6 +187,7 @@ async function seedTrivia() {
   await seedWhoAmI();
   await seedTwentyQuestions();
   await seedTrivia();
+  await seedMeenYazood();
   console.log("\nDone! All content seeded.");
 })().catch((err) => {
   console.error("Seeding failed:", err);

@@ -119,7 +119,9 @@ const gameController = (() => {
 
     // Update common UI elements
     gameUI.updatePlayerList(state.players, _playerName);
-    gameUI.updateScoreboard(state.players);
+    if (_gameType !== 'meen_yazood') {
+      gameUI.updateScoreboard(state.players);
+    }
     gameUI.updateStatus(state.status, state.currentPlayer, _playerName);
 
     // Animate score changes (fly-up + confetti for big gains)
@@ -129,7 +131,7 @@ const gameController = (() => {
     gameUI.updateRoundInfo(state.currentRound, state.settings);
 
     // Mouth-based game notification banner
-    const isMouthBased = _gameType === 'twenty_questions' || _gameType === 'who_am_i';
+    const isMouthBased = _gameType === 'twenty_questions' || _gameType === 'who_am_i' || _gameType === 'meen_yazood';
     if (isMouthBased) {
       gameUI.showMouthBasedBanner(true);
     }
@@ -137,7 +139,14 @@ const gameController = (() => {
     // Game ended
     if (state.status === 'ended') {
       timer.stop();
-      gameUI.showEndGameScreen(state.players, _playerName);
+
+      // Meen Yazood: show team-based end screen
+      if (_gameType === 'meen_yazood') {
+        showMeenYazoodEndScreen(state);
+      } else {
+        gameUI.showEndGameScreen(state.players, _playerName);
+      }
+
       // Confetti celebration for the winner
       if (typeof enhancements !== 'undefined') {
         enhancements.confettiCelebration();
@@ -191,8 +200,75 @@ const gameController = (() => {
       case 'riddles': return window.riddlesRenderer || null;
       case 'bus_complete': return window.busCompleteRenderer || null;
       case 'who_am_i': return window.whoAmIRenderer || null;
+      case 'meen_yazood': return window.meenYazoodRenderer || null;
       default: return null;
     }
+  }
+
+  /**
+   * Show team-based end screen for Meen Yazood.
+   * @param {object} state - Full game state.
+   */
+  function showMeenYazoodEndScreen(state) {
+    const gameArea = document.getElementById('game-area');
+    if (!gameArea) return;
+
+    const gs = state.state || {};
+    const teamScores = gs.teamScores || {};
+    const teamLabels = { 1: 'الفريق الأول', 2: 'الفريق الثاني', 3: 'الفريق الثالث', 4: 'الفريق الرابع' };
+    const teamColors = { 1: '#e74c3c', 2: '#3498db', 3: '#2ecc71', 4: '#f39c12' };
+
+    // Build sorted team list
+    const teams = Object.entries(teamScores)
+      .map(([tid, score]) => ({
+        id: tid,
+        name: teamLabels[tid] || 'فريق ' + tid,
+        color: teamColors[tid] || '#888',
+        score: score,
+        members: state.players.filter(p => String(p.teamId) === tid).map(p => p.name),
+      }))
+      .sort((a, b) => b.score - a.score);
+
+    const winner = teams[0];
+    const myPlayer = state.players.find(p => p.name === _playerName);
+    const myTeamId = myPlayer?.teamId ? String(myPlayer.teamId) : null;
+    const isWinningTeam = winner && myTeamId === winner.id;
+
+    const leaderboardRows = teams.map((t, i) => {
+      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`;
+      const highlight = myTeamId === t.id ? ' class="table-primary"' : '';
+      return `<tr${highlight}>
+        <td>${medal}</td>
+        <td><span style="color:${t.color}; font-weight:bold;">${t.name}</span>
+          <small class="d-block text-muted">${t.members.join('، ')}</small></td>
+        <td class="text-center fw-bold">${t.score}</td>
+      </tr>`;
+    }).join('');
+
+    gameArea.innerHTML = `
+      <div class="text-center py-4 animate__animated animate__fadeIn">
+        <h2 class="mb-3">🎉 انتهت اللعبة!</h2>
+        <div class="card mx-auto mb-3 border-warning" style="max-width: 420px;">
+          <div class="card-body">
+            <div class="display-1 mb-2">🏆</div>
+            <h4>${isWinningTeam ? 'مبروك! فريقكم فاز!' : (winner ? winner.name + ' فاز!' : '')}</h4>
+            <p class="display-4 fw-bold mb-0" style="color:${winner?.color || '#333'}">${winner?.score || 0}</p>
+            <small class="text-muted">نقطة</small>
+          </div>
+        </div>
+        <div class="card mx-auto" style="max-width: 420px;">
+          <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+              <thead><tr><th>#</th><th>الفريق</th><th class="text-center">النقاط</th></tr></thead>
+              <tbody>${leaderboardRows}</tbody>
+            </table>
+          </div>
+        </div>
+        <div class="d-flex justify-content-center gap-2 mt-3 align-items-center">
+          <a href="/" class="btn btn-primary"><i class="fas fa-home"></i> الرئيسية</a>
+          <span class="text-muted small" id="end-countdown">العودة للرئيسية خلال <strong>5</strong> ثوانٍ...</span>
+        </div>
+      </div>`;
   }
 
   /**
