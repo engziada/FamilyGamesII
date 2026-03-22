@@ -18,7 +18,7 @@ window.whoAmIRenderer = (() => {
 
     // Show start round button if no assignments yet (waiting for host to start)
     const hasAssignments = gs.assignments && Object.keys(gs.assignments).length > 0;
-    if (state.status === 'playing' && isHost && !hasAssignments) {
+    if ((state.status === 'playing' || state.status === 'waiting') && isHost && !hasAssignments) {
       area.innerHTML = `
         <div class="text-center py-4">
           <h4>من أنا؟</h4>
