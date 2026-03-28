@@ -1,0 +1,197 @@
+/**
+ * Family Games II - Design Tokens
+ * Core design tokens for consistent styling across the platform.
+ * 
+ * Usage: Import before other stylesheets
+ * @import url('tokens.css');
+ */
+
+:root {/* ═══════════════════════════════════════════════════════════════════
+   * COLOR TOKENS
+   * Primary palette for brand identity and UI elements
+   * ═══════════════════════════════════════════════════════════════════ */
+  
+  /* Brand Colors */
+  --color-primary: #FF6B6B;       /* Coral - CTAs, highlights, active states */
+  --color-secondary: #4ECDC4;    /* Teal - Secondary actions, team badges */
+  --color-accent: #FFE66D;       /* Yellow - Highlights, warnings, emphasis */
+  --color-success: #6BCB77;      /* Green - Correct answers, wins */
+  --color-danger: #FF6B6B;       /* Coral - Errors, time warnings (same as primary) */
+  --color-purple: #BC7AF9;       /* Purple - Team distinctions *//* Background Colors */
+  --color-bg-main: #F7FFF7;      /* Light mint - Page background */
+  --color-surface: #FFFFFF;      /* White - Cards, modals *//* Text Colors */
+  --color-text: #2F2F2F;         /* Near-black - Body text */
+  --color-text-light: #5A5A5A;   /* Gray - Secondary text *//* ═══════════════════════════════════════════════════════════════════
+   * TYPOGRAPHY TOKENS
+   * Font families, sizes, and weights
+   * ═══════════════════════════════════════════════════════════════════ */
+  
+  /* Font Families */
+  --font-body: 'Changa', sans-serif;
+  --font-heading: 'Lemonada', cursive;/* Font Weight Scale */
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 800;
+  --font-weight-black: 900;/* Font Size Scale */
+  --font-size-xs: 0.75rem;       /* 12px */
+  --font-size-sm: 0.875rem;      /* 14px */
+  --font-size-base: 1rem;        /* 16px */
+  --font-size-lg: 1.125rem;      /* 18px */
+  --font-size-xl: 1.25rem;       /* 20px */
+  --font-size-2xl: 1.5rem;       /* 24px */
+  --font-size-3xl: 1.875rem;     /* 30px */
+  --font-size-4xl: 2.25rem;      /* 36px *//* ═══════════════════════════════════════════════════════════════════
+   * SPACING TOKENS
+   * Consistent spacing scale for margins, padding, gaps
+   * ═══════════════════════════════════════════════════════════════════ */
+  
+  --space-0: 0;
+  --space-1: 0.25rem;           /* 4px */
+  --space-2: 0.5rem;             /* 8px */
+  --space-3: 0.75rem;            /* 12px */
+  --space-4: 1rem;               /* 16px */
+  --space-5: 1.5rem;             /* 24px */
+  --space-6: 2rem;               /* 32px */
+  --space-8: 3rem;               /* 48px */
+  --space-10: 4rem;              /* 64px *//* ═══════════════════════════════════════════════════════════════════
+   * SHADOW TOKENS
+   * Pop shadows for playful depth
+   * ═══════════════════════════════════════════════════════════════════ */
+  
+  --shadow-pop: 5px 5px 0 rgba(0, 0, 0, 0.1);
+  --shadow-heavy: 8px 8px 0 rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
+  
+  /* ═══════════════════════════════════════════════════════════════════
+   * BORDER RADIUS TOKENS
+   * Playful asymmetric radii for whimsical personality
+   * ═══════════════════════════════════════════════════════════════════ */
+  
+  --radius-sm: 10px;
+  --radius-md: 15px;
+  --radius-lg: 20px;
+  --radius-full: 50px;
+  
+  /* Asymmetric card radius (signature style) */
+  --radius-card: 30px 80px 30px 70px / 70px 30px 80px 30px;
+  --radius-card-alt: 60px 20px 70px 30px / 30px 70px 20px 60px;
+  
+  /* Input radius */
+  --radius-input: 15px 30px 10px 25px;
+  
+  /* Button radius */
+  --radius-button: 15px 50px 15px 50px;
+  --radius-button-alt: 50px 15px 50px 15px;
+  
+  /* ═══════════════════════════════════════════════════════════════════
+   * TRANSITION TOKENS
+   * Animation timing for consistent motion
+   * ═══════════════════════════════════════════════════════════════════ */
+  
+  --transition-fast: 0.2s ease;
+  --transition-base: 0.3s ease;
+  --transition-bounce: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  
+  /* ═══════════════════════════════════════════════════════════════════
+   * Z-INDEX TOKENS
+   * Layering scale for consistent stacking
+   * ═══════════════════════════════════════════════════════════════════ */
+  
+  --z-base: 0;
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+  --z-toast: 1100;
+  --z-overlay: 9999;
+  
+  /* ═══════════════════════════════════════════════════════════════════
+   * TOUCH TARGET TOKENS
+   * Accessibility - minimum sizes for touch interfaces
+   * ═══════════════════════════════════════════════════════════════════ */
+  
+  --touch-target-min: 44px;
+  
+  /* ═══════════════════════════════════════════════════════════════════
+   * BREAKPOINT TOKENS
+   * Responsive design breakpoints
+   * ═══════════════════════════════════════════════════════════════════ */
+  
+  --breakpoint-sm: 576px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 992px;
+  --breakpoint-xl: 1200px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * DARK MODE OVERRIDES
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+[data-theme="dark"] {
+  --color-bg-main: #1a1a2e;
+  --color-surface: #16213e;
+  --color-text: #e0e0e0;
+  --color-text-light: #a0a0a0;
+  
+  --shadow-pop: 5px 5px 0 rgba(0, 0, 0, 0.3);
+  --shadow-heavy: 8px 8px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* System preference fallback */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg-main: #1a1a2e;
+    --color-surface: #16213e;
+    --color-text: #e0e0e0;
+    --color-text-light: #a0a0a0;
+    
+    --shadow-pop: 5px 5px 0 rgba(0, 0, 0, 0.3);
+    --shadow-heavy: 8px 8px 0 rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * SEMANTIC TOKENS
+ * Purpose-specific tokens that reference primitive tokens
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Interactive states */
+  --color-interactive: var(--color-primary);
+  --color-interactive-hover: #ff5252;
+  --color-interactive-active: #e05555;
+  --color-interactive-disabled: #cccccc;
+  
+  /* Focus states */
+  --color-focus: var(--color-primary);
+  --focus-ring: 0 0 0 3px rgba(255, 107, 107, 0.4);
+  
+  /* Border defaults */
+  --border-width-default: 3px;
+  --border-color-default: var(--color-text);
+  
+  /* Card background */
+  --bg-card: var(--color-surface);
+  --bg-input: #fdfdfd;
+  
+  /* Timer colors */
+  --color-timer-safe: var(--color-success);
+  --color-timer-warning: var(--color-accent);
+  --color-timer-danger: var(--color-danger);
+  
+  /* Validation colors */
+  --color-valid: #2ecc71;
+  --color-valid-bg: #f0fff4;
+  --color-invalid-bg: #fff5f5;
+  
+  /* Dark mode specific */
+  --color-dark-input-bg: #0f3460;
+  --color-dark-border: #2a2a4a;
+  
+  /* Maintenance/danger */
+  --color-maintenance: #dc3545;
+}

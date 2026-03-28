@@ -346,7 +346,19 @@ const gameController = (() => {
             playerName: _playerName,
           });
         } catch (e) {
-          gameUI.showToast(e.message, 'error');
+          const errorMsg = e.message || 'حدث خطأ';
+          const actionText = errorMsg.includes('لاعبين') ? 'دعوة أصدقاء' : null;
+          gameUI.showToast(errorMsg, 'error', {
+            action: actionText,
+            onAction: actionText ? () => {
+              const roomId = document.getElementById('full-room-id')?.textContent.trim();
+              if (roomId) {
+                const url = `${window.location.origin}/game/${roomId}`;
+                navigator.clipboard.writeText(url);
+                gameUI.showToast('تم نسخ رابط الدعوة!', 'success');
+              }
+            } : undefined
+          });
         }
       });
     }
@@ -363,14 +375,20 @@ const gameController = (() => {
       });
     });
 
-    // Sound toggle
+    // Sound toggle - initialize with persisted state
     const soundBtn = document.getElementById('btn-sound-toggle');
     if (soundBtn) {
+      const { muted } = sound.getState();
+      soundBtn.innerHTML = muted
+        ? '<i class="fas fa-volume-mute"></i>'
+        : '<i class="fas fa-volume-up"></i>';
+      soundBtn.title = muted ? 'تشغيل الصوت' : 'كتم الصوت';
       soundBtn.addEventListener('click', () => {
-        const muted = sound.toggleMute();
-        soundBtn.innerHTML = muted
+        const newMuted = sound.toggleMute();
+        soundBtn.innerHTML = newMuted
           ? '<i class="fas fa-volume-mute"></i>'
           : '<i class="fas fa-volume-up"></i>';
+        soundBtn.title = newMuted ? 'تشغيل الصوت' : 'كتم الصوت';
       });
     }
 

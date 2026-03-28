@@ -3,6 +3,19 @@
  */
 
 const gameUI = (() => {
+  // Track previous player count for join detection
+  let prevPlayerCount = 0;
+  
+  // Encouraging waiting messages
+  const waitingMessages = [
+    { text: 'في انتظار اللاعبين...', sub: 'شارك رقم الغرفة مع أصدقائك' },
+    { text: 'جاري تجميع الفريق...', sub: 'الصبر من الملل!' },
+    { text: 'اللعبة على وشك البدء!', sub: 'استعد للمرح' },
+    { text: 'بانتظار انضمام المزيد...', sub: 'كلما زاد число، زاد المرح!' },
+    { text: 'لم تأتوا جميعاً بعد!', sub: 'أرسل دعوة لصديق' },
+  ];
+  let waitingMessageIndex = 0;
+
   /**
    * Update the player list sidebar.
    * @param {Array} players - Player objects from Convex.
@@ -11,6 +24,15 @@ const gameUI = (() => {
   function updatePlayerList(players, currentPlayerName) {
     const el = document.getElementById('player-list');
     if (!el) return;
+
+    // Detect player join for celebration
+    if (players.length > prevPlayerCount && prevPlayerCount > 0) {
+      const newPlayer = players[players.length - 1];
+      if (newPlayer && newPlayer.name !== currentPlayerName) {
+        announcePlayerJoin(newPlayer.name, newPlayer.avatar);
+      }
+    }
+    prevPlayerCount = players.length;
 
     el.innerHTML = players
       .map((p) => {
@@ -24,6 +46,95 @@ const gameUI = (() => {
         </li>`;
       })
       .join('');
+    
+    // Update player dots indicator
+    updatePlayerDots(players.length);
+    
+    // Update waiting message
+    updateWaitingMessage(players.length);
+  }
+
+  /**
+   * Update waiting state message based on player count.
+   * @param {number} playerCount - Current player count.
+   */
+  function updateWaitingMessage(playerCount) {
+    const titleEl = document.getElementById('waiting-title');
+    const subtitleEl = document.getElementById('waiting-subtitle');
+    const hostControls = document.getElementById('host-controls');
+    const startBtn = document.getElementById('btn-start-game');
+    
+    if (titleEl) {
+      // Rotate through encouraging messages
+      const minPlayers = 2;
+      if (playerCount < minPlayers) {
+        const needed = minPlayers - playerCount;
+        titleEl.textContent = needed === 1 ? 'بانتظار لاعب واحد...' : `بانتظار ${needed} لاعبين...`;
+        if (subtitleEl) {
+          subtitleEl.textContent = 'شارك رقم الغرفة مع أصدقائك';
+        }
+      } else {
+        // Game is ready to start
+        titleEl.textContent = 'اللعبة جاهزة!';
+        if (subtitleEl) {
+          subtitleEl.textContent = 'بانتظار بدء المضيف...';
+        }
+      }
+    }
+    
+    // Show/hide host controls
+    if (hostControls && startBtn) {
+      const isHost = startBtn.dataset.isHost === 'true';
+      if (isHost && playerCount >= 2) {
+        hostControls.style.display = 'block';
+      } else {
+        hostControls.style.display = 'none';
+      }
+    }
+  }
+
+  /**
+   * Update player count dots indicator.
+   * @param {number} count - Current player count.
+   */
+  function updatePlayerDots(count) {
+    const dotsContainer = document.getElementById('player-dots');
+    const countText = document.getElementById('player-count-text');
+    if (!dotsContainer) return;
+    
+    const maxDots = 8;
+    const displayCount = Math.min(count, maxDots);
+    
+    dotsContainer.innerHTML = '';
+    for (let i = 0; i < maxDots; i++) {
+      const dot = document.createElement('div');
+      dot.className = `player-dot ${i < displayCount ? 'filled' : 'waiting'}`;
+      dot.innerHTML = i < displayCount ? '✓' : '';
+      dotsContainer.appendChild(dot);
+    }
+    
+    if (countText) {
+      countText.textContent = `${count} ${count === 1 ? 'لاعب' : 'لاعبين'}`;
+    }
+  }
+
+  /**
+   * Announce player join with celebration.
+   * @param {string} name - Player name.
+   * @param {string} [avatar] - Player avatar emoji.
+   */
+  function announcePlayerJoin(name, avatar) {
+    // Show toast
+    const toast = document.createElement('div');
+    toast.className = 'player-joined-toast';
+    toast.innerHTML = `<span style="font-size: 1.5rem; margin-right: 0.5rem;">${avatar || '👋'}</span> ${name} انضم للعبة!`;
+    document.body.appendChild(toast);
+    
+    // Play confetti
+    enhancements?.confettiBurst?.();
+    
+    // Remove toast after animation
+    setTimeout(() => toast.remove(), 2000);
   }
 
   /**
@@ -202,25 +313,53 @@ const gameUI = (() => {
   }
 
   /**
-   * Show a toast notification.
+   * Show a toast notification with optional action.
    * @param {string} message - Message text.
    * @param {string} [type='info'] - Type: 'info', 'success', 'error', 'warning'.
+   * @param {Object} [options] - Additional options.
+   * @param {string} [options.action] - Action text (e.g., "أعد المحاولة").
+   * @param {Function} [options.onAction] - Callback when action is clicked.
+   * @param {number} [options.duration] - Duration in ms (default 4000 for info, 6000 for error).
    */
-  function showToast(message, type = 'info') {
+  function showToast(message, type = 'info', options = {}) {
     const container = document.getElementById('toast-container') || createToastContainer();
     const colorClass = { info: 'bg-info', success: 'bg-success', error: 'bg-danger', warning: 'bg-warning' }[type] || 'bg-info';
+    const icon = { info: 'fa-info-circle', success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle' }[type] || 'fa-info-circle';
+
+    const actionHtml = options.action
+      ? `<button type="button" class="btn btn-sm btn-light ms-2 toast-action">${options.action}</button>`
+      : '';
 
     const toast = document.createElement('div');
     toast.className = `toast show align-items-center text-white ${colorClass} border-0 mb-2`;
-    toast.setAttribute('role', 'alert');
+    toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+    toast.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
+    toast.setAttribute('aria-atomic', 'true');
     toast.innerHTML = `
-      <div class="d-flex">
-        <div class="toast-body">${message}</div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      <div class="d-flex align-items-center">
+        <i class="fas ${icon} me-2"></i>
+        <div class="toast-body flex-grow-1">${message}</div>
+        ${actionHtml}
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="إغلاق"></button>
       </div>
     `;
+
+    if (options.action && options.onAction) {
+      const actionBtn = toast.querySelector('.toast-action');
+      if (actionBtn) {
+        actionBtn.addEventListener('click', () => {
+          options.onAction();
+          toast.remove();
+        });
+      }
+    }
+
     container.appendChild(toast);
-    setTimeout(() => toast.remove(), 4000);
+    const duration = options.duration || (type === 'error' ? 6000 : 4000);
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    }, duration);
   }
 
   function createToastContainer() {
@@ -228,6 +367,8 @@ const gameUI = (() => {
     c.id = 'toast-container';
     c.className = 'position-fixed top-0 end-0 p-3';
     c.style.zIndex = '1100';
+    c.setAttribute('aria-live', 'polite');
+    c.setAttribute('aria-atomic', 'true');
     document.body.appendChild(c);
     return c;
   }
@@ -240,5 +381,7 @@ const gameUI = (() => {
     showMouthBasedBanner,
     showEndGameScreen,
     showToast,
+    announcePlayerJoin,
+    updateWaitingMessage,
   };
 })();

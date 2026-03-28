@@ -12,12 +12,12 @@
                         <i class="fas {{ game_icon }}"></i>
                         <strong>{{ game_title }}</strong>
                         <span class="text-muted mx-2">|</span>
-                        <span id="game-status">في انتظار اللاعبين...</span>
+                        <span id="game-status" role="status" aria-live="polite">في انتظار اللاعبين...</span>
                     </div>
                     <div class="d-flex align-items-center gap-3">
                         <span id="round-info" class="text-muted"></span>
                         <span id="timer-display" class="fw-bold fs-5">--:--</span>
-                        <div class="progress" style="width: 100px; height: 8px;">
+                        <div class="progress" style="width: clamp(80px, 15vw, 120px); height: 8px;">
                             <div id="timer-bar" class="progress-bar bg-success" role="progressbar" style="width: 100%;" aria-valuenow="100"></div>
                         </div>
                         <button id="btn-sound-toggle" class="btn btn-outline-secondary btn-sm" title="كتم الصوت">
@@ -30,12 +30,46 @@
             <!-- Dynamic game area — populated by renderers -->
             <div class="card">
                 <div class="card-body" id="game-area">
-                    <div class="text-center py-5">
-                        <i class="fas fa-hourglass-half fa-3x text-muted mb-3 animate__animated animate__pulse animate__infinite"></i>
-                        <h4>في انتظار بدء اللعبة...</h4>
-                        <button id="btn-start-game" class="btn btn-primary btn-lg mt-3" style="display: none;">
-                            <i class="fas fa-play-circle"></i> ابدأ اللعبة
-                        </button>
+                    <!-- Waiting State with Delight -->
+                    <div class="waiting-state text-center py-5" id="waiting-state">
+                        <div class="waiting-animation mb-4">
+                            <div class="waiting-dots">
+                                <span></span><span></span><span></span>
+                            </div>
+                        </div>
+                        <h4 class="mb-3" id="waiting-title">في انتظار اللاعبين...</h4>
+                        <p class="text-muted mb-4" id="waiting-subtitle">شارك رقم الغرفة مع أصدقائك</p>
+                        
+                        <!-- Quick share section -->
+                        <div class="share-prompt mb-4">
+                            <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                <button class="btn btn-primary btn-lg px-4" id="btn-share-waiting" data-bs-toggle="tooltip" title="انسخ الرابط وشاركه">
+                                    <i class="fas fa-share-alt me-2"></i> شارك الدعوة
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Player count indicator -->
+                        <div class="player-count-indicator mt-3">
+                            <div class="d-flex justify-content-center align-items-center gap-2">
+                                <div class="player-dots" id="player-dots">
+                                    <!-- Filled dynamically -->
+                                </div>
+                                <span class="text-muted small" id="player-count-text">لاعبين بانتظار</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Host start button (hidden initially) -->
+                        <div class="host-controls mt-4" id="host-controls" style="display: none;">
+                            <p class="text-success mb-2">
+                                <i class="fas fa-check-circle me-1"></i>
+                                يكفي لاعبين للبدء!
+                            </p>
+                            <button id="btn-start-game" class="btn btn-success btn-lg animate__animated animate__pulse animate__infinite">
+                                <i class="fas fa-play-circle me-2"></i> ابدأ اللعبة
+                            </button>
+                            <p class="text-muted small mt-2">أنت المضيف — ابدأ عندما يتجهز الجميع</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -44,11 +78,11 @@
             <div class="card mt-3">
                 <div class="card-body d-flex justify-content-center align-items-center py-2 gap-2 flex-wrap">
                     <!-- Reaction emojis only -->
-                    <button class="btn btn-outline-secondary btn-sm" data-emoji="😂">😂</button>
-                    <button class="btn btn-outline-secondary btn-sm" data-emoji="👏">👏</button>
-                    <button class="btn btn-outline-secondary btn-sm" data-emoji="🔥">🔥</button>
-                    <button class="btn btn-outline-secondary btn-sm" data-emoji="😱">😱</button>
-                    <button class="btn btn-outline-secondary btn-sm" data-emoji="❤️">❤️</button>
+                    <button class="btn btn-outline-secondary reaction-btn" data-emoji="😂">😂</button>
+                    <button class="btn btn-outline-secondary reaction-btn" data-emoji="👏">👏</button>
+                    <button class="btn btn-outline-secondary reaction-btn" data-emoji="🔥">🔥</button>
+                    <button class="btn btn-outline-secondary reaction-btn" data-emoji="😱">😱</button>
+                    <button class="btn btn-outline-secondary reaction-btn" data-emoji="❤️">❤️</button>
                 </div>
             </div>
         </div>
@@ -68,7 +102,7 @@
                 <div class="card-header"><i class="fas fa-trophy"></i> النتائج</div>
                 <div class="card-body p-0">
                     <table class="table table-sm mb-0">
-                        <tbody id="scoreboard">
+                        <tbody id="scoreboard" aria-live="polite">
                             <!-- Populated by gameUI.js -->
                         </tbody>
                     </table>
@@ -81,7 +115,7 @@
                     <small class="text-muted">رقم الغرفة</small>
                     <div class="d-flex align-items-center justify-content-center gap-2 my-1">
                         <span id="room-code-display" class="fw-bold text-primary"
-                              style="font-size:2rem; letter-spacing:6px; cursor:pointer;"
+                              style="font-size: clamp(1.5rem, 5vw, 2rem); letter-spacing:6px; cursor:pointer;"
                               title="اضغط للنسخ">----</span>
                     </div>
                     <small class="text-muted">أنت: <strong>{{ player_name }}</strong></small>

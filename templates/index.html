@@ -1,60 +1,137 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container py-4">
-    <header class="text-center mb-4">
-        <h1 class="display-5 fw-bold">أهلاً بكم في ألعاب العيلة!</h1>
-        <p class="lead text-muted">استمتع بأجمل الألعاب مع العائلة والأصدقاء في مكان واحد</p>
-    </header>
-
-    <!-- Join Game Card (moved to top) -->
-    <div class="card border-success mb-4">
-        <div class="card-body py-3 d-flex align-items-center gap-3 flex-wrap justify-content-center">
-            <i class="fas fa-sign-in-alt fa-lg text-success"></i>
-            <span class="fw-bold">لديك رقم غرفة؟</span>
-            <input type="text" id="join-room-input" class="form-control text-center"
-                   style="max-width:150px; font-size:1.4rem; letter-spacing:4px;" 
-                   placeholder="XXXX" maxlength="4" inputmode="numeric">
-            <button class="btn btn-success" id="btn-open-join">
-                <i class="fas fa-arrow-left"></i> انضم
+    <!-- Hero Section with Clear CTA -->
+    <header class="text-center mb-5">
+        <h1 class="display-4 fw-bold mb-2" style="color: var(--primary);">ألعاب العيلة</h1>
+        <p class="lead text-muted mb-4">العب مع العائلة والأصدقاء</p>
+        
+        <!-- Primary Action: Join or Create -->
+        <div class="d-flex justify-content-center mb-4">
+            <button class="btn btn-success btn-lg px-5" id="btn-quick-join" style="min-width: 200px;">
+                <i class="fas fa-sign-in-alt me-2"></i> انضم لغرفة
             </button>
         </div>
-    </div>
+    </header>
 
-    <!-- Game catalog grid -->
-    <div class="row g-4">
-        {% for key, game in game_catalog.items() %}
-        <div class="col-sm-6 col-lg-4 col-xl-3">
-            <div class="card h-100 game-card animate__animated animate__fadeInUp {{ 'opacity-50' if game.get('disabled') }}" style="position:relative;overflow:hidden;">
-                {% if game.get('disabled') %}
-                <div style="position:absolute;top:12px;right:-35px;transform:rotate(45deg);background:#dc3545;color:#fff;padding:2px 40px;font-size:0.75rem;font-weight:700;z-index:2;box-shadow:0 2px 4px rgba(0,0,0,.2);">
-                    تحت الصيانة
-                </div>
-                {% endif %}
-                <div class="card-body text-center d-flex flex-column">
-                    <div class="mb-3"><i class="fas {{ game.icon }} fa-3x {{ 'text-muted' if game.get('disabled') else 'text-primary' }}"></i></div>
-                    <h5 class="card-title">{{ game.title }}</h5>
-                    {% if game.mouthBased %}
-                    <span class="badge bg-info mb-2"><i class="fas fa-users"></i> وجهاً لوجه</span>
-                    {% endif %}
-                    <div class="mt-auto">
-                        <span class="text-muted d-block mb-2"><i class="fas fa-users"></i> 2 - 8 لاعبين</span>
-                        {% if game.get('disabled') %}
-                        <button class="btn btn-secondary w-100 mb-1" disabled>
-                            <i class="fas fa-wrench"></i> تحت الصيانة
-                        </button>
-                        {% else %}
-                        <button class="btn btn-primary w-100 create-game-btn mb-1" data-game-type="{{ key }}">
-                            <i class="fas fa-plus"></i> لعبة جديدة
-                        </button>
-                        {% endif %}
-                        <button class="btn btn-outline-info btn-sm w-100 rules-btn" data-game-type="{{ key }}">
-                            <i class="fas fa-question-circle"></i> كيف تلعب؟
-                        </button>
+    <!-- Game Categories with Progressive Disclosure -->
+    <section class="mb-5">
+        <h2 class="h4 mb-3 d-flex align-items-center gap-2">
+            <i class="fas fa-star text-warning"></i>
+            ألعاب الأكثر شعبية
+        </h2>
+        <div class="row g-3">
+            <!-- Featured Games (Top 2-3) -->
+            {% set featured_games = ['charades', 'trivia', 'rapid_fire'] %}
+            {% for key, game in game_catalog.items() %}
+                {% if key in featured_games and not game.get('disabled') %}
+                <div class="col-12 col-md-4">
+                    <div class="card h-100 game-card game-card-featured animate__animated animate__fadeInUp" data-game-type="{{ key }}">
+                        <div class="card-body text-center d-flex flex-column p-3">
+                            <div class="featured-game-icon mb-2">
+                                <i class="fas {{ game.icon }} text-primary"></i>
+                            </div>
+                            <h5 class="card-title featured-card-title mb-1">{{ game.title }}</h5>
+                            <p class="text-muted featured-card-meta mb-3 flex-grow-1">
+                                {% if game.mouthBased %}وجهاً لوجه{% else %}على الشاشة{% endif %} • 2-8 لاعبين
+                            </p>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary featured-card-btn flex-grow-1 create-game-btn" data-game-type="{{ key }}">
+                                    <i class="fas fa-play me-1"></i> ابدأ
+                                </button>
+                                <button class="btn btn-outline-secondary featured-card-rules-btn rules-btn" data-game-type="{{ key }}" aria-label="قواعد {{ game.title }}">
+                                    <i class="fas fa-question-circle"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- All Games Grid (Collapsible) -->
+    <section class="mb-4">
+        <details open>
+            <summary class="h5 mb-3 d-flex align-items-center gap-2 cursor-pointer" style="cursor: pointer;">
+                <i class="fas fa-th-large text-secondary"></i>
+                كل الألعاب
+                <span class="badge bg-light text-muted ms-auto">{{ game_catalog.items()|length }} لعبة</span>
+            </summary>
+            <div class="row g-3 mt-2">
+                {% for key, game in game_catalog.items() %}
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="card h-100 game-card mini-game-card {{ 'opacity-50' if game.get('disabled') }}" style="position:relative;overflow:hidden;">
+                        {% if game.get('disabled') %}
+                        <div class="position-absolute" style="top:12px;right:-35px;transform:rotate(45deg);background:var(--danger);color:#fff;padding:2px 40px;font-size:0.7rem;font-weight:700;z-index:2;box-shadow:0 2px 4px rgba(0,0,0,.2);">
+                            تحت الصيانة
+                        </div>
+                        {% endif %}
+                        <div class="card-body text-center d-flex flex-column mini-card-body">
+                            <div class="mini-game-icon mb-1">
+                                <i class="fas {{ game.icon }} {{ 'text-muted' if game.get('disabled') else 'text-secondary' }}"></i>
+                            </div>
+                            <h6 class="mini-card-title mb-1">{{ game.title }}</h6>
+                            {% if game.mouthBased %}
+                            <span class="badge mini-face-badge mb-2"><i class="fas fa-users"></i> وجهاً لوجه</span>
+                            {% endif %}
+                            <div class="mt-auto mini-card-actions">
+                                {% if game.get('disabled') %}
+                                <button class="btn mini-card-btn btn-secondary w-100" disabled>
+                                    <i class="fas fa-wrench"></i>
+                                </button>
+                                {% else %}
+                                <button class="btn mini-card-btn btn-outline-primary w-100 create-game-btn mb-1" data-game-type="{{ key }}">
+                                    لعبة جديدة
+                                </button>
+                                <button class="btn mini-card-link rules-btn" data-game-type="{{ key }}">
+                                    كيف تلعب؟
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </details>
+    </section>
+</div>
+
+<!-- Quick Join Modal -->
+<div class="modal fade" id="quickJoinModal" tabindex="-1" aria-labelledby="quickJoinModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="quickJoinModalLabel"><i class="fas fa-sign-in-alt text-success me-2"></i> انضم لغرفة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+            </div>
+            <div class="modal-body text-center">
+                <input type="hidden" id="join-room-id">
+                <div id="join-room-preview" class="alert alert-info d-none mb-3"></div>
+                <div id="join-error" class="alert alert-danger d-none mb-3" role="alert" aria-live="assertive"></div>
+                
+                <div class="mb-4">
+                    <label class="form-label small text-muted">أدخل رقم الغرفة أو الصق الرابط</label>
+                    <input type="text" id="join-room-code" class="form-control form-control-lg text-center" 
+                           style="font-size: 1.5rem; letter-spacing: 6px;" 
+                           placeholder="XXXX" maxlength="50" inputmode="numeric" autofocus>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">اسمك</label>
+                    <input type="text" id="join-name" class="form-control text-end" 
+                           placeholder="اكتب اسمك هنا..." dir="rtl">
+                </div>
+                <div id="join-avatar-picker-slot"></div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-success btn-lg px-5" id="btn-join-confirm">
+                    <i class="fas fa-arrow-left me-2"></i> انضم الآن
+                </button>
             </div>
         </div>
-        {% endfor %}
     </div>
 </div>
 
@@ -64,11 +141,11 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="createGameModalLabel">إنشاء غرفة جديدة</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="modal-game-type">
-                <div id="create-error" class="alert alert-danger d-none"></div>
+                <div id="create-error" class="alert alert-danger d-none" role="alert" aria-live="assertive"></div>
                 <div class="mb-3">
                     <label for="host-name" class="form-label">اسمك</label>
                     <input type="text" id="host-name" class="form-control text-end" placeholder="اكتب اسمك هنا..." dir="rtl" autofocus>
@@ -85,36 +162,7 @@
     </div>
 </div>
 
-<!-- Join Game Modal -->
-<div class="modal fade" id="joinGameModal" tabindex="-1" aria-labelledby="joinGameModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="joinGameModalLabel"><i class="fas fa-sign-in-alt"></i> انضم إلى غرفة</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="join-room-id">
-                <div id="join-room-preview" class="alert alert-info d-none mb-3 text-center"></div>
-                <div id="join-error" class="alert alert-danger d-none mb-3"></div>
-                <div class="mb-3">
-                    <label for="join-name" class="form-label">اسمك</label>
-                    <input type="text" id="join-name" class="form-control text-end"
-                           placeholder="اكتب اسمك هنا..." dir="rtl" autofocus>
-                </div>
-                <div id="join-avatar-picker-slot"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                <button type="button" class="btn btn-success" id="btn-join-confirm">
-                    <i class="fas fa-arrow-left"></i> انضم الآن
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1100;"></div>
+<div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1100;" aria-live="polite" aria-atomic="true"></div>
 {% endblock %}
 
 {% block scripts %}
@@ -128,18 +176,32 @@ document.addEventListener('DOMContentLoaded', () => {
   const getAvatar = enhancements.createAvatarPicker('host-name');
   const getJoinAvatar = enhancements.createAvatarPicker('join-name');
 
-  // Create game buttons
+  // ── Quick Join Flow ────────────────────────────────────────────────
+  const quickJoinModal = new bootstrap.Modal(document.getElementById('quickJoinModal'));
+  const quickJoinBtn = document.getElementById('btn-quick-join');
+  
+  if (quickJoinBtn) {
+    quickJoinBtn.addEventListener('click', () => {
+      quickJoinModal.show();
+      setTimeout(() => document.getElementById('join-room-code')?.focus(), 300);
+    });
+  }
+
+  // ── Create Game Buttons ────────────────────────────────────────────
   document.querySelectorAll('.create-game-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.getElementById('modal-game-type').value = btn.dataset.gameType;
-      document.getElementById('createGameModalLabel').textContent =
-        btn.closest('.card').querySelector('.card-title').textContent + ' — غرفة جديدة';
+      const gameType = btn.dataset.gameType;
+      const gameCard = btn.closest('.game-card, .card');
+      const gameTitle = gameCard?.querySelector('.card-title')?.textContent || 'لعبة جديدة';
+      
+      document.getElementById('modal-game-type').value = gameType;
+      document.getElementById('createGameModalLabel').textContent = gameTitle + ' — غرفة جديدة';
       document.getElementById('create-error').classList.add('d-none');
       new bootstrap.Modal(document.getElementById('createGameModal')).show();
     });
   });
 
-  // Create room action
+  // ── Create Room Action ─────────────────────────────────────────────
   document.getElementById('btn-create-room').addEventListener('click', async () => {
     const gameType = document.getElementById('modal-game-type').value;
     const playerName = document.getElementById('host-name').value.trim();
@@ -147,19 +209,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const errEl = document.getElementById('create-error');
 
     if (!playerName) {
-      errEl.textContent = 'اكتب اسمك!';
+      errEl.textContent = 'اكتب اسمك للاستمرار';
       errEl.classList.remove('d-none');
+      document.getElementById('host-name').focus();
       return;
     }
 
     try {
       errEl.classList.add('d-none');
       const roomId = await lobby.createRoom(gameType, playerName, {});
-      // Set avatar after room creation (separate mutation)
       await convex.mutate(api.rooms.setAvatar, { roomId, playerName, avatar });
       lobby.navigateToGame(roomId, playerName, gameType);
     } catch (e) {
-      errEl.textContent = e.message || 'حدث خطأ';
+      errEl.textContent = e.message || 'حدث خطأ. حاول مرة أخرى.';
       errEl.classList.remove('d-none');
     }
   });
@@ -169,91 +231,111 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Enter') document.getElementById('btn-create-room').click();
   });
 
-  // "How to play?" buttons on game cards
+  // ── Rules Buttons ──────────────────────────────────────────────────
   document.querySelectorAll('.rules-btn').forEach(btn => {
     btn.addEventListener('click', () => enhancements.showGameRules(btn.dataset.gameType));
   });
 
-  // ── Join Game flow ────────────────────────────────────────────────
+  // ── Join Flow ────────────────────────────────────────────────────────
   function extractRoomId(input) {
-    // Accept full URL like /game/<roomId>?... or just the raw roomId
     const urlMatch = input.match(/\/game\/([^?#\s]+)/);
     return urlMatch ? urlMatch[1] : input.trim();
   }
 
-  async function openJoinModal(rawInput) {
-    const modal = new bootstrap.Modal(document.getElementById('joinGameModal'));
-    const previewEl = document.getElementById('join-room-preview');
+  async function handleJoin(roomId) {
+    const joinName = document.getElementById('join-name');
     const errEl = document.getElementById('join-error');
+    const previewEl = document.getElementById('join-room-preview');
+
     errEl.classList.add('d-none');
     previewEl.classList.add('d-none');
 
-    let roomId = rawInput;
-
-    // Resolve 4-digit room code to full Convex room ID
-    if (/^\d{4,5}$/.test(rawInput)) {
+    // Resolve short code
+    if (/^\d{4,5}$/.test(roomId)) {
       try {
-        const result = await lobby.getRoomByCode(rawInput);
+        const result = await lobby.getRoomByCode(roomId);
         if (!result) {
-          gameUI.showToast('رقم الغرفة غير موجود', 'error');
+          gameUI.showToast('رقم الغرفة غير موجود. تأكد من الرقم وحاول مجدداً.', 'error');
           return;
         }
         roomId = result.roomId;
       } catch (e) {
-        gameUI.showToast('تعذر العثور على الغرفة', 'error');
+        gameUI.showToast('تعذر الاتصال. تحقق من الإنترنت وحاول مجدداً.', 'error');
         return;
       }
     }
 
     document.getElementById('join-room-id').value = roomId;
 
-    // Fetch room preview
+    // Fetch preview
     try {
       const preview = await lobby.getRoomPreview(roomId);
       if (preview) {
-        const blocked = !preview.joinAllowed ? `<br><span class="text-danger"><i class="fas fa-ban"></i> ${preview.joinBlockReason}</span>` : '';
-        previewEl.innerHTML = `<i class="fas fa-gamepad"></i> <strong>${preview.gameTitle}</strong> — ${preview.playersCount} لاعبين${blocked}`;
+        const blocked = !preview.joinAllowed 
+          ? `<br><span class="text-danger"><i class="fas fa-ban me-1"></i>${preview.joinBlockReason}</span>` 
+          : '';
+        previewEl.innerHTML = `<i class="fas fa-gamepad text-success me-2"></i><strong>${preview.gameTitle}</strong> — ${preview.playersCount} لاعبين${blocked}`;
         previewEl.classList.remove('d-none');
       }
-    } catch (e) { /* ignore preview errors */ }
-
-    modal.show();
+    } catch (e) { /* ignore */ }
   }
 
-  document.getElementById('btn-open-join').addEventListener('click', () => {
-    const raw = document.getElementById('join-room-input').value.trim();
-    if (!raw) { gameUI.showToast('الصق رابط الغرفة أولاً', 'warning'); return; }
-    openJoinModal(extractRoomId(raw));
+  // Quick join from input
+  document.getElementById('join-room-code')?.addEventListener('input', async (e) => {
+    const val = e.target.value.trim();
+    if (val.length >= 4) {
+      await handleJoin(extractRoomId(val));
+    }
   });
 
-  document.getElementById('join-room-input').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') document.getElementById('btn-open-join').click();
-  });
-
+  // Confirm join
   document.getElementById('btn-join-confirm').addEventListener('click', async () => {
-    const roomId = document.getElementById('join-room-id').value.trim();
+    let roomId = document.getElementById('join-room-id').value || 
+                 extractRoomId(document.getElementById('join-room-code')?.value || '');
     const playerName = document.getElementById('join-name').value.trim();
     const errEl = document.getElementById('join-error');
 
     if (!playerName) {
-      errEl.textContent = 'اكتب اسمك!';
+      errEl.textContent = 'اكتب اسمك للاستمرار';
       errEl.classList.remove('d-none');
+      document.getElementById('join-name').focus();
       return;
+    }
+
+    // Resolve short code if needed
+    if (/^\d{4,5}$/.test(roomId)) {
+      try {
+        const result = await lobby.getRoomByCode(roomId);
+        if (!result) {
+          errEl.textContent = 'رقم الغرفة غير موجود. تأكد من الرقم وحاول مجدداً.';
+          errEl.classList.remove('d-none');
+          return;
+        }
+        roomId = result.roomId;
+      } catch (e) {
+        errEl.textContent = 'تعذر الاتصال بالخادم. تحقق من الإنترنت وحاول مجدداً.';
+        errEl.classList.remove('d-none');
+        return;
+      }
     }
 
     try {
       errEl.classList.add('d-none');
       const preview = await lobby.getRoomPreview(roomId);
-      if (!preview) throw new Error('الغرفة غير موجودة أو انتهت');
+      if (!preview) {
+        errEl.textContent = 'الغرفة غير موجودة أو انتهت. تأكد من الرابط وحاول مجدداً.';
+        errEl.classList.remove('d-none');
+        return;
+      }
+      
       await lobby.joinRoom(roomId, playerName);
-      // Set avatar after joining
       const joinAvatar = getJoinAvatar();
       if (joinAvatar) {
         await convex.mutate(api.rooms.setAvatar, { roomId, playerName, avatar: joinAvatar });
       }
       lobby.navigateToGame(roomId, playerName, preview.gameType);
     } catch (e) {
-      errEl.textContent = e.message || 'حدث خطأ عند الانضمام';
+      errEl.textContent = e.message || 'حدث خطأ. حاول مرة أخرى.';
       errEl.classList.remove('d-none');
     }
   });
@@ -262,10 +344,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Enter') document.getElementById('btn-join-confirm').click();
   });
 
-  // Auto-open join modal if URL has ?join=<roomId>
+  // ── URL Parameter Auto-Join ──────────────────────────────────────────
   const urlParams = new URLSearchParams(window.location.search);
   const joinRoomId = urlParams.get('join');
-  if (joinRoomId) openJoinModal(joinRoomId);
+  if (joinRoomId) {
+    document.getElementById('join-room-code').value = joinRoomId;
+    quickJoinModal.show();
+    handleJoin(joinRoomId);
+  }
 });
 </script>
 {% endblock %}
